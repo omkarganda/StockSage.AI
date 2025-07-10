@@ -1,9 +1,9 @@
-# StockSage.AI ─ Project Structure
+# StockStage.AI ─ Project Structure
 
-Below is a recommended, production‑ready layout for the **StockSage.AI** repository.  It separates concerns clearly—data, features, models, evaluation, and deployment—making collaboration, testing, and CI/CD straightforward.
+Below is a recommended, production‑ready layout for the **StockStage.AI** repository.  It separates concerns clearly—data, features, models, evaluation, and deployment—making collaboration, testing, and CI/CD straightforward.
 
 ```text
-StockSageAI/
+StockStage.AI/
 ├── data/                       # Local data storage (git‑ignored)
 │   ├── raw/                    # Unmodified downloads from APIs
 │   ├── processed/              # Cleaned & feature‑rich datasets
@@ -86,7 +86,7 @@ StockSageAI/
 
 ```bash
 # clone repo & install
-$ git clone https://github.com/omkarganda/StockSageAI.git && cd StockSageAI
+$ git clone https://github.com/omkarganda/StockStage.AI.git && cd StockStage.AI
 $ python -m venv .venv && source .venv/bin/activate
 $ pip install -r requirements.txt
 
@@ -109,7 +109,7 @@ You'll need to manually create this file in your root directory:
 ```bash
 # .env.template
 
-# StockSage.AI Environment Variables Template
+# StockStage.AI Environment Variables Template
 # Copy this file to .env and fill in your actual API keys
 
 # =============================================================================

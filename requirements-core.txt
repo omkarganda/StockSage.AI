@@ -1,4 +1,4 @@
-# StockSage.AI Core Requirements (without problematic packages)
+# StockStage.AI Core Requirements (without problematic packages)
 # Install this first, then add neuralforecast separately
 
 # Core Data Handling
