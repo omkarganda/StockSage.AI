@@ -172,6 +172,11 @@ def merge_all_data(market_data, economic_data, sentiment_data):
     if market_data is not None:
         market_daily = market_data[['Open', 'High', 'Low', 'Close', 'Volume']].copy()
         market_daily.columns = [f'AAPL_{col}' for col in market_daily.columns]
+        
+        # Normalize timezone - convert to timezone-naive (remove timezone info)
+        if market_daily.index.tz is not None:
+            market_daily.index = market_daily.index.tz_convert('UTC').tz_localize(None)
+        
         all_data.append(market_daily)
         logger.info(f"✓ Market data: {len(market_daily)} rows")
     
@@ -179,6 +184,11 @@ def merge_all_data(market_data, economic_data, sentiment_data):
     if economic_data is not None:
         # Resample to daily if needed
         economic_daily = economic_data.resample('D').ffill()
+        
+        # Ensure timezone-naive
+        if economic_daily.index.tz is not None:
+            economic_daily.index = economic_daily.index.tz_convert('UTC').tz_localize(None)
+        
         all_data.append(economic_daily)
         logger.info(f"✓ Economic data: {len(economic_daily)} rows")
     
@@ -187,11 +197,16 @@ def merge_all_data(market_data, economic_data, sentiment_data):
         # Convert date index to datetime
         sentiment_daily = sentiment_data.copy()
         sentiment_daily.index = pd.to_datetime(sentiment_daily.index)
+        
+        # Ensure timezone-naive
+        if sentiment_daily.index.tz is not None:
+            sentiment_daily.index = sentiment_daily.index.tz_convert('UTC').tz_localize(None)
+        
         all_data.append(sentiment_daily)
         logger.info(f"✓ Sentiment data: {len(sentiment_daily)} rows")
     
     if all_data:
-        # Merge all data
+        # Merge all data - now all indices are timezone-naive
         merged_data = pd.concat(all_data, axis=1, join='outer')
         merged_data = merged_data.sort_index()
         

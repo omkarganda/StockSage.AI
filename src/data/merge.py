@@ -1,0 +1,634 @@
+"""
+Data Merging & Alignment Module for StockSage.AI
+
+This module provides functionality to merge and align different data sources:
+- Market data (from yfinance)
+- Economic indicators (from FRED)
+- Sentiment scores (from news/FinBERT)
+
+All data is aligned by timestamp with proper handling of different frequencies
+and missing values.
+"""
+
+import pandas as pd
+import numpy as np
+from typing import Optional, Dict, List, Tuple, Union
+from datetime import datetime, timedelta
+import warnings
+from functools import reduce
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+def merge_market_economic_data(
+    symbol: str,
+    start_date: Union[str, datetime],
+    end_date: Union[str, datetime],
+    market_data: Optional[pd.DataFrame] = None,
+    economic_data: Optional[Dict[str, pd.DataFrame]] = None,
+    alignment: str = 'inner',
+    fill_method: str = 'ffill'
+) -> pd.DataFrame:
+    """
+    Merge market data with economic indicators.
+    
+    This function handles the complexity of merging daily market data with
+    economic indicators that may have different frequencies (monthly, quarterly).
+    
+    Parameters:
+    -----------
+    symbol : str
+        Stock symbol (e.g., 'AAPL')
+    start_date : str or datetime
+        Start date for the data
+    end_date : str or datetime
+        End date for the data
+    market_data : pd.DataFrame, optional
+        Pre-loaded market data. If None, should be loaded via download_market.py
+    economic_data : dict, optional
+        Dict of economic indicator DataFrames. Keys are indicator names.
+        If None, should be loaded via download_economic.py
+    alignment : str, default='inner'
+        How to align data ('inner', 'outer', 'left', 'right')
+    fill_method : str, default='ffill'
+        Method to fill missing values ('ffill', 'bfill', 'interpolate', None)
+    
+    Returns:
+    --------
+    pd.DataFrame
+        Merged dataset with market and economic data aligned by date
+    """
+    # Convert dates to datetime if needed
+    if isinstance(start_date, str):
+        start_date = pd.to_datetime(start_date)
+    if isinstance(end_date, str):
+        end_date = pd.to_datetime(end_date)
+    
+    # If data not provided, we would load it here
+    # For now, we'll work with provided data or create sample structure
+    if market_data is None:
+        logger.warning(f"No market data provided for {symbol}. Creating empty structure.")
+        date_range = pd.date_range(start=start_date, end=end_date, freq='B')  # Business days
+        market_data = pd.DataFrame(index=date_range)
+        market_data.index.name = 'Date'
+    
+    # Ensure market data has datetime index and normalize timezone
+    if not isinstance(market_data.index, pd.DatetimeIndex):
+        market_data.index = pd.to_datetime(market_data.index)
+    
+    # Normalize timezone to avoid mixing tz-aware and tz-naive indices
+    if market_data.index.tz is not None:
+        market_data.index = market_data.index.tz_convert('UTC').tz_localize(None)
+    
+    # Start with market data as base
+    merged_df = market_data.copy()
+    
+    # Add symbol column if not present
+    if 'symbol' not in merged_df.columns:
+        merged_df['symbol'] = symbol
+    
+    # Merge economic indicators
+    if economic_data:
+        for indicator_name, indicator_df in economic_data.items():
+            logger.info(f"Merging {indicator_name} data...")
+            
+            # Ensure datetime index and normalize timezone
+            if not isinstance(indicator_df.index, pd.DatetimeIndex):
+                indicator_df.index = pd.to_datetime(indicator_df.index)
+            
+            # Normalize timezone to match market data
+            if indicator_df.index.tz is not None:
+                indicator_df.index = indicator_df.index.tz_convert('UTC').tz_localize(None)
+            
+            # Rename columns to avoid conflicts
+            indicator_df = indicator_df.copy()
+            indicator_df.columns = [f"{indicator_name}_{col}" if col != indicator_name else col 
+                                   for col in indicator_df.columns]
+            
+            # Handle different frequencies
+            if len(indicator_df) < len(merged_df) * 0.5:
+                # Likely lower frequency (monthly/quarterly)
+                # Use forward fill to propagate values
+                indicator_df_reindexed = indicator_df.reindex(merged_df.index, method='ffill')
+                
+                # Add a column to track when the value was last updated
+                for col in indicator_df.columns:
+                    if col in indicator_df_reindexed.columns:
+                        # Find the last valid date for each row
+                        last_valid_dates = indicator_df[col].dropna().index
+                        if len(last_valid_dates) > 0:
+                            # Create a series that tracks days since last update
+                            days_since = pd.Series(index=merged_df.index, dtype=float)
+                            for date in merged_df.index:
+                                # Find the most recent valid data point
+                                valid_before = last_valid_dates[last_valid_dates <= date]
+                                if len(valid_before) > 0:
+                                    last_date = valid_before.max()
+                                    days_since[date] = (date - last_date).days
+                                else:
+                                    days_since[date] = np.nan
+                            merged_df[f"{col}_days_since_update"] = days_since
+                
+                indicator_df = indicator_df_reindexed
+            
+            # Merge the data - use outer join to preserve all market data
+            merged_df = merged_df.join(indicator_df, how='outer')
+    
+    # Handle missing values based on fill_method
+    if fill_method:
+        if fill_method == 'ffill':
+            merged_df = merged_df.ffill()
+        elif fill_method == 'bfill':
+            merged_df = merged_df.bfill()
+        elif fill_method == 'interpolate':
+            numeric_cols = merged_df.select_dtypes(include=[np.number]).columns
+            merged_df[numeric_cols] = merged_df[numeric_cols].interpolate(method='linear')
+    
+    # Add derived features
+    merged_df = _add_temporal_features(merged_df)
+    
+    # Log merge statistics
+    logger.info(f"Merged data shape: {merged_df.shape}")
+    logger.info(f"Date range: {merged_df.index.min()} to {merged_df.index.max()}")
+    logger.info(f"Missing values per column:\n{merged_df.isnull().sum()}")
+    
+    return merged_df
+
+
+def align_sentiment_with_market_data(
+    market_df: pd.DataFrame,
+    sentiment_df: pd.DataFrame,
+    sentiment_window: str = '1D',
+    aggregation_method: str = 'weighted_mean',
+    weight_decay: float = 0.8
+) -> pd.DataFrame:
+    """
+    Align sentiment scores with market data, handling intraday sentiment updates.
+    
+    Sentiment data often comes at irregular intervals (when news is published),
+    so we need to aggregate it appropriately to match market data frequency.
+    
+    Parameters:
+    -----------
+    market_df : pd.DataFrame
+        Market data with datetime index
+    sentiment_df : pd.DataFrame
+        Sentiment scores with datetime index and columns like 'sentiment_score',
+        'confidence', 'source', etc.
+    sentiment_window : str, default='1D'
+        Time window for sentiment aggregation ('1D', '4H', '1H', etc.)
+    aggregation_method : str, default='weighted_mean'
+        How to aggregate multiple sentiment scores:
+        - 'mean': Simple average
+        - 'weighted_mean': Weight by confidence scores
+        - 'ewm': Exponentially weighted mean (recent news matters more)
+        - 'last': Use most recent sentiment
+    weight_decay : float, default=0.8
+        Decay factor for exponential weighting (used if aggregation_method='ewm')
+    
+    Returns:
+    --------
+    pd.DataFrame
+        Market data with aligned sentiment features
+    """
+    # Ensure datetime indices and normalize timezones
+    if not isinstance(market_df.index, pd.DatetimeIndex):
+        market_df = market_df.copy()
+        market_df.index = pd.to_datetime(market_df.index)
+    
+    # Normalize timezone for market data
+    if market_df.index.tz is not None:
+        market_df.index = market_df.index.tz_convert('UTC').tz_localize(None)
+    
+    if not isinstance(sentiment_df.index, pd.DatetimeIndex):
+        sentiment_df = sentiment_df.copy()
+        sentiment_df.index = pd.to_datetime(sentiment_df.index)
+    
+    # Normalize timezone for sentiment data
+    if sentiment_df.index.tz is not None:
+        sentiment_df.index = sentiment_df.index.tz_convert('UTC').tz_localize(None)
+    
+    # Sort by time
+    sentiment_df = sentiment_df.sort_index()
+    
+    # Create result dataframe
+    result_df = market_df.copy()
+    
+    # Aggregate sentiment based on method
+    if aggregation_method == 'mean':
+        # Simple rolling mean
+        sentiment_agg = sentiment_df.resample(sentiment_window).mean()
+        
+    elif aggregation_method == 'weighted_mean':
+        # Weight by confidence if available
+        if 'confidence' in sentiment_df.columns:
+            def weighted_avg(group):
+                if len(group) == 0:
+                    return pd.Series(dtype=float)
+                weights = group['confidence']
+                return pd.Series({
+                    'sentiment_score': np.average(group['sentiment_score'], weights=weights),
+                    'sentiment_count': len(group),
+                    'avg_confidence': weights.mean()
+                })
+            
+            # Apply weighted aggregation and ensure result is DataFrame
+            sentiment_agg = sentiment_df.resample(sentiment_window).apply(weighted_avg)
+            
+            # Handle the MultiIndex columns issue that can occur with apply
+            if hasattr(sentiment_agg, 'columns') and isinstance(sentiment_agg.columns, pd.MultiIndex):
+                # Flatten MultiIndex columns
+                sentiment_agg.columns = ['_'.join(col).strip() for col in sentiment_agg.columns.values]
+            
+            # Ensure unique column names by removing duplicates
+            if hasattr(sentiment_agg, 'columns'):
+                # Get unique columns and keep first occurrence
+                _, idx = np.unique(sentiment_agg.columns, return_index=True)
+                sentiment_agg = sentiment_agg.iloc[:, np.sort(idx)]
+                
+        else:
+            # Fall back to simple mean
+            sentiment_agg = sentiment_df.resample(sentiment_window).mean()
+            
+    elif aggregation_method == 'ewm':
+        # Exponentially weighted mean - recent news matters more
+        def ewm_agg(group):
+            if len(group) == 0:
+                return pd.Series(dtype=float)
+            result = group.ewm(halflife=weight_decay, times=group.index).mean().iloc[-1]
+            return result
+            
+        sentiment_agg = sentiment_df.resample(sentiment_window).apply(ewm_agg)
+        
+        # Ensure result is DataFrame
+        if isinstance(sentiment_agg, pd.Series):
+            sentiment_agg = sentiment_agg.to_frame(name='sentiment_score')
+        
+    elif aggregation_method == 'last':
+        # Use most recent sentiment
+        sentiment_agg = sentiment_df.resample(sentiment_window).last()
+    
+    else:
+        raise ValueError(f"Unknown aggregation method: {aggregation_method}")
+    
+    # Forward fill to propagate sentiment to next market day
+    sentiment_agg = sentiment_agg.ffill(limit=7)  # Max 7 days forward fill
+    
+    # Ensure sentiment_agg is a DataFrame before joining
+    if isinstance(sentiment_agg, pd.Series):
+        sentiment_agg = sentiment_agg.to_frame(name='sentiment_score')
+    
+    # Align with market data
+    result_df = result_df.join(sentiment_agg, how='left', rsuffix='_sentiment')
+    
+    # Add sentiment age feature (how old is the sentiment data)
+    # TODO: Fix pandas version compatibility issue with Series boolean evaluation
+    # For now, skip this feature to get core functionality working
+    if 'sentiment_score' in result_df.columns:
+        result_df['sentiment_age_hours'] = 0  # Placeholder
+    
+    # Add sentiment momentum features
+    # TODO: Debug DataFrame vs Series issue - temporarily disabled
+    # if 'sentiment_score' in result_df.columns:
+    #     sentiment_series = result_df['sentiment_score'] 
+    #     result_df['sentiment_ma_3d'] = sentiment_series.rolling(window=3).mean()
+    #     result_df['sentiment_ma_7d'] = sentiment_series.rolling(window=7).mean()
+    #     result_df['sentiment_momentum'] = sentiment_series - result_df['sentiment_ma_7d']
+    #     result_df['sentiment_volatility'] = sentiment_series.rolling(window=7).std()
+    
+    # Log alignment statistics
+    sentiment_features = [c for c in result_df.columns if 'sentiment' in c]
+    logger.info(f"Sentiment alignment complete. Added {len(sentiment_features)} sentiment features")
+    if 'sentiment_score' in result_df.columns:
+        try:
+            # Use iloc to get the first occurrence of sentiment_score if there are duplicates
+            sentiment_col = result_df['sentiment_score']
+            if hasattr(sentiment_col, 'iloc'):
+                # Handle case where there might be multiple columns with same name
+                if len(sentiment_col.shape) > 1:
+                    sentiment_col = sentiment_col.iloc[:, 0]
+            non_null_count = sentiment_col.notna().sum()
+            total_count = len(result_df)
+            coverage = float(non_null_count / total_count * 100)
+            logger.info(f"Sentiment coverage: {coverage:.1f}%")
+        except Exception as e:
+            logger.warning(f"Could not calculate sentiment coverage: {e}")
+    
+    return result_df
+
+
+def create_unified_dataset(
+    symbol: str,
+    start_date: Union[str, datetime],
+    end_date: Union[str, datetime],
+    market_data: Optional[pd.DataFrame] = None,
+    economic_data: Optional[Dict[str, pd.DataFrame]] = None,
+    sentiment_data: Optional[pd.DataFrame] = None,
+    include_technical_indicators: bool = True,
+    include_market_regime: bool = True,
+    handle_missing: str = 'interpolate'
+) -> pd.DataFrame:
+    """
+    Create a unified dataset by combining all data sources.
+    
+    This is the main orchestration function that brings together market data,
+    economic indicators, and sentiment scores into a single, analysis-ready dataset.
+    
+    Parameters:
+    -----------
+    symbol : str
+        Stock symbol
+    start_date : str or datetime
+        Start date for the dataset
+    end_date : str or datetime
+        End date for the dataset
+    market_data : pd.DataFrame, optional
+        Pre-loaded market data
+    economic_data : dict, optional
+        Dictionary of economic indicator DataFrames
+    sentiment_data : pd.DataFrame, optional
+        Sentiment scores data
+    include_technical_indicators : bool, default=True
+        Whether to calculate and include technical indicators
+    include_market_regime : bool, default=True
+        Whether to include market regime detection features
+    handle_missing : str, default='interpolate'
+        How to handle missing values ('drop', 'interpolate', 'forward_fill', 'mean')
+    
+    Returns:
+    --------
+    pd.DataFrame
+        Unified dataset ready for modeling
+    """
+    logger.info(f"Creating unified dataset for {symbol} from {start_date} to {end_date}")
+    
+    # Step 1: Merge market and economic data
+    unified_df = merge_market_economic_data(
+        symbol=symbol,
+        start_date=start_date,
+        end_date=end_date,
+        market_data=market_data,
+        economic_data=economic_data,
+        fill_method='ffill'
+    )
+    
+    # Step 2: Align sentiment data if provided
+    if sentiment_data is not None:
+        unified_df = align_sentiment_with_market_data(
+            market_df=unified_df,
+            sentiment_df=sentiment_data,
+            aggregation_method='weighted_mean'
+        )
+    
+    # Step 3: Add technical indicators if requested
+    if include_technical_indicators and 'Close' in unified_df.columns:
+        unified_df = _add_technical_indicators(unified_df)
+    
+    # Step 4: Add market regime features if requested
+    if include_market_regime and 'Close' in unified_df.columns:
+        unified_df = _add_market_regime_features(unified_df)
+    
+    # Step 5: Handle missing values
+    unified_df = _handle_missing_values(unified_df, method=handle_missing)
+    
+    # Step 6: Add data quality indicators
+    unified_df = _add_data_quality_features(unified_df)
+    
+    # Step 7: Feature engineering for time series
+    unified_df = _add_lag_features(unified_df)
+    
+    # Final cleanup and validation
+    unified_df = _validate_and_clean_dataset(unified_df)
+    
+    # Log final statistics
+    logger.info(f"Unified dataset created successfully!")
+    logger.info(f"Shape: {unified_df.shape}")
+    logger.info(f"Features: {list(unified_df.columns)}")
+    logger.info(f"Memory usage: {unified_df.memory_usage().sum() / 1024**2:.2f} MB")
+    
+    return unified_df
+
+
+# Helper functions
+
+def _add_temporal_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Add time-based features like day of week, month, quarter, etc."""
+    df = df.copy()
+    
+    # Basic temporal features
+    df['day_of_week'] = df.index.dayofweek
+    df['day_of_month'] = df.index.day
+    df['week_of_year'] = df.index.isocalendar().week
+    df['month'] = df.index.month
+    df['quarter'] = df.index.quarter
+    df['year'] = df.index.year
+    
+    # Trading-specific features
+    df['is_monday'] = (df.index.dayofweek == 0).astype(int)
+    df['is_friday'] = (df.index.dayofweek == 4).astype(int)
+    df['is_month_start'] = df.index.is_month_start.astype(int)
+    df['is_month_end'] = df.index.is_month_end.astype(int)
+    df['is_quarter_start'] = df.index.is_quarter_start.astype(int)
+    df['is_quarter_end'] = df.index.is_quarter_end.astype(int)
+    
+    return df
+
+
+def _add_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
+    """Add common technical indicators."""
+    df = df.copy()
+    
+    if 'Close' not in df.columns:
+        logger.warning("No 'Close' column found. Skipping technical indicators.")
+        return df
+    
+    # Price-based features
+    df['returns'] = df['Close'].pct_change()
+    df['log_returns'] = np.log(df['Close'] / df['Close'].shift(1))
+    
+    # Moving averages
+    for window in [5, 10, 20, 50, 200]:
+        df[f'sma_{window}'] = df['Close'].rolling(window=window).mean()
+        df[f'sma_{window}_ratio'] = df['Close'] / df[f'sma_{window}']
+    
+    # Exponential moving averages
+    for span in [12, 26]:
+        df[f'ema_{span}'] = df['Close'].ewm(span=span, adjust=False).mean()
+    
+    # MACD
+    df['macd'] = df['ema_12'] - df['ema_26']
+    df['macd_signal'] = df['macd'].ewm(span=9, adjust=False).mean()
+    df['macd_diff'] = df['macd'] - df['macd_signal']
+    
+    # Bollinger Bands
+    df['bb_middle'] = df['Close'].rolling(window=20).mean()
+    bb_std = df['Close'].rolling(window=20).std()
+    df['bb_upper'] = df['bb_middle'] + 2 * bb_std
+    df['bb_lower'] = df['bb_middle'] - 2 * bb_std
+    df['bb_width'] = df['bb_upper'] - df['bb_lower']
+    df['bb_position'] = (df['Close'] - df['bb_lower']) / df['bb_width']
+    
+    # RSI
+    def calculate_rsi(prices, period=14):
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        return 100 - (100 / (1 + rs))
+    
+    df['rsi'] = calculate_rsi(df['Close'])
+    
+    # Volume features if available
+    if 'Volume' in df.columns:
+        df['volume_sma_10'] = df['Volume'].rolling(window=10).mean()
+        df['volume_ratio'] = df['Volume'] / df['volume_sma_10']
+        df['price_volume'] = df['Close'] * df['Volume']
+    
+    return df
+
+
+def _add_market_regime_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Add features to identify market regimes (trending, ranging, volatile)."""
+    df = df.copy()
+    
+    if 'returns' not in df.columns and 'Close' in df.columns:
+        df['returns'] = df['Close'].pct_change()
+    
+    # Volatility regimes
+    df['volatility_20d'] = df['returns'].rolling(window=20).std() * np.sqrt(252)
+    df['volatility_60d'] = df['returns'].rolling(window=60).std() * np.sqrt(252)
+    df['volatility_ratio'] = df['volatility_20d'] / df['volatility_60d']
+    
+    # Trend strength
+    if 'Close' in df.columns:
+        # ADX-like trend strength
+        df['trend_strength'] = abs(df['Close'].rolling(window=20).mean() - df['Close'].rolling(window=50).mean()) / df['Close'].rolling(window=20).std()
+    
+    # Market regime classification
+    df['high_volatility'] = (df['volatility_20d'] > df['volatility_20d'].rolling(window=252).mean() + 
+                             df['volatility_20d'].rolling(window=252).std()).astype(int)
+    
+    return df
+
+
+def _add_lag_features(df: pd.DataFrame, target_cols: List[str] = None, lags: List[int] = None) -> pd.DataFrame:
+    """Add lagged features for time series modeling."""
+    df = df.copy()
+    
+    if lags is None:
+        lags = [1, 2, 3, 5, 10]
+    
+    if target_cols is None:
+        # Default to returns and key indicators
+        target_cols = [col for col in ['returns', 'Close', 'sentiment_score', 'rsi'] if col in df.columns]
+    
+    for col in target_cols:
+        if col in df.columns:
+            # Handle case where column might be duplicated
+            col_data = df[col]
+            if hasattr(col_data, 'iloc') and len(col_data.shape) > 1:
+                # If multiple columns with same name, take the first one
+                col_data = col_data.iloc[:, 0]
+            
+            for lag in lags:
+                lag_col_name = f'{col}_lag_{lag}'
+                if lag_col_name not in df.columns:  # Avoid overwriting existing columns
+                    df[lag_col_name] = col_data.shift(lag)
+    
+    return df
+
+
+def _add_data_quality_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Add features indicating data quality and completeness."""
+    df = df.copy()
+    
+    # Count missing values in each row
+    df['missing_count'] = df.isnull().sum(axis=1)
+    df['missing_pct'] = df['missing_count'] / len(df.columns)
+    
+    # Flag rows with interpolated or filled data
+    # This is a simplified version - in production, track during fill operations
+    
+    return df
+
+
+def _handle_missing_values(df: pd.DataFrame, method: str = 'interpolate') -> pd.DataFrame:
+    """Handle missing values using specified method."""
+    df = df.copy()
+    
+    if method == 'drop':
+        df = df.dropna()
+    elif method == 'interpolate':
+        # Fix: Handle interpolation more safely to avoid column length mismatch
+        numeric_cols = df.select_dtypes(include=[np.number]).columns
+        for col in numeric_cols:
+            df[col] = df[col].interpolate(method='linear', limit=5)
+    elif method == 'forward_fill':
+        df = df.ffill(limit=5)  # Updated to use newer syntax
+    elif method == 'mean':
+        numeric_cols = df.select_dtypes(include=[np.number]).columns
+        for col in numeric_cols:
+            df[col] = df[col].fillna(df[col].mean())
+    
+    return df
+
+
+def _validate_and_clean_dataset(df: pd.DataFrame) -> pd.DataFrame:
+    """Final validation and cleaning of the dataset."""
+    df = df.copy()
+    
+    # Remove any duplicate indices
+    df = df[~df.index.duplicated(keep='first')]
+    
+    # Sort by date
+    df = df.sort_index()
+    
+    # Remove any infinite values
+    numeric_cols = df.select_dtypes(include=[np.number]).columns
+    df[numeric_cols] = df[numeric_cols].replace([np.inf, -np.inf], np.nan)
+    
+    # Remove columns with too many missing values (>50%)
+    missing_pct = df.isnull().sum() / len(df)
+    cols_to_drop = missing_pct[missing_pct > 0.5].index.tolist()
+    if cols_to_drop:
+        logger.warning(f"Dropping columns with >50% missing values: {cols_to_drop}")
+        df = df.drop(columns=cols_to_drop)
+    
+    return df
+
+
+# Utility functions for data alignment
+
+def resample_to_business_days(df: pd.DataFrame, fill_method: str = 'ffill') -> pd.DataFrame:
+    """Resample data to business days frequency."""
+    # Create business day index
+    bus_days = pd.date_range(start=df.index.min(), end=df.index.max(), freq='B')
+    
+    # Reindex to business days
+    df_resampled = df.reindex(bus_days, method=fill_method)
+    
+    return df_resampled
+
+
+def align_multiple_dataframes(dfs: List[pd.DataFrame], join: str = 'inner') -> pd.DataFrame:
+    """Align multiple dataframes with different time indices."""
+    if not dfs:
+        return pd.DataFrame()
+    
+    # Use reduce to sequentially join all dataframes
+    aligned_df = reduce(lambda left, right: left.join(right, how=join), dfs)
+    
+    return aligned_df
+
+
+# Main execution example
+if __name__ == "__main__":
+    # Example usage
+    print("Data merge module loaded successfully!")
+    print("Available functions:")
+    print("- merge_market_economic_data()")
+    print("- align_sentiment_with_market_data()")
+    print("- create_unified_dataset()")

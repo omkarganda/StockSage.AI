@@ -155,11 +155,21 @@ class MarketDataDownloader:
         if self.cache and interval == "1d":
             cached_data = self.cache.load(ticker, "ohlcv")
             if cached_data is not None:
+                # Normalize cached data index to timezone-naive for comparison
+                if hasattr(cached_data.index, 'tz') and cached_data.index.tz is not None:
+                    cached_data.index = cached_data.index.tz_convert('UTC').tz_localize(None)
+                
                 # Filter by date range if specified
                 if start_date:
-                    cached_data = cached_data[cached_data.index >= pd.to_datetime(start_date)]
+                    start_ts = pd.to_datetime(start_date)
+                    if hasattr(start_ts, 'tz') and start_ts.tz is not None:
+                        start_ts = start_ts.tz_convert('UTC').tz_localize(None)
+                    cached_data = cached_data[cached_data.index >= start_ts]
                 if end_date:
-                    cached_data = cached_data[cached_data.index <= pd.to_datetime(end_date)]
+                    end_ts = pd.to_datetime(end_date)
+                    if hasattr(end_ts, 'tz') and end_ts.tz is not None:
+                        end_ts = end_ts.tz_convert('UTC').tz_localize(None)
+                    cached_data = cached_data[cached_data.index <= end_ts]
                 
                 if not cached_data.empty:
                     return cached_data

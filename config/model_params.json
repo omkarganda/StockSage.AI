@@ -1,0 +1,15 @@
+{
+  "lstm": {
+    "units": [
+      128,
+      64,
+      32
+    ],
+    "dropout": 0.2,
+    "batch_size": 32
+  },
+  "training": {
+    "epochs": 100,
+    "early_stopping": 10
+  }
+}

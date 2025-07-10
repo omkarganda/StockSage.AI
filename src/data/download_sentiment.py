@@ -520,11 +520,15 @@ class SentimentDataProcessor:
         Returns:
             DataFrame with daily sentiment scores
         """
-        # Convert dates
-        if isinstance(start_date, str):
-            start_date = pd.to_datetime(start_date)
-        if isinstance(end_date, str):
-            end_date = pd.to_datetime(end_date)
+        # Convert dates to pandas Timestamp and ensure timezone-naive
+        start_date = pd.to_datetime(start_date)
+        end_date = pd.to_datetime(end_date)
+        
+        # Convert to timezone-naive if they have timezone info
+        if start_date.tz is not None:
+            start_date = start_date.tz_convert('UTC').tz_localize(None)
+        if end_date.tz is not None:
+            end_date = end_date.tz_convert('UTC').tz_localize(None)
         
         # Calculate days
         days = (end_date - start_date).days + 1
@@ -539,6 +543,11 @@ class SentimentDataProcessor:
         if articles.empty:
             logger.warning(f"No articles found for {ticker}")
             return pd.DataFrame()
+        
+        # Normalize publishedAt column to timezone-naive for comparison
+        if 'publishedAt' in articles.columns:
+            if articles['publishedAt'].dt.tz is not None:
+                articles['publishedAt'] = articles['publishedAt'].dt.tz_convert('UTC').dt.tz_localize(None)
         
         # Filter by date range
         articles = articles[
