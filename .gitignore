@@ -10,3 +10,12 @@ temp_backup/
 # logs & caches
 logs/
 *.pkl
+
+# Python build artifacts
+__pycache__/
+*.pyc
+# Data & cache files
+data/raw/
+*.pkl
+logs/
+
