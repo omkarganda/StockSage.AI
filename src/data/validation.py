@@ -19,11 +19,7 @@ from dataclasses import dataclass
 from enum import Enum
 import logging
 
-import sys
-import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-
-from utils.logging import get_logger
+from ..utils.logging import get_logger
 
 # Get module logger
 logger = get_logger(__name__)
@@ -73,7 +69,7 @@ class ValidationReport:
         logger.info(f"=== Validation Report for {self.dataset_name} ===")
         logger.info(f"Dataset: {self.total_rows} rows × {self.total_columns} columns")
         logger.info(f"Quality Score: {self.quality_score:.1f}/100")
-        logger.info(f"Valid: {'✓' if self.is_valid else '✗'}")
+        logger.info(f"Valid: {'[PASS]' if self.is_valid else '[FAIL]'}")
         
         severity_counts = {}
         for severity in ValidationSeverity:
@@ -252,14 +248,19 @@ class DataValidator:
             min_date = df.index.min()
             max_date = df.index.max()
             
-            if min_date < pd.Timestamp('1990-01-01'):
+            # Handle potential NaT values and ensure proper datetime comparison
+            if (isinstance(min_date, pd.Timestamp) and 
+                not pd.isna(min_date) and 
+                min_date < pd.Timestamp('1990-01-01')):
                 issues.append(ValidationIssue(
                     severity=ValidationSeverity.WARNING,
                     category="index",
                     message=f"Start date seems too early: {min_date}"
                 ))
             
-            if max_date > pd.Timestamp.now() + timedelta(days=7):
+            if (isinstance(max_date, pd.Timestamp) and 
+                not pd.isna(max_date) and 
+                max_date > pd.Timestamp.now() + timedelta(days=7)):
                 issues.append(ValidationIssue(
                     severity=ValidationSeverity.WARNING,
                     category="index",
