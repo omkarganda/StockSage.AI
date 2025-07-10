@@ -1,11 +1,11 @@
-# StockSage.AI – Project Rules
-These rules give the Cursor AI agent persistent context about our codebase **StockSage.AI**.  They ensure generated code, edits, and chat responses stay aligned with the project’s architecture, workflows, and engineering standards.
+# StockStage.AI – Project Rules
+These rules give the Cursor AI agent persistent context about our codebase **StockStage.AI**.  They ensure generated code, edits, and chat responses stay aligned with the project’s architecture, workflows, and engineering standards.
 
 > **Scope :** Applies to all Python, notebook, script, and markdown files in the repo.
 
 ---
 ## 1 · Domain Overview
-- StockSage.AI predicts stock prices by combining **market data**, **economic indicators**, and **NLP‑based sentiment**.
+- StockStage.AI predicts stock prices by combining **market data**, **economic indicators**, and **NLP‑based sentiment**.
 - Core stack: `pandas`, `yfinance`, `Prophet`, `Darts`, `PyTorch Lightning`, `LangChain`, `Hugging Face`, `Plotly`, `Streamlit`, `llamaIndex`, `OpenAI`.
 - Repository layout is documented in `@project_structure.md`. Respect that directory breakdown when adding files.
 
