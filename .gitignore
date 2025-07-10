@@ -1,0 +1,12 @@
+# .gitignore
+# compiled files
+__pycache__/
+*.pyc
+
+# large/raw data
+data/raw/
+temp_backup/
+
+# logs & caches
+logs/
+*.pkl
