@@ -1,0 +1,23 @@
+2025-07-10 15:56:21,325 - src.data.validation - ERROR - ERROR: DatetimeIndex is not properly sorted | module=src.data.validation
+2025-07-10 15:56:21,325 - src.data.validation - ERROR - ERROR: Found 1 duplicate index values | module=src.data.validation
+2025-07-10 15:56:21,325 - src.data.validation - ERROR - ERROR: Column 'Close' has 1 values below minimum 0 | module=src.data.validation
+2025-07-10 15:56:21,326 - src.data.validation - ERROR - ERROR: Column 'Volume' has 1 values below minimum 0 | module=src.data.validation
+2025-07-10 15:56:21,326 - src.data.validation - ERROR - ERROR: High price violations: 2 cases where High < max(Open, Close) | module=src.data.validation
+2025-07-10 15:56:21,326 - src.data.validation - ERROR - ERROR: Low price violations: 2 cases where Low > min(Open, Close) | module=src.data.validation
+2025-07-10 15:56:21,326 - src.data.validation - ERROR - ERROR: Negative volume: 1 cases | module=src.data.validation
+2025-07-10 15:56:21,326 - src.data.validation - ERROR - ERROR: Non-positive prices in Close: 1 cases | module=src.data.validation
+2025-07-10 15:56:21,350 - src.data.validation - ERROR - ERROR: Column 'sentiment_score' has 1 values below minimum -1 | module=src.data.validation
+2025-07-10 15:56:21,350 - src.data.validation - ERROR - ERROR: Column 'sentiment_score' has 1 values above maximum 1 | module=src.data.validation
+2025-07-10 15:56:21,350 - src.data.validation - ERROR - ERROR: Column 'confidence' has 1 values below minimum 0 | module=src.data.validation
+2025-07-10 15:56:21,350 - src.data.validation - ERROR - ERROR: Column 'confidence' has 1 values above maximum 1 | module=src.data.validation
+2025-07-10 15:56:21,351 - src.data.validation - ERROR - ERROR: Sentiment scores out of range [-1,1]: 2 cases | module=src.data.validation
+2025-07-10 15:56:21,351 - src.data.validation - ERROR - ERROR: Confidence scores out of range [0,1]: 2 cases | module=src.data.validation
+2025-07-10 15:56:21,359 - src.data.validation - ERROR - ERROR: Column 'DFF' has 66.7% missing data | module=src.data.validation
+2025-07-10 15:56:21,360 - src.data.validation - ERROR - ERROR: Found 2 rows with all missing data | module=src.data.validation
+2025-07-10 15:56:21,368 - src.data.validation - ERROR - ERROR: Column 'DGS10' has 66.7% missing data | module=src.data.validation
+2025-07-10 15:56:21,368 - src.data.validation - ERROR - ERROR: Found 2 rows with all missing data | module=src.data.validation
+2025-07-10 15:56:21,376 - src.data.validation - ERROR - ERROR: Column 'VIXCLS' has 66.7% missing data | module=src.data.validation
+2025-07-10 15:56:21,376 - src.data.validation - ERROR - ERROR: Found 2 rows with all missing data | module=src.data.validation
+2025-07-10 15:56:21,456 - __main__ - ERROR - ❌ Failed to create unified dataset: Other Series must have a name | module=__main__
+2025-07-10 15:56:21,471 - alerts - ERROR - ALERT: Test error alert | module=alerts | alert_message=Test error alert | severity=error | test_mode=True
+2025-07-10 15:56:21,471 - alerts - CRITICAL - ALERT: Test critical alert | module=alerts | alert_message=Test critical alert | severity=critical | test_mode=True

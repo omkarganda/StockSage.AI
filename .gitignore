@@ -1,0 +1,27 @@
+# .gitignore
+# compiled files
+__pycache__/
+*.pyc
+
+# large/raw data
+data/raw/
+temp_backup/
+
+# logs & caches
+logs/
+*.pkl
+
+# Python build artifacts
+__pycache__/
+*.pyc
+# Data & cache files
+data/raw/
+*.pkl
+logs/
+
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
