@@ -36,12 +36,16 @@ from src.models.neuralforecast_model import create_neural_forecasting_models
 # Advanced hybrid DL models (LSTM + Transformer attention)
 from src.models.lstm_attention_model import create_deep_learning_models
 from src.models.sktime_model import create_statistical_models
+from src.models.transformer_model import create_transformer_models
 
 # Import data processing
 from src.data.merge import create_unified_dataset
 from src.features.indicators import add_all_technical_indicators
 # NEW: data cleaning & validation utilities
 from src.data.cleaning import clean_market_data
+
+# Optuna tuning utils
+from src.tuning.optuna_tuner import tune_lstm_attention, tune_transformer
 
 # Setup logging
 logging.basicConfig(
@@ -75,7 +79,8 @@ class ModelTrainer:
         forecast_horizon: int = 30,
         quick_test: bool = False,
         save_models: bool = True,
-        results_dir: str = "results/model_training"
+        results_dir: str = "results/model_training",
+        tune: bool = False,
     ):
         """
         Initialize the model trainer.
@@ -107,6 +112,9 @@ class ModelTrainer:
         self.quick_test = quick_test
         self.save_models = save_models
         self.results_dir = Path(results_dir)
+        self.tune = tune
+        # cache tuned params per model type
+        self._tuned_params: Dict[str, Any] = {}
         
         # Create results directory
         self.results_dir.mkdir(parents=True, exist_ok=True)
@@ -243,14 +251,34 @@ class ModelTrainer:
         # Deep learning hybrid models (if not quick test)
         if not self.quick_test:
             try:
+                tuned_kwargs = {}
+                if self.tune:
+                    tuned_kwargs = self._tuned_params.get("lstm_attention", {})
                 dl_models = create_deep_learning_models(
                     context_length=60,
                     horizon=self.forecast_horizon,
+                    **tuned_kwargs,
                 )
                 models.update({f"dl_{k}": v for k, v in dl_models.items()})
                 logger.info(f"Created {len(dl_models)} deep learning models")
             except Exception as e:
                 logger.warning(f"Error creating deep learning models: {e}")
+
+        # Transformer models
+        if not self.quick_test:
+            try:
+                trans_kwargs = {}
+                if self.tune:
+                    trans_kwargs = self._tuned_params.get("transformer", {})
+                trans_models = create_transformer_models(
+                    context_length=60,
+                    horizon=self.forecast_horizon,
+                    **trans_kwargs,
+                )
+                models.update({f"dl_{k}" : v for k, v in trans_models.items()})
+                logger.info(f"Created {len(trans_models)} transformer models")
+            except Exception as e:
+                logger.warning(f"Error creating transformer models: {e}")
 
         logger.info(f"Total models created: {len(models)}")
         return models
@@ -454,7 +482,27 @@ class ModelTrainer:
                     'date_range': f"{data.index.min()} to {data.index.max()}"
                 }
                 
-                # Create models
+                # If tuning requested and deep learning models exist, run tuning once per type
+                if self.tune and not self.quick_test:
+                    logger.info("Running hyperparameter tuning for deep learning models")
+                    # Run LSTM tuning if not tuned
+                    lstm_params = tune_lstm_attention(
+                        train_data,
+                        context_length=60,
+                        horizon=self.forecast_horizon,
+                        n_trials=20 if self.quick_test else 40,
+                    )
+                    self._tuned_params["lstm_attention"] = lstm_params
+
+                    trans_params = tune_transformer(
+                        train_data,
+                        context_length=60,
+                        horizon=self.forecast_horizon,
+                        n_trials=20 if self.quick_test else 40,
+                    )
+                    self._tuned_params["transformer"] = trans_params
+
+                # Create models (after tuning params ready)
                 models = self.create_models()
                 
                 if not models:
@@ -675,6 +723,12 @@ def parse_arguments():
         help='Path to YAML configuration file'
     )
     
+    parser.add_argument(
+        '--tune', 
+        action='store_true',
+        help='Run hyperparameter tuning for deep learning models'
+    )
+    
     return parser.parse_args()
 
 
@@ -710,7 +764,8 @@ def main():
         forecast_horizon=config.get('forecast_horizon', args.forecast_horizon),
         quick_test=config.get('quick_test', args.quick_test),
         save_models=not args.no_save,
-        results_dir=config.get('results_dir', args.results_dir)
+        results_dir=config.get('results_dir', args.results_dir),
+        tune=args.tune,
     )
     
     # Create logs directory
