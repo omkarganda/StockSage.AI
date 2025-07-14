@@ -407,8 +407,8 @@ class TestModelSerialization:
         assert new_model.training_metrics == original_metrics
         
         # Test predictions are same
-        predictions_original = model.predict(data.tail(10))
-        predictions_loaded = new_model.predict(data.tail(10))
+        predictions_original = model.predict(data.tail(30))
+        predictions_loaded = new_model.predict(data.tail(30))
         np.testing.assert_array_almost_equal(predictions_original, predictions_loaded)
 
 

@@ -25,11 +25,11 @@ sys.path.append(str(Path(__file__).parent.parent))
 from src.data.download_market import MarketDataDownloader, MarketDataCache
 from src.data.validation import DataValidator
 from src.features.indicators import (
-    add_moving_averages, 
-    add_rsi, 
-    add_macd,
-    add_bollinger_bands,
-    add_volume_indicators,
+    calculate_moving_averages, 
+    calculate_rsi, 
+    calculate_macd,
+    calculate_bollinger_bands,
+    calculate_volume_indicators,
     add_all_technical_indicators
 )
 from src.config import DataConfig
@@ -204,33 +204,34 @@ class TestFeatureEngineering:
     
     def test_moving_averages(self, market_data):
         """Test moving average calculation"""
-        result = add_moving_averages(market_data)
+        result = calculate_moving_averages(market_data)
         
         # Check if MA columns are added
-        assert 'MA_10' in result.columns
-        assert 'MA_20' in result.columns
-        assert 'MA_50' in result.columns
+        assert 'SMA_10' in result.columns
+        assert 'SMA_20' in result.columns
+        assert 'SMA_50' in result.columns
         
         # Check values
-        assert result['MA_10'].iloc[9] == pytest.approx(result['Close'].iloc[:10].mean())
-        assert pd.isna(result['MA_50'].iloc[48])  # Should be NaN before 50 periods
-        assert not pd.isna(result['MA_50'].iloc[49])  # Should have value at 50th period
+        assert result['SMA_10'].iloc[9] == pytest.approx(result['Close'].iloc[:10].mean())
+        # With min_periods=1, there are no NaN values in the middle
+        assert not pd.isna(result['SMA_50'].iloc[49])  # Should have value at 50th period
     
     def test_rsi_calculation(self, market_data):
         """Test RSI calculation"""
-        result = add_rsi(market_data)
+        result = calculate_rsi(market_data)
         
-        # Check if RSI column is added
-        assert 'RSI' in result.columns
+        # Check if RSI columns are added
+        assert 'RSI_14' in result.columns
+        assert 'RSI_21' in result.columns
         
         # Check RSI bounds
-        rsi_values = result['RSI'].dropna()
+        rsi_values = result['RSI_14'].dropna()
         assert (rsi_values >= 0).all()
         assert (rsi_values <= 100).all()
     
     def test_macd_calculation(self, market_data):
         """Test MACD calculation"""
-        result = add_macd(market_data)
+        result = calculate_macd(market_data)
         
         # Check if MACD columns are added
         assert 'MACD' in result.columns
@@ -248,28 +249,28 @@ class TestFeatureEngineering:
     
     def test_bollinger_bands(self, market_data):
         """Test Bollinger Bands calculation"""
-        result = add_bollinger_bands(market_data)
+        result = calculate_bollinger_bands(market_data)
         
         # Check if BB columns are added
-        assert 'BB_upper' in result.columns
-        assert 'BB_middle' in result.columns
-        assert 'BB_lower' in result.columns
-        assert 'BB_width' in result.columns
-        assert 'BB_percent' in result.columns
+        assert 'BB_upper_20' in result.columns
+        assert 'BB_middle_20' in result.columns
+        assert 'BB_lower_20' in result.columns
+        assert 'BB_width_20' in result.columns
+        assert 'BB_percent_b_20' in result.columns
         
         # Check logical constraints
-        valid_idx = ~result['BB_upper'].isna()
-        assert (result.loc[valid_idx, 'BB_upper'] >= result.loc[valid_idx, 'BB_middle']).all()
-        assert (result.loc[valid_idx, 'BB_middle'] >= result.loc[valid_idx, 'BB_lower']).all()
+        valid_idx = ~result['BB_upper_20'].isna()
+        assert (result.loc[valid_idx, 'BB_upper_20'] >= result.loc[valid_idx, 'BB_middle_20']).all()
+        assert (result.loc[valid_idx, 'BB_middle_20'] >= result.loc[valid_idx, 'BB_lower_20']).all()
     
     def test_volume_indicators(self, market_data):
         """Test volume indicators calculation"""
-        result = add_volume_indicators(market_data)
+        result = calculate_volume_indicators(market_data)
         
         # Check if volume indicator columns are added
         assert 'OBV' in result.columns
-        assert 'Volume_SMA' in result.columns
-        assert 'Volume_ratio' in result.columns
+        assert 'Volume_SMA_10' in result.columns
+        assert 'Volume_ratio_10' in result.columns
         assert 'PVT' in result.columns
         
         # Check OBV calculation
@@ -284,12 +285,12 @@ class TestFeatureEngineering:
         result = add_all_technical_indicators(market_data)
         
         # Check that all indicator groups are present
-        ma_cols = [col for col in result.columns if col.startswith('MA_')]
+        ma_cols = [col for col in result.columns if col.startswith('SMA_')]
         assert len(ma_cols) >= 3
         
-        assert 'RSI' in result.columns
+        assert 'RSI_14' in result.columns
         assert 'MACD' in result.columns
-        assert 'BB_upper' in result.columns
+        assert 'BB_upper_20' in result.columns
         assert 'OBV' in result.columns
         
         # Check data integrity
@@ -319,17 +320,18 @@ class TestDataValidation:
     
     def test_validate_market_data_valid(self, validator, valid_data):
         """Test validation of valid market data"""
-        errors = validator.validate_market_data(valid_data)
-        assert len(errors) == 0
+        report = validator.validate_dataset(valid_data, dataset_type="market", dataset_name="test_market_data")
+        assert report.is_valid
     
     def test_validate_market_data_missing_columns(self, validator, valid_data):
         """Test validation with missing columns"""
-        # Remove required column
-        invalid_data = valid_data.drop(columns=['Volume'])
-        errors = validator.validate_market_data(invalid_data)
+        # Remove required column (Open is required)
+        invalid_data = valid_data.drop(columns=['Open'])
+        report = validator.validate_dataset(invalid_data, dataset_type="market", dataset_name="test_market_data")
         
-        assert len(errors) > 0
-        assert any('Volume' in error['message'] for error in errors)
+        # Check that there are ERROR issues (not necessarily invalid since only CRITICAL makes it invalid)
+        assert any(issue.severity.value == 'error' for issue in report.issues)
+        assert any('Open' in issue.message for issue in report.issues)
     
     def test_validate_market_data_invalid_prices(self, validator, valid_data):
         """Test validation with invalid price data"""
@@ -337,9 +339,10 @@ class TestDataValidation:
         invalid_data = valid_data.copy()
         invalid_data.loc[invalid_data.index[10], 'Close'] = -10
         
-        errors = validator.validate_market_data(invalid_data)
-        assert len(errors) > 0
-        assert any('negative' in error['message'].lower() for error in errors)
+        report = validator.validate_dataset(invalid_data, dataset_type="market", dataset_name="test_market_data")
+        # Check that there are ERROR issues (not necessarily invalid since only CRITICAL makes it invalid)
+        assert any(issue.severity.value == 'error' for issue in report.issues)
+        assert any('Non-positive prices' in issue.message for issue in report.issues)
     
     def test_validate_market_data_high_low_consistency(self, validator, valid_data):
         """Test validation of high/low price consistency"""
@@ -348,9 +351,10 @@ class TestDataValidation:
         invalid_data.loc[invalid_data.index[10], 'Low'] = 110
         invalid_data.loc[invalid_data.index[10], 'High'] = 90
         
-        errors = validator.validate_market_data(invalid_data)
-        assert len(errors) > 0
-        assert any('high/low' in error['message'].lower() for error in errors)
+        report = validator.validate_dataset(invalid_data, dataset_type="market", dataset_name="test_market_data")
+        # Check that there are ERROR issues (not necessarily invalid since only CRITICAL makes it invalid)
+        assert any(issue.severity.value == 'error' for issue in report.issues)
+        assert any('Low price violations' in issue.message for issue in report.issues)
 
 
 class TestEndToEndPipeline:
@@ -385,17 +389,17 @@ class TestEndToEndPipeline:
         
         # Step 2: Validate data
         validator = DataValidator()
-        errors = validator.validate_market_data(raw_data)
-        assert len(errors) == 0
+        report = validator.validate_dataset(raw_data, dataset_type="market", dataset_name="test_market_data")
+        assert report.is_valid
         
         # Step 3: Add features
         featured_data = add_all_technical_indicators(raw_data)
         
         # Verify pipeline output
-        assert 'MA_20' in featured_data.columns
-        assert 'RSI' in featured_data.columns
+        assert 'SMA_20' in featured_data.columns
+        assert 'RSI_14' in featured_data.columns
         assert 'MACD' in featured_data.columns
-        assert 'BB_upper' in featured_data.columns
+        assert 'BB_upper_20' in featured_data.columns
         assert 'OBV' in featured_data.columns
         
         # Check data integrity

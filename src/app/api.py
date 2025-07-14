@@ -33,6 +33,9 @@ from src.data.download_market import MarketDataDownloader
 from src.features.indicators import add_all_technical_indicators
 from src.utils.logging import get_logger
 
+# Initialize downloader
+downloader = MarketDataDownloader(use_cache=False)
+
 # Configure logging
 logger = get_logger(__name__)
 
@@ -103,7 +106,7 @@ class ExplanationResponse(BaseModel):
     """Response model for model explanations"""
     symbol: str
     model_type: str
-    top_features: List[Dict[str, float]]
+    top_features: List[Dict[str, Union[str, float]]]
     feature_importance_plot: Optional[str] = None
     recent_predictions_accuracy: Optional[Dict[str, float]] = None
     explanation_text: str
@@ -206,7 +209,7 @@ async def get_stock_data(symbol: str, days: int = 100) -> pd.DataFrame:
         start_date = end_date - timedelta(days=days)
         
         df = await asyncio.to_thread(
-            download_stock_data,
+            downloader.download_stock_data,
             symbol,
             start_date.strftime("%Y-%m-%d"),
             end_date.strftime("%Y-%m-%d")
