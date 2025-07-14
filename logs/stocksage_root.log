@@ -280,3 +280,232 @@ src.data.merge: | module=__main__
 2025-07-10 15:56:21,473 - __main__ - INFO - â€¢ Integration with data pipeline | module=__main__
 2025-07-10 15:56:21,473 - __main__ - INFO - â€¢ Quality scoring system | module=__main__
 2025-07-10 15:56:21,473 - __main__ - INFO - â€¢ Alert mechanisms | module=__main__
+2025-07-14 14:21:41,924 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:21:41,924 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:21:41,924 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:21:41,925 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:21:41,925 - system - INFO - Environment: development | module=system
+2025-07-14 14:21:43,399 - src.models.baseline - INFO - Training baseline model with 50 samples | module=src.models.baseline
+2025-07-14 14:21:43,400 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:21:43,400 - src.features.indicators - INFO - Adding all technical indicators...
+2025-07-14 14:21:43,411 - src.features.indicators - INFO - Added 33 moving average features
+2025-07-14 14:21:43,418 - src.features.indicators - INFO - Added RSI features for periods: [14, 21, 30]
+2025-07-14 14:21:43,420 - src.features.indicators - INFO - Added MACD features with periods: 12, 26, 9
+2025-07-14 14:21:43,423 - src.features.indicators - INFO - Added Bollinger Bands features with period: 20
+2025-07-14 14:21:43,428 - src.features.indicators - INFO - Added volume-based indicators
+2025-07-14 14:21:43,435 - src.features.indicators - INFO - Added price momentum and pattern features
+2025-07-14 14:21:43,440 - src.features.indicators - INFO - Added 99 technical indicator features
+2025-07-14 14:21:43,440 - src.features.indicators - INFO - DataFrame shape: (50, 141)
+2025-07-14 14:21:43,467 - src.models.baseline - INFO - Selected 50 features out of 179 | module=src.models.baseline
+2025-07-14 14:21:43,485 - src.models.baseline - INFO - Fitted ridge regression with alpha=1.0 | module=src.models.baseline
+2025-07-14 14:21:43,487 - src.models.baseline - INFO - Training completed. R² score: 0.6593 | module=src.models.baseline
+2025-07-14 14:21:43,487 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:21:43,487 - src.features.indicators - INFO - Adding all technical indicators...
+2025-07-14 14:21:43,492 - src.features.indicators - INFO - Added 33 moving average features
+2025-07-14 14:21:43,496 - src.features.indicators - INFO - Added RSI features for periods: [14, 21, 30]
+2025-07-14 14:21:43,498 - src.features.indicators - INFO - Added MACD features with periods: 12, 26, 9
+2025-07-14 14:21:43,501 - src.features.indicators - INFO - Added Bollinger Bands features with period: 20
+2025-07-14 14:21:43,504 - src.features.indicators - INFO - Added volume-based indicators
+2025-07-14 14:21:43,509 - src.features.indicators - INFO - Added price momentum and pattern features
+2025-07-14 14:21:43,513 - src.features.indicators - INFO - Added 99 technical indicator features
+2025-07-14 14:21:43,513 - src.features.indicators - INFO - DataFrame shape: (10, 141)
+2025-07-14 14:22:54,839 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:22:54,840 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:22:54,840 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:22:54,840 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:22:54,840 - system - INFO - Environment: development | module=system
+2025-07-14 14:22:56,551 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-07-14 14:22:56,966 - src.models.baseline - INFO - Training baseline model with 50 samples | module=src.models.baseline
+2025-07-14 14:22:56,967 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:22:56,967 - src.features.indicators - INFO - Adding all technical indicators...
+2025-07-14 14:22:56,974 - src.features.indicators - INFO - Added 33 moving average features
+2025-07-14 14:22:56,979 - src.features.indicators - INFO - Added RSI features for periods: [14, 21, 30]
+2025-07-14 14:22:56,981 - src.features.indicators - INFO - Added MACD features with periods: 12, 26, 9
+2025-07-14 14:22:56,983 - src.features.indicators - INFO - Added Bollinger Bands features with period: 20
+2025-07-14 14:22:56,987 - src.features.indicators - INFO - Added volume-based indicators
+2025-07-14 14:22:56,993 - src.features.indicators - INFO - Added price momentum and pattern features
+2025-07-14 14:22:56,999 - src.features.indicators - INFO - Added 99 technical indicator features
+2025-07-14 14:22:56,999 - src.features.indicators - INFO - DataFrame shape: (50, 141)
+2025-07-14 14:22:57,017 - src.models.baseline - INFO - Selected 50 features out of 173 | module=src.models.baseline
+2025-07-14 14:22:57,024 - src.models.baseline - INFO - Fitted ridge regression with alpha=1.0 | module=src.models.baseline
+2025-07-14 14:22:57,026 - src.models.baseline - INFO - Training completed. R² score: 0.5245 | module=src.models.baseline
+2025-07-14 14:22:57,026 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:22:57,026 - src.features.indicators - INFO - Adding all technical indicators...
+2025-07-14 14:22:57,030 - src.features.indicators - INFO - Added 33 moving average features
+2025-07-14 14:22:57,035 - src.features.indicators - INFO - Added RSI features for periods: [14, 21, 30]
+2025-07-14 14:22:57,037 - src.features.indicators - INFO - Added MACD features with periods: 12, 26, 9
+2025-07-14 14:22:57,039 - src.features.indicators - INFO - Added Bollinger Bands features with period: 20
+2025-07-14 14:22:57,042 - src.features.indicators - INFO - Added volume-based indicators
+2025-07-14 14:22:57,048 - src.features.indicators - INFO - Added price momentum and pattern features
+2025-07-14 14:22:57,052 - src.features.indicators - INFO - Added 99 technical indicator features
+2025-07-14 14:22:57,052 - src.features.indicators - INFO - DataFrame shape: (10, 141)
+2025-07-14 14:25:45,800 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:25:45,800 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:25:45,800 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:25:45,800 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:25:45,801 - system - INFO - Environment: development | module=system
+2025-07-14 14:25:46,995 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-07-14 14:25:47,431 - src.models.baseline - INFO - Training baseline model with 50 samples | module=src.models.baseline
+2025-07-14 14:25:47,431 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:25:47,432 - src.features.indicators - INFO - Adding all technical indicators...
+2025-07-14 14:25:47,437 - src.features.indicators - INFO - Added 33 moving average features
+2025-07-14 14:25:47,441 - src.features.indicators - INFO - Added RSI features for periods: [14, 21, 30]
+2025-07-14 14:25:47,443 - src.features.indicators - INFO - Added MACD features with periods: 12, 26, 9
+2025-07-14 14:25:47,445 - src.features.indicators - INFO - Added Bollinger Bands features with period: 20
+2025-07-14 14:25:47,449 - src.features.indicators - INFO - Added volume-based indicators
+2025-07-14 14:25:47,454 - src.features.indicators - INFO - Added price momentum and pattern features
+2025-07-14 14:25:47,461 - src.features.indicators - INFO - Added 99 technical indicator features
+2025-07-14 14:25:47,462 - src.features.indicators - INFO - DataFrame shape: (50, 141)
+2025-07-14 14:25:47,479 - src.models.baseline - INFO - Selected 50 features out of 195 | module=src.models.baseline
+2025-07-14 14:25:47,487 - src.models.baseline - INFO - Fitted ridge regression with alpha=1.0 | module=src.models.baseline
+2025-07-14 14:25:47,488 - src.models.baseline - INFO - Training completed. R² score: 0.8244 | module=src.models.baseline
+2025-07-14 14:25:47,489 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:25:47,489 - src.features.indicators - INFO - Adding all technical indicators...
+2025-07-14 14:25:47,493 - src.features.indicators - INFO - Added 33 moving average features
+2025-07-14 14:25:47,498 - src.features.indicators - INFO - Added RSI features for periods: [14, 21, 30]
+2025-07-14 14:25:47,500 - src.features.indicators - INFO - Added MACD features with periods: 12, 26, 9
+2025-07-14 14:25:47,503 - src.features.indicators - INFO - Added Bollinger Bands features with period: 20
+2025-07-14 14:25:47,506 - src.features.indicators - INFO - Added volume-based indicators
+2025-07-14 14:25:47,512 - src.features.indicators - INFO - Added price momentum and pattern features
+2025-07-14 14:25:47,515 - src.features.indicators - INFO - Added 99 technical indicator features
+2025-07-14 14:25:47,516 - src.features.indicators - INFO - DataFrame shape: (10, 141)
+2025-07-14 14:25:47,535 - src.features.indicators - INFO - Added 33 moving average features
+2025-07-14 14:26:00,278 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:26:00,279 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:26:00,279 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:26:00,279 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:26:00,279 - system - INFO - Environment: development | module=system
+2025-07-14 14:26:01,499 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-07-14 14:26:01,938 - src.models.baseline - INFO - Training baseline model with 50 samples | module=src.models.baseline
+2025-07-14 14:26:01,938 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:26:01,938 - src.features.indicators - INFO - Adding all technical indicators...
+2025-07-14 14:26:01,944 - src.features.indicators - INFO - Added 33 moving average features
+2025-07-14 14:26:01,948 - src.features.indicators - INFO - Added RSI features for periods: [14, 21, 30]
+2025-07-14 14:26:01,950 - src.features.indicators - INFO - Added MACD features with periods: 12, 26, 9
+2025-07-14 14:26:01,953 - src.features.indicators - INFO - Added Bollinger Bands features with period: 20
+2025-07-14 14:26:01,956 - src.features.indicators - INFO - Added volume-based indicators
+2025-07-14 14:26:01,962 - src.features.indicators - INFO - Added price momentum and pattern features
+2025-07-14 14:26:01,969 - src.features.indicators - INFO - Added 99 technical indicator features
+2025-07-14 14:26:01,969 - src.features.indicators - INFO - DataFrame shape: (50, 141)
+2025-07-14 14:26:01,987 - src.models.baseline - INFO - Selected 50 features out of 186 | module=src.models.baseline
+2025-07-14 14:26:01,994 - src.models.baseline - INFO - Fitted ridge regression with alpha=1.0 | module=src.models.baseline
+2025-07-14 14:26:01,996 - src.models.baseline - INFO - Training completed. R² score: 0.7280 | module=src.models.baseline
+2025-07-14 14:26:01,996 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:26:01,996 - src.features.indicators - INFO - Adding all technical indicators...
+2025-07-14 14:26:02,001 - src.features.indicators - INFO - Added 33 moving average features
+2025-07-14 14:26:02,005 - src.features.indicators - INFO - Added RSI features for periods: [14, 21, 30]
+2025-07-14 14:26:02,008 - src.features.indicators - INFO - Added MACD features with periods: 12, 26, 9
+2025-07-14 14:26:02,011 - src.features.indicators - INFO - Added Bollinger Bands features with period: 20
+2025-07-14 14:26:02,014 - src.features.indicators - INFO - Added volume-based indicators
+2025-07-14 14:26:02,020 - src.features.indicators - INFO - Added price momentum and pattern features
+2025-07-14 14:26:02,023 - src.features.indicators - INFO - Added 99 technical indicator features
+2025-07-14 14:26:02,024 - src.features.indicators - INFO - DataFrame shape: (10, 141)
+2025-07-14 14:26:02,045 - src.features.indicators - INFO - Added 33 moving average features
+2025-07-14 14:26:16,356 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:26:16,357 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:26:16,357 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:26:16,357 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:26:16,357 - system - INFO - Environment: development | module=system
+2025-07-14 14:26:17,541 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-07-14 14:26:17,963 - src.models.baseline - INFO - Training baseline model with 50 samples | module=src.models.baseline
+2025-07-14 14:26:17,964 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:26:17,964 - src.features.indicators - INFO - Adding all technical indicators...
+2025-07-14 14:26:17,969 - src.features.indicators - INFO - Added 33 moving average features
+2025-07-14 14:26:17,974 - src.features.indicators - INFO - Added RSI features for periods: [14, 21, 30]
+2025-07-14 14:26:17,976 - src.features.indicators - INFO - Added MACD features with periods: 12, 26, 9
+2025-07-14 14:26:17,979 - src.features.indicators - INFO - Added Bollinger Bands features with period: 20
+2025-07-14 14:26:17,983 - src.features.indicators - INFO - Added volume-based indicators
+2025-07-14 14:26:17,988 - src.features.indicators - INFO - Added price momentum and pattern features
+2025-07-14 14:26:17,994 - src.features.indicators - INFO - Added 99 technical indicator features
+2025-07-14 14:26:17,995 - src.features.indicators - INFO - DataFrame shape: (50, 141)
+2025-07-14 14:26:18,012 - src.models.baseline - INFO - Selected 50 features out of 190 | module=src.models.baseline
+2025-07-14 14:26:18,019 - src.models.baseline - INFO - Fitted ridge regression with alpha=1.0 | module=src.models.baseline
+2025-07-14 14:26:18,020 - src.models.baseline - INFO - Training completed. R² score: 0.7535 | module=src.models.baseline
+2025-07-14 14:26:18,021 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:26:18,021 - src.features.indicators - INFO - Adding all technical indicators...
+2025-07-14 14:26:18,025 - src.features.indicators - INFO - Added 33 moving average features
+2025-07-14 14:26:18,029 - src.features.indicators - INFO - Added RSI features for periods: [14, 21, 30]
+2025-07-14 14:26:18,031 - src.features.indicators - INFO - Added MACD features with periods: 12, 26, 9
+2025-07-14 14:26:18,034 - src.features.indicators - INFO - Added Bollinger Bands features with period: 20
+2025-07-14 14:26:18,037 - src.features.indicators - INFO - Added volume-based indicators
+2025-07-14 14:26:18,042 - src.features.indicators - INFO - Added price momentum and pattern features
+2025-07-14 14:26:18,046 - src.features.indicators - INFO - Added 99 technical indicator features
+2025-07-14 14:26:18,046 - src.features.indicators - INFO - DataFrame shape: (10, 141)
+2025-07-14 14:26:18,060 - src.models.baseline - WARNING - Dropping 10 rows with remaining NaN values before prediction. | module=src.models.baseline
+2025-07-14 14:26:18,066 - src.features.indicators - INFO - Added 33 moving average features
+2025-07-14 14:28:34,846 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:28:34,847 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:28:34,847 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:28:34,847 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:28:34,847 - system - INFO - Environment: development | module=system
+2025-07-14 14:28:36,047 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-07-14 14:28:36,472 - src.models.baseline - INFO - Training baseline model with 50 samples | module=src.models.baseline
+2025-07-14 14:28:36,472 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:28:36,472 - src.features.indicators - INFO - Adding all technical indicators...
+2025-07-14 14:28:36,478 - src.features.indicators - INFO - Added 33 moving average features
+2025-07-14 14:28:36,482 - src.features.indicators - INFO - Added RSI features for periods: [14, 21, 30]
+2025-07-14 14:28:36,484 - src.features.indicators - INFO - Added MACD features with periods: 12, 26, 9
+2025-07-14 14:28:36,487 - src.features.indicators - INFO - Added Bollinger Bands features with period: 20
+2025-07-14 14:28:36,490 - src.features.indicators - INFO - Added volume-based indicators
+2025-07-14 14:28:36,496 - src.features.indicators - INFO - Added price momentum and pattern features
+2025-07-14 14:28:36,502 - src.features.indicators - INFO - Added 99 technical indicator features
+2025-07-14 14:28:36,502 - src.features.indicators - INFO - DataFrame shape: (50, 141)
+2025-07-14 14:28:36,520 - src.models.baseline - INFO - Selected 50 features out of 188 | module=src.models.baseline
+2025-07-14 14:28:36,527 - src.models.baseline - INFO - Fitted ridge regression with alpha=1.0 | module=src.models.baseline
+2025-07-14 14:28:36,529 - src.models.baseline - INFO - Training completed. R² score: 0.6472 | module=src.models.baseline
+2025-07-14 14:28:36,530 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:28:36,530 - src.features.indicators - INFO - Adding all technical indicators...
+2025-07-14 14:28:36,534 - src.features.indicators - INFO - Added 33 moving average features
+2025-07-14 14:28:36,538 - src.features.indicators - INFO - Added RSI features for periods: [14, 21, 30]
+2025-07-14 14:28:36,540 - src.features.indicators - INFO - Added MACD features with periods: 12, 26, 9
+2025-07-14 14:28:36,542 - src.features.indicators - INFO - Added Bollinger Bands features with period: 20
+2025-07-14 14:28:36,546 - src.features.indicators - INFO - Added volume-based indicators
+2025-07-14 14:28:36,551 - src.features.indicators - INFO - Added price momentum and pattern features
+2025-07-14 14:28:36,555 - src.features.indicators - INFO - Added 99 technical indicator features
+2025-07-14 14:28:36,556 - src.features.indicators - INFO - DataFrame shape: (30, 141)
+2025-07-14 14:28:36,577 - src.features.indicators - INFO - Added 33 moving average features
+2025-07-14 14:28:37,811 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:28:37,811 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:28:37,811 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:28:37,813 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:28:37,813 - system - INFO - Environment: development | module=system
+2025-07-14 14:28:38,791 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-07-14 14:28:38,794 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-07-14 14:28:56,690 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:28:56,690 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:28:56,690 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:28:56,691 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:28:56,691 - system - INFO - Environment: development | module=system
+2025-07-14 14:28:57,872 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-07-14 14:28:58,295 - src.models.baseline - INFO - Training baseline model with 50 samples | module=src.models.baseline
+2025-07-14 14:28:58,295 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:28:58,295 - src.features.indicators - INFO - Adding all technical indicators...
+2025-07-14 14:28:58,300 - src.features.indicators - INFO - Added 33 moving average features
+2025-07-14 14:28:58,305 - src.features.indicators - INFO - Added RSI features for periods: [14, 21, 30]
+2025-07-14 14:28:58,307 - src.features.indicators - INFO - Added MACD features with periods: 12, 26, 9
+2025-07-14 14:28:58,310 - src.features.indicators - INFO - Added Bollinger Bands features with period: 20
+2025-07-14 14:28:58,314 - src.features.indicators - INFO - Added volume-based indicators
+2025-07-14 14:28:58,319 - src.features.indicators - INFO - Added price momentum and pattern features
+2025-07-14 14:28:58,325 - src.features.indicators - INFO - Added 99 technical indicator features
+2025-07-14 14:28:58,325 - src.features.indicators - INFO - DataFrame shape: (50, 141)
+2025-07-14 14:28:58,346 - src.models.baseline - INFO - Selected 50 features out of 195 | module=src.models.baseline
+2025-07-14 14:28:58,354 - src.models.baseline - INFO - Fitted ridge regression with alpha=1.0 | module=src.models.baseline
+2025-07-14 14:28:58,355 - src.models.baseline - INFO - Training completed. R² score: 0.8176 | module=src.models.baseline
+2025-07-14 14:28:58,356 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:28:58,356 - src.features.indicators - INFO - Adding all technical indicators...
+2025-07-14 14:28:58,360 - src.features.indicators - INFO - Added 33 moving average features
+2025-07-14 14:28:58,365 - src.features.indicators - INFO - Added RSI features for periods: [14, 21, 30]
+2025-07-14 14:28:58,367 - src.features.indicators - INFO - Added MACD features with periods: 12, 26, 9
+2025-07-14 14:28:58,369 - src.features.indicators - INFO - Added Bollinger Bands features with period: 20
+2025-07-14 14:28:58,372 - src.features.indicators - INFO - Added volume-based indicators
+2025-07-14 14:28:58,378 - src.features.indicators - INFO - Added price momentum and pattern features
+2025-07-14 14:28:58,383 - src.features.indicators - INFO - Added 99 technical indicator features
+2025-07-14 14:28:58,383 - src.features.indicators - INFO - DataFrame shape: (30, 141)
+2025-07-14 14:28:58,403 - src.features.indicators - INFO - Added 33 moving average features
+2025-07-14 14:28:59,096 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:28:59,096 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:28:59,096 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:28:59,096 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:28:59,096 - system - INFO - Environment: development | module=system
+2025-07-14 14:29:00,030 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"
+2025-07-14 14:29:00,034 - httpx - INFO - HTTP Request: GET http://testserver/health "HTTP/1.1 200 OK"

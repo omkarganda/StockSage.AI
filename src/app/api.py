@@ -29,7 +29,7 @@ from contextlib import asynccontextmanager
 # Add src to path
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
-from src.data.download_market import download_stock_data
+from src.data.download_market import MarketDataDownloader
 from src.features.indicators import add_all_technical_indicators
 from src.utils.logging import get_logger
 
