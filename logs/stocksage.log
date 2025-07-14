@@ -280,3 +280,900 @@ src.data.merge: | module=__main__
 2025-07-10 15:56:21,473 - __main__ - INFO - â€¢ Integration with data pipeline | module=__main__
 2025-07-10 15:56:21,473 - __main__ - INFO - â€¢ Quality scoring system | module=__main__
 2025-07-10 15:56:21,473 - __main__ - INFO - â€¢ Alert mechanisms | module=__main__
+2025-07-14 14:21:41,924 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:21:41,924 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:21:41,924 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:21:41,925 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:21:41,925 - system - INFO - Environment: development | module=system
+2025-07-14 14:21:43,399 - src.models.baseline - INFO - Training baseline model with 50 samples | module=src.models.baseline
+2025-07-14 14:21:43,400 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:21:43,467 - src.models.baseline - INFO - Selected 50 features out of 179 | module=src.models.baseline
+2025-07-14 14:21:43,485 - src.models.baseline - INFO - Fitted ridge regression with alpha=1.0 | module=src.models.baseline
+2025-07-14 14:21:43,487 - src.models.baseline - INFO - Training completed. R² score: 0.6593 | module=src.models.baseline
+2025-07-14 14:21:43,487 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:22:54,839 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:22:54,840 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:22:54,840 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:22:54,840 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:22:54,840 - system - INFO - Environment: development | module=system
+2025-07-14 14:22:56,966 - src.models.baseline - INFO - Training baseline model with 50 samples | module=src.models.baseline
+2025-07-14 14:22:56,967 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:22:57,017 - src.models.baseline - INFO - Selected 50 features out of 173 | module=src.models.baseline
+2025-07-14 14:22:57,024 - src.models.baseline - INFO - Fitted ridge regression with alpha=1.0 | module=src.models.baseline
+2025-07-14 14:22:57,026 - src.models.baseline - INFO - Training completed. R² score: 0.5245 | module=src.models.baseline
+2025-07-14 14:22:57,026 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:25:45,800 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:25:45,800 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:25:45,800 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:25:45,800 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:25:45,801 - system - INFO - Environment: development | module=system
+2025-07-14 14:25:47,431 - src.models.baseline - INFO - Training baseline model with 50 samples | module=src.models.baseline
+2025-07-14 14:25:47,431 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:25:47,479 - src.models.baseline - INFO - Selected 50 features out of 195 | module=src.models.baseline
+2025-07-14 14:25:47,487 - src.models.baseline - INFO - Fitted ridge regression with alpha=1.0 | module=src.models.baseline
+2025-07-14 14:25:47,488 - src.models.baseline - INFO - Training completed. R² score: 0.8244 | module=src.models.baseline
+2025-07-14 14:25:47,489 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:26:00,278 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:26:00,279 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:26:00,279 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:26:00,279 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:26:00,279 - system - INFO - Environment: development | module=system
+2025-07-14 14:26:01,938 - src.models.baseline - INFO - Training baseline model with 50 samples | module=src.models.baseline
+2025-07-14 14:26:01,938 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:26:01,987 - src.models.baseline - INFO - Selected 50 features out of 186 | module=src.models.baseline
+2025-07-14 14:26:01,994 - src.models.baseline - INFO - Fitted ridge regression with alpha=1.0 | module=src.models.baseline
+2025-07-14 14:26:01,996 - src.models.baseline - INFO - Training completed. R² score: 0.7280 | module=src.models.baseline
+2025-07-14 14:26:01,996 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:26:16,356 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:26:16,357 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:26:16,357 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:26:16,357 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:26:16,357 - system - INFO - Environment: development | module=system
+2025-07-14 14:26:17,963 - src.models.baseline - INFO - Training baseline model with 50 samples | module=src.models.baseline
+2025-07-14 14:26:17,964 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:26:18,012 - src.models.baseline - INFO - Selected 50 features out of 190 | module=src.models.baseline
+2025-07-14 14:26:18,019 - src.models.baseline - INFO - Fitted ridge regression with alpha=1.0 | module=src.models.baseline
+2025-07-14 14:26:18,020 - src.models.baseline - INFO - Training completed. R² score: 0.7535 | module=src.models.baseline
+2025-07-14 14:26:18,021 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:26:18,060 - src.models.baseline - WARNING - Dropping 10 rows with remaining NaN values before prediction. | module=src.models.baseline
+2025-07-14 14:28:34,846 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:28:34,847 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:28:34,847 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:28:34,847 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:28:34,847 - system - INFO - Environment: development | module=system
+2025-07-14 14:28:36,472 - src.models.baseline - INFO - Training baseline model with 50 samples | module=src.models.baseline
+2025-07-14 14:28:36,472 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:28:36,520 - src.models.baseline - INFO - Selected 50 features out of 188 | module=src.models.baseline
+2025-07-14 14:28:36,527 - src.models.baseline - INFO - Fitted ridge regression with alpha=1.0 | module=src.models.baseline
+2025-07-14 14:28:36,529 - src.models.baseline - INFO - Training completed. R² score: 0.6472 | module=src.models.baseline
+2025-07-14 14:28:36,530 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:28:37,811 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:28:37,811 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:28:37,811 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:28:37,813 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:28:37,813 - system - INFO - Environment: development | module=system
+2025-07-14 14:28:56,690 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:28:56,690 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:28:56,690 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:28:56,691 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:28:56,691 - system - INFO - Environment: development | module=system
+2025-07-14 14:28:58,295 - src.models.baseline - INFO - Training baseline model with 50 samples | module=src.models.baseline
+2025-07-14 14:28:58,295 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:28:58,346 - src.models.baseline - INFO - Selected 50 features out of 195 | module=src.models.baseline
+2025-07-14 14:28:58,354 - src.models.baseline - INFO - Fitted ridge regression with alpha=1.0 | module=src.models.baseline
+2025-07-14 14:28:58,355 - src.models.baseline - INFO - Training completed. R² score: 0.8176 | module=src.models.baseline
+2025-07-14 14:28:58,356 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:28:59,096 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:28:59,096 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:28:59,096 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:28:59,096 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:28:59,096 - system - INFO - Environment: development | module=system
+2025-07-14 14:31:45,500 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:31:45,500 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:31:45,500 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:31:45,500 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:31:45,500 - system - INFO - Environment: development | module=system
+2025-07-14 14:31:45,589 - src.app.api - INFO - Starting StockSage.AI API | module=src.app.api
+2025-07-14 14:31:45,589 - src.app.api - WARNING - Model directory results\model_training not found, creating mock models | module=src.app.api
+2025-07-14 14:31:45,589 - src.app.api - INFO - Successfully loaded 5 models | module=src.app.api
+2025-07-14 14:32:25,023 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:32:25,023 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:32:25,023 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:32:25,023 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:32:25,023 - system - INFO - Environment: development | module=system
+2025-07-14 14:32:32,223 - src.app.api - ERROR - Error fetching data for AAPL: name 'download_stock_data' is not defined | module=src.app.api
+2025-07-14 14:32:32,224 - src.app.api - ERROR - Prediction failed for AAPL: name 'download_stock_data' is not defined | module=src.app.api
+2025-07-14 14:32:34,984 - src.app.api - WARNING - Model AAPL_baseline_ensemble not found, using AAPL_ensemble | module=src.app.api
+2025-07-14 14:32:34,985 - src.app.api - ERROR - Explanation failed for AAPL: 7 validation errors for ExplanationResponse
+top_features.0.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='price_momentum', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.1.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='volume_trend', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.2.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='rsi', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.3.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='market_sentiment', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.4.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='volatility', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.5.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='ma_crossover', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.6.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='economic_indicators', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing | module=src.app.api
+2025-07-14 14:33:36,630 - src.app.api - ERROR - Error fetching data for AAPL: name 'download_stock_data' is not defined | module=src.app.api
+2025-07-14 14:33:36,630 - src.app.api - ERROR - Prediction failed for AAPL: name 'download_stock_data' is not defined | module=src.app.api
+2025-07-14 14:33:38,737 - src.app.api - WARNING - Model AAPL_baseline_ensemble not found, using AAPL_ensemble | module=src.app.api
+2025-07-14 14:33:38,737 - src.app.api - ERROR - Explanation failed for AAPL: 7 validation errors for ExplanationResponse
+top_features.0.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='price_momentum', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.1.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='volume_trend', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.2.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='rsi', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.3.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='market_sentiment', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.4.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='volatility', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.5.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='ma_crossover', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.6.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='economic_indicators', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing | module=src.app.api
+2025-07-14 14:34:29,926 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:34:29,927 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:34:29,927 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:34:29,927 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:34:29,927 - system - INFO - Environment: development | module=system
+2025-07-14 14:35:33,317 - src.app.api - INFO - Shutting down StockSage.AI API | module=src.app.api
+2025-07-14 14:35:34,181 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:35:34,182 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:35:34,182 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:35:34,182 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:35:34,182 - system - INFO - Environment: development | module=system
+2025-07-14 14:35:34,272 - src.app.api - INFO - Starting StockSage.AI API | module=src.app.api
+2025-07-14 14:35:34,273 - src.app.api - WARNING - Model directory results\model_training not found, creating mock models | module=src.app.api
+2025-07-14 14:35:34,273 - src.app.api - INFO - Successfully loaded 5 models | module=src.app.api
+2025-07-14 14:35:40,278 - src.app.api - INFO - Shutting down StockSage.AI API | module=src.app.api
+2025-07-14 14:35:40,900 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:35:40,901 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:35:40,901 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:35:40,901 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:35:40,901 - system - INFO - Environment: development | module=system
+2025-07-14 14:35:40,993 - src.app.api - INFO - Starting StockSage.AI API | module=src.app.api
+2025-07-14 14:35:40,993 - src.app.api - WARNING - Model directory results\model_training not found, creating mock models | module=src.app.api
+2025-07-14 14:35:40,993 - src.app.api - INFO - Successfully loaded 5 models | module=src.app.api
+2025-07-14 14:35:52,890 - src.app.api - INFO - Shutting down StockSage.AI API | module=src.app.api
+2025-07-14 14:35:53,527 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:35:53,528 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:35:53,528 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:35:53,528 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:35:53,528 - system - INFO - Environment: development | module=system
+2025-07-14 14:35:53,618 - src.app.api - INFO - Starting StockSage.AI API | module=src.app.api
+2025-07-14 14:35:53,619 - src.app.api - WARNING - Model directory results\model_training not found, creating mock models | module=src.app.api
+2025-07-14 14:35:53,619 - src.app.api - INFO - Successfully loaded 5 models | module=src.app.api
+2025-07-14 14:35:59,516 - src.app.api - INFO - Shutting down StockSage.AI API | module=src.app.api
+2025-07-14 14:36:00,143 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:36:00,143 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:36:00,143 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:36:00,144 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:36:00,144 - system - INFO - Environment: development | module=system
+2025-07-14 14:36:00,232 - src.app.api - INFO - Starting StockSage.AI API | module=src.app.api
+2025-07-14 14:36:00,233 - src.app.api - WARNING - Model directory results\model_training not found, creating mock models | module=src.app.api
+2025-07-14 14:36:00,233 - src.app.api - INFO - Successfully loaded 5 models | module=src.app.api
+2025-07-14 14:36:06,236 - src.app.api - INFO - Shutting down StockSage.AI API | module=src.app.api
+2025-07-14 14:36:06,844 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:36:06,844 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:36:06,844 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:36:06,844 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:36:06,844 - system - INFO - Environment: development | module=system
+2025-07-14 14:36:06,936 - src.app.api - INFO - Starting StockSage.AI API | module=src.app.api
+2025-07-14 14:36:06,936 - src.app.api - WARNING - Model directory results\model_training not found, creating mock models | module=src.app.api
+2025-07-14 14:36:06,937 - src.app.api - INFO - Successfully loaded 5 models | module=src.app.api
+2025-07-14 14:36:15,004 - src.app.api - INFO - Shutting down StockSage.AI API | module=src.app.api
+2025-07-14 14:36:15,631 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:36:15,631 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:36:15,631 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:36:15,631 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:36:15,631 - system - INFO - Environment: development | module=system
+2025-07-14 14:36:15,720 - src.app.api - INFO - Starting StockSage.AI API | module=src.app.api
+2025-07-14 14:36:15,720 - src.app.api - WARNING - Model directory results\model_training not found, creating mock models | module=src.app.api
+2025-07-14 14:36:15,720 - src.app.api - INFO - Successfully loaded 5 models | module=src.app.api
+2025-07-14 14:36:23,773 - src.app.api - INFO - Shutting down StockSage.AI API | module=src.app.api
+2025-07-14 14:36:24,429 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:36:24,429 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:36:24,429 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:36:24,429 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:36:24,429 - system - INFO - Environment: development | module=system
+2025-07-14 14:36:24,516 - src.app.api - INFO - Starting StockSage.AI API | module=src.app.api
+2025-07-14 14:36:24,516 - src.app.api - WARNING - Model directory results\model_training not found, creating mock models | module=src.app.api
+2025-07-14 14:36:24,517 - src.app.api - INFO - Successfully loaded 5 models | module=src.app.api
+2025-07-14 14:36:30,415 - src.app.api - INFO - Shutting down StockSage.AI API | module=src.app.api
+2025-07-14 14:36:31,025 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:36:31,025 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:36:31,025 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:36:31,025 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:36:31,025 - system - INFO - Environment: development | module=system
+2025-07-14 14:36:31,115 - src.app.api - INFO - Starting StockSage.AI API | module=src.app.api
+2025-07-14 14:36:31,115 - src.app.api - WARNING - Model directory results\model_training not found, creating mock models | module=src.app.api
+2025-07-14 14:36:31,115 - src.app.api - INFO - Successfully loaded 5 models | module=src.app.api
+2025-07-14 14:36:32,811 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:36:32,811 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:36:32,811 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:36:32,811 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:36:32,812 - system - INFO - Environment: development | module=system
+2025-07-14 14:36:43,136 - src.app.api - INFO - Shutting down StockSage.AI API | module=src.app.api
+2025-07-14 14:36:43,759 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:36:43,759 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:36:43,759 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:36:43,760 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:36:43,760 - system - INFO - Environment: development | module=system
+2025-07-14 14:36:43,851 - src.app.api - INFO - Starting StockSage.AI API | module=src.app.api
+2025-07-14 14:36:43,851 - src.app.api - WARNING - Model directory results\model_training not found, creating mock models | module=src.app.api
+2025-07-14 14:36:43,851 - src.app.api - INFO - Successfully loaded 5 models | module=src.app.api
+2025-07-14 14:36:47,881 - src.app.api - INFO - Shutting down StockSage.AI API | module=src.app.api
+2025-07-14 14:36:48,483 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:36:48,484 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:36:48,484 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:36:48,484 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:36:48,484 - system - INFO - Environment: development | module=system
+2025-07-14 14:36:48,572 - src.app.api - INFO - Starting StockSage.AI API | module=src.app.api
+2025-07-14 14:36:48,572 - src.app.api - WARNING - Model directory results\model_training not found, creating mock models | module=src.app.api
+2025-07-14 14:36:48,572 - src.app.api - INFO - Successfully loaded 5 models | module=src.app.api
+2025-07-14 14:36:56,512 - src.app.api - INFO - Shutting down StockSage.AI API | module=src.app.api
+2025-07-14 14:36:57,128 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:36:57,128 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:36:57,129 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:36:57,129 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:36:57,129 - system - INFO - Environment: development | module=system
+2025-07-14 14:36:57,217 - src.app.api - INFO - Starting StockSage.AI API | module=src.app.api
+2025-07-14 14:36:57,217 - src.app.api - WARNING - Model directory results\model_training not found, creating mock models | module=src.app.api
+2025-07-14 14:36:57,218 - src.app.api - INFO - Successfully loaded 5 models | module=src.app.api
+2025-07-14 14:37:01,246 - src.app.api - INFO - Shutting down StockSage.AI API | module=src.app.api
+2025-07-14 14:37:01,866 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:37:01,866 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:37:01,866 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:37:01,866 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:37:01,866 - system - INFO - Environment: development | module=system
+2025-07-14 14:37:01,954 - src.app.api - INFO - Starting StockSage.AI API | module=src.app.api
+2025-07-14 14:37:01,955 - src.app.api - WARNING - Model directory results\model_training not found, creating mock models | module=src.app.api
+2025-07-14 14:37:01,955 - src.app.api - INFO - Successfully loaded 5 models | module=src.app.api
+2025-07-14 14:37:06,111 - src.app.api - INFO - Shutting down StockSage.AI API | module=src.app.api
+2025-07-14 14:37:06,748 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:37:06,749 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:37:06,749 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:37:06,749 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:37:06,749 - system - INFO - Environment: development | module=system
+2025-07-14 14:37:06,839 - src.app.api - INFO - Starting StockSage.AI API | module=src.app.api
+2025-07-14 14:37:06,839 - src.app.api - WARNING - Model directory results\model_training not found, creating mock models | module=src.app.api
+2025-07-14 14:37:06,840 - src.app.api - INFO - Successfully loaded 5 models | module=src.app.api
+2025-07-14 14:37:10,868 - src.app.api - INFO - Shutting down StockSage.AI API | module=src.app.api
+2025-07-14 14:37:11,485 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:37:11,486 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:37:11,486 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:37:11,486 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:37:11,486 - system - INFO - Environment: development | module=system
+2025-07-14 14:37:11,573 - src.app.api - INFO - Starting StockSage.AI API | module=src.app.api
+2025-07-14 14:37:11,574 - src.app.api - WARNING - Model directory results\model_training not found, creating mock models | module=src.app.api
+2025-07-14 14:37:11,574 - src.app.api - INFO - Successfully loaded 5 models | module=src.app.api
+2025-07-14 14:37:17,544 - src.app.api - INFO - Shutting down StockSage.AI API | module=src.app.api
+2025-07-14 14:37:18,153 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:37:18,154 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:37:18,154 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:37:18,154 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:37:18,154 - system - INFO - Environment: development | module=system
+2025-07-14 14:37:18,241 - src.app.api - INFO - Starting StockSage.AI API | module=src.app.api
+2025-07-14 14:37:18,242 - src.app.api - WARNING - Model directory results\model_training not found, creating mock models | module=src.app.api
+2025-07-14 14:37:18,242 - src.app.api - INFO - Successfully loaded 5 models | module=src.app.api
+2025-07-14 14:37:24,220 - src.app.api - INFO - Shutting down StockSage.AI API | module=src.app.api
+2025-07-14 14:37:24,826 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:37:24,826 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:37:24,827 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:37:24,827 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:37:24,827 - system - INFO - Environment: development | module=system
+2025-07-14 14:37:24,916 - src.app.api - INFO - Starting StockSage.AI API | module=src.app.api
+2025-07-14 14:37:24,917 - src.app.api - WARNING - Model directory results\model_training not found, creating mock models | module=src.app.api
+2025-07-14 14:37:24,917 - src.app.api - INFO - Successfully loaded 5 models | module=src.app.api
+2025-07-14 14:37:34,882 - src.app.api - INFO - Shutting down StockSage.AI API | module=src.app.api
+2025-07-14 14:37:35,500 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:37:35,500 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:37:35,500 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:37:35,500 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:37:35,501 - system - INFO - Environment: development | module=system
+2025-07-14 14:37:35,596 - src.app.api - INFO - Starting StockSage.AI API | module=src.app.api
+2025-07-14 14:37:35,596 - src.app.api - WARNING - Model directory results\model_training not found, creating mock models | module=src.app.api
+2025-07-14 14:37:35,596 - src.app.api - INFO - Successfully loaded 5 models | module=src.app.api
+2025-07-14 14:37:43,910 - src.app.api - INFO - Shutting down StockSage.AI API | module=src.app.api
+2025-07-14 14:37:44,742 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:37:44,742 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:37:44,742 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:37:44,742 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:37:44,742 - system - INFO - Environment: development | module=system
+2025-07-14 14:37:44,832 - src.app.api - INFO - Starting StockSage.AI API | module=src.app.api
+2025-07-14 14:37:44,832 - src.app.api - WARNING - Model directory results\model_training not found, creating mock models | module=src.app.api
+2025-07-14 14:37:44,832 - src.app.api - INFO - Successfully loaded 5 models | module=src.app.api
+2025-07-14 14:37:44,869 - src.app.api - ERROR - Error fetching data for AAPL: name 'download_stock_data' is not defined | module=src.app.api
+2025-07-14 14:37:44,870 - src.app.api - ERROR - Prediction failed for AAPL: name 'download_stock_data' is not defined | module=src.app.api
+2025-07-14 14:37:46,976 - src.app.api - WARNING - Model AAPL_baseline_ensemble not found, using AAPL_ensemble | module=src.app.api
+2025-07-14 14:37:46,977 - src.app.api - ERROR - Explanation failed for AAPL: 7 validation errors for ExplanationResponse
+top_features.0.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='price_momentum', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.1.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='volume_trend', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.2.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='rsi', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.3.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='market_sentiment', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.4.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='volatility', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.5.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='ma_crossover', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.6.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='economic_indicators', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing | module=src.app.api
+2025-07-14 14:37:50,928 - src.app.api - INFO - Shutting down StockSage.AI API | module=src.app.api
+2025-07-14 14:37:51,570 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:37:51,570 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:37:51,570 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:37:51,571 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:37:51,571 - system - INFO - Environment: development | module=system
+2025-07-14 14:37:51,659 - src.app.api - INFO - Starting StockSage.AI API | module=src.app.api
+2025-07-14 14:37:51,660 - src.app.api - WARNING - Model directory results\model_training not found, creating mock models | module=src.app.api
+2025-07-14 14:37:51,660 - src.app.api - INFO - Successfully loaded 5 models | module=src.app.api
+2025-07-14 14:37:53,155 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:37:53,155 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:37:53,155 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:37:53,156 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:37:53,156 - system - INFO - Environment: development | module=system
+2025-07-14 14:38:02,654 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:38:02,655 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:38:02,655 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:38:02,655 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:38:02,655 - system - INFO - Environment: development | module=system
+2025-07-14 14:38:02,766 - src.data.validation - INFO - Starting validation for test_market_data (market) | module=src.data.validation
+2025-07-14 14:38:02,773 - src.data.validation - INFO - Validation completed for test_market_data. Quality score: 77.0 | module=src.data.validation
+2025-07-14 14:38:02,775 - src.data.validation - INFO - Starting validation for test_market_data (market) | module=src.data.validation
+2025-07-14 14:38:02,779 - src.data.validation - INFO - Validation completed for test_market_data. Quality score: 78.0 | module=src.data.validation
+2025-07-14 14:38:02,855 - src.data.validation - INFO - Starting validation for test_market_data (market) | module=src.data.validation
+2025-07-14 14:38:02,859 - src.data.validation - INFO - Validation completed for test_market_data. Quality score: 56.0 | module=src.data.validation
+2025-07-14 14:38:02,866 - src.data.validation - INFO - Starting validation for test_market_data (market) | module=src.data.validation
+2025-07-14 14:38:02,870 - src.data.validation - INFO - Validation completed for test_market_data. Quality score: 77.0 | module=src.data.validation
+2025-07-14 14:38:08,194 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:38:08,194 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:38:08,194 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:38:08,195 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:38:08,195 - system - INFO - Environment: development | module=system
+2025-07-14 14:38:09,616 - src.app.api - ERROR - Error fetching data for 123: name 'download_stock_data' is not defined | module=src.app.api
+2025-07-14 14:38:09,616 - src.app.api - ERROR - Prediction failed for 123: name 'download_stock_data' is not defined | module=src.app.api
+2025-07-14 14:38:09,640 - src.app.api - ERROR - Explanation failed for AAPL: 3 validation errors for ExplanationResponse
+top_features.0.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='price_momentum', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.1.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='volume_trend', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.2.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='rsi', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing | module=src.app.api
+2025-07-14 14:38:09,648 - src.app.api - ERROR - Explanation failed for AAPL: 7 validation errors for ExplanationResponse
+top_features.0.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='price_momentum', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.1.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='volume_trend', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.2.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='rsi', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.3.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='market_sentiment', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.4.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='volatility', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.5.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='ma_crossover', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.6.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='economic_indicators', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing | module=src.app.api
+2025-07-14 14:38:09,656 - src.app.api - ERROR - Explanation failed for AAPL: 7 validation errors for ExplanationResponse
+top_features.0.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='price_momentum', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.1.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='volume_trend', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.2.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='rsi', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.3.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='market_sentiment', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.4.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='volatility', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.5.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='ma_crossover', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.6.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='economic_indicators', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing | module=src.app.api
+2025-07-14 14:38:09,675 - src.app.api - ERROR - Error fetching data for AAPL: name 'download_stock_data' is not defined | module=src.app.api
+2025-07-14 14:38:09,676 - src.app.api - ERROR - Prediction failed for AAPL: name 'download_stock_data' is not defined | module=src.app.api
+2025-07-14 14:38:09,697 - src.app.api - ERROR - Error fetching data for AAPL: name 'download_stock_data' is not defined | module=src.app.api
+2025-07-14 14:38:09,697 - src.app.api - ERROR - Prediction failed for AAPL: name 'download_stock_data' is not defined | module=src.app.api
+2025-07-14 14:38:09,791 - src.data.validation - INFO - Starting validation for test_market_data (market) | module=src.data.validation
+2025-07-14 14:38:09,796 - src.data.validation - INFO - Validation completed for test_market_data. Quality score: 78.0 | module=src.data.validation
+2025-07-14 14:38:09,798 - src.data.validation - INFO - Starting validation for test_market_data (market) | module=src.data.validation
+2025-07-14 14:38:09,802 - src.data.validation - INFO - Validation completed for test_market_data. Quality score: 76.0 | module=src.data.validation
+2025-07-14 14:38:09,810 - src.data.validation - INFO - Starting validation for test_market_data (market) | module=src.data.validation
+2025-07-14 14:38:09,815 - src.data.validation - INFO - Validation completed for test_market_data. Quality score: 57.0 | module=src.data.validation
+2025-07-14 14:38:09,822 - src.data.validation - INFO - Starting validation for test_market_data (market) | module=src.data.validation
+2025-07-14 14:38:09,826 - src.data.validation - INFO - Validation completed for test_market_data. Quality score: 77.0 | module=src.data.validation
+2025-07-14 14:38:09,834 - src.data.validation - INFO - Starting validation for test_market_data (market) | module=src.data.validation
+2025-07-14 14:38:09,840 - src.data.validation - INFO - Validation completed for test_market_data. Quality score: 77.0 | module=src.data.validation
+2025-07-14 14:38:09,875 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:09,939 - src.models.baseline - INFO - Training baseline model with 100 samples | module=src.models.baseline
+2025-07-14 14:38:09,940 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:09,989 - src.models.baseline - INFO - Selected 50 features out of 212 | module=src.models.baseline
+2025-07-14 14:38:09,997 - src.models.baseline - INFO - Fitted ridge regression with alpha=1.0 | module=src.models.baseline
+2025-07-14 14:38:09,999 - src.models.baseline - INFO - Training completed. R² score: 0.5836 | module=src.models.baseline
+2025-07-14 14:38:10,001 - src.models.baseline - INFO - Training baseline model with 100 samples | module=src.models.baseline
+2025-07-14 14:38:10,001 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:10,055 - src.models.baseline - INFO - Selected 50 features out of 212 | module=src.models.baseline
+2025-07-14 14:38:10,062 - src.models.baseline - INFO - Fitted ridge regression with alpha=1.0 | module=src.models.baseline
+2025-07-14 14:38:10,064 - src.models.baseline - INFO - Training completed. R² score: 0.5836 | module=src.models.baseline
+2025-07-14 14:38:10,064 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:10,107 - src.models.baseline - INFO - Training baseline model with 100 samples | module=src.models.baseline
+2025-07-14 14:38:10,107 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:10,157 - src.models.baseline - INFO - Selected 50 features out of 212 | module=src.models.baseline
+2025-07-14 14:38:10,164 - src.models.baseline - INFO - Fitted ridge regression with alpha=1.0 | module=src.models.baseline
+2025-07-14 14:38:10,165 - src.models.baseline - INFO - Training completed. R² score: 0.5836 | module=src.models.baseline
+2025-07-14 14:38:10,165 - src.models.baseline - INFO - Training baseline model with 100 samples | module=src.models.baseline
+2025-07-14 14:38:10,165 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:10,213 - src.models.baseline - INFO - Selected 50 features out of 212 | module=src.models.baseline
+2025-07-14 14:38:10,225 - src.models.baseline - INFO - Fitted lasso regression with alpha=0.1 | module=src.models.baseline
+2025-07-14 14:38:10,226 - src.models.baseline - INFO - Training completed. R² score: 0.0000 | module=src.models.baseline
+2025-07-14 14:38:10,226 - src.models.baseline - INFO - Training baseline model with 100 samples | module=src.models.baseline
+2025-07-14 14:38:10,226 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:10,275 - src.models.baseline - INFO - Selected 50 features out of 212 | module=src.models.baseline
+2025-07-14 14:38:10,282 - src.models.baseline - INFO - Fitted elastic regression with alpha=0.1 | module=src.models.baseline
+2025-07-14 14:38:10,284 - src.models.baseline - INFO - Training completed. R² score: 0.0000 | module=src.models.baseline
+2025-07-14 14:38:10,285 - src.models.baseline - INFO - Training baseline model with 150 samples | module=src.models.baseline
+2025-07-14 14:38:10,286 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:10,339 - src.models.baseline - INFO - Selected 50 features out of 211 | module=src.models.baseline
+2025-07-14 14:38:10,449 - src.models.baseline - INFO - Fitted Random Forest with 10 estimators | module=src.models.baseline
+2025-07-14 14:38:10,464 - src.models.baseline - INFO - Training completed. R² score: 0.6807 | module=src.models.baseline
+2025-07-14 14:38:10,513 - src.models.baseline - INFO - Training baseline model with 150 samples | module=src.models.baseline
+2025-07-14 14:38:10,513 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:10,566 - src.models.baseline - INFO - Selected 50 features out of 211 | module=src.models.baseline
+2025-07-14 14:38:10,592 - src.models.baseline - INFO - Fitted Random Forest with 10 estimators | module=src.models.baseline
+2025-07-14 14:38:10,607 - src.models.baseline - INFO - Training completed. R² score: 0.6807 | module=src.models.baseline
+2025-07-14 14:38:10,607 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:10,665 - src.models.baseline - INFO - Training baseline model with 150 samples | module=src.models.baseline
+2025-07-14 14:38:10,665 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:10,719 - src.models.baseline - INFO - Selected 50 features out of 211 | module=src.models.baseline
+2025-07-14 14:38:10,726 - src.models.baseline - INFO - Performing hyperparameter tuning with grid search | module=src.models.baseline
+2025-07-14 14:38:14,671 - src.models.baseline - INFO - Best parameters: {'max_depth': 5, 'max_features': 0.3, 'min_samples_leaf': 4, 'min_samples_split': 10, 'n_estimators': 50} | module=src.models.baseline
+2025-07-14 14:38:14,671 - src.models.baseline - INFO - Best CV score: -0.0006 | module=src.models.baseline
+2025-07-14 14:38:14,673 - src.models.baseline - INFO - Training completed. R² score: 0.6612 | module=src.models.baseline
+2025-07-14 14:38:14,676 - src.models.baseline - INFO - Training baseline model with 200 samples | module=src.models.baseline
+2025-07-14 14:38:14,676 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:14,739 - src.models.baseline - INFO - Selected 50 features out of 211 | module=src.models.baseline
+2025-07-14 14:38:14,977 - src.models.baseline - INFO - Fitted ensemble model with Linear Regression, Random Forest, and Gradient Boosting | module=src.models.baseline
+2025-07-14 14:38:14,998 - src.models.baseline - INFO - Training completed. R² score: 0.8404 | module=src.models.baseline
+2025-07-14 14:38:15,000 - src.models.baseline - INFO - Training baseline model with 200 samples | module=src.models.baseline
+2025-07-14 14:38:15,000 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:15,072 - src.models.baseline - INFO - Selected 50 features out of 211 | module=src.models.baseline
+2025-07-14 14:38:15,300 - src.models.baseline - INFO - Fitted ensemble model with Linear Regression, Random Forest, and Gradient Boosting | module=src.models.baseline
+2025-07-14 14:38:15,321 - src.models.baseline - INFO - Training completed. R² score: 0.8404 | module=src.models.baseline
+2025-07-14 14:38:15,321 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:15,390 - src.models.baseline - INFO - Training baseline model with 200 samples | module=src.models.baseline
+2025-07-14 14:38:15,390 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:15,453 - src.models.baseline - INFO - Selected 50 features out of 211 | module=src.models.baseline
+2025-07-14 14:38:15,671 - src.models.baseline - INFO - Fitted ensemble model with Linear Regression, Random Forest, and Gradient Boosting | module=src.models.baseline
+2025-07-14 14:38:15,691 - src.models.baseline - INFO - Training completed. R² score: 0.8404 | module=src.models.baseline
+2025-07-14 14:38:15,692 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:15,757 - src.models.baseline - INFO - Training baseline model with 100 samples | module=src.models.baseline
+2025-07-14 14:38:15,757 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:15,814 - src.models.baseline - INFO - Selected 50 features out of 212 | module=src.models.baseline
+2025-07-14 14:38:15,821 - src.models.baseline - INFO - Fitted ridge regression with alpha=1.0 | module=src.models.baseline
+2025-07-14 14:38:15,823 - src.models.baseline - INFO - Training completed. R² score: 0.6037 | module=src.models.baseline
+2025-07-14 14:38:15,824 - src.models.baseline - INFO - Model saved to C:\Users\omkar\AppData\Local\Temp\tmpxsn6tob0\test_model.joblib | module=src.models.baseline
+2025-07-14 14:38:15,825 - src.models.baseline - INFO - Model loaded from C:\Users\omkar\AppData\Local\Temp\tmpxsn6tob0\test_model.joblib | module=src.models.baseline
+2025-07-14 14:38:15,825 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:15,870 - src.models.baseline - WARNING - Dropping 10 rows with remaining NaN values before prediction. | module=src.models.baseline
+2025-07-14 14:38:15,913 - src.models.baseline - INFO - Training baseline model with 100 samples | module=src.models.baseline
+2025-07-14 14:38:15,913 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:15,963 - src.models.baseline - INFO - Selected 50 features out of 208 | module=src.models.baseline
+2025-07-14 14:38:15,970 - src.models.baseline - INFO - Fitted ridge regression with alpha=1.0 | module=src.models.baseline
+2025-07-14 14:38:15,971 - src.models.baseline - INFO - Training completed. R² score: 0.6387 | module=src.models.baseline
+2025-07-14 14:38:15,972 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:16,011 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:53,469 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:38:53,470 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:38:53,470 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:38:53,472 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:38:53,472 - system - INFO - Environment: development | module=system
+2025-07-14 14:38:54,867 - src.app.api - ERROR - Error fetching data for 123: name 'download_stock_data' is not defined | module=src.app.api
+2025-07-14 14:38:54,867 - src.app.api - ERROR - Prediction failed for 123: name 'download_stock_data' is not defined | module=src.app.api
+2025-07-14 14:38:54,890 - src.app.api - ERROR - Explanation failed for AAPL: 3 validation errors for ExplanationResponse
+top_features.0.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='price_momentum', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.1.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='volume_trend', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.2.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='rsi', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing | module=src.app.api
+2025-07-14 14:38:54,897 - src.app.api - ERROR - Explanation failed for AAPL: 7 validation errors for ExplanationResponse
+top_features.0.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='price_momentum', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.1.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='volume_trend', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.2.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='rsi', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.3.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='market_sentiment', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.4.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='volatility', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.5.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='ma_crossover', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.6.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='economic_indicators', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing | module=src.app.api
+2025-07-14 14:38:54,903 - src.app.api - ERROR - Explanation failed for AAPL: 7 validation errors for ExplanationResponse
+top_features.0.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='price_momentum', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.1.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='volume_trend', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.2.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='rsi', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.3.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='market_sentiment', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.4.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='volatility', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.5.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='ma_crossover', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing
+top_features.6.feature
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='economic_indicators', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.11/v/float_parsing | module=src.app.api
+2025-07-14 14:38:54,919 - src.app.api - ERROR - Error fetching data for AAPL: name 'download_stock_data' is not defined | module=src.app.api
+2025-07-14 14:38:54,919 - src.app.api - ERROR - Prediction failed for AAPL: name 'download_stock_data' is not defined | module=src.app.api
+2025-07-14 14:38:54,927 - src.app.api - ERROR - Error fetching data for AAPL: name 'download_stock_data' is not defined | module=src.app.api
+2025-07-14 14:38:54,927 - src.app.api - ERROR - Prediction failed for AAPL: name 'download_stock_data' is not defined | module=src.app.api
+2025-07-14 14:38:55,012 - src.data.validation - INFO - Starting validation for test_market_data (market) | module=src.data.validation
+2025-07-14 14:38:55,017 - src.data.validation - INFO - Validation completed for test_market_data. Quality score: 78.0 | module=src.data.validation
+2025-07-14 14:38:55,018 - src.data.validation - INFO - Starting validation for test_market_data (market) | module=src.data.validation
+2025-07-14 14:38:55,023 - src.data.validation - INFO - Validation completed for test_market_data. Quality score: 76.0 | module=src.data.validation
+2025-07-14 14:38:55,031 - src.data.validation - INFO - Starting validation for test_market_data (market) | module=src.data.validation
+2025-07-14 14:38:55,036 - src.data.validation - INFO - Validation completed for test_market_data. Quality score: 57.0 | module=src.data.validation
+2025-07-14 14:38:55,043 - src.data.validation - INFO - Starting validation for test_market_data (market) | module=src.data.validation
+2025-07-14 14:38:55,048 - src.data.validation - INFO - Validation completed for test_market_data. Quality score: 77.0 | module=src.data.validation
+2025-07-14 14:38:55,055 - src.data.validation - INFO - Starting validation for test_market_data (market) | module=src.data.validation
+2025-07-14 14:38:55,061 - src.data.validation - INFO - Validation completed for test_market_data. Quality score: 77.0 | module=src.data.validation
+2025-07-14 14:38:55,096 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:55,162 - src.models.baseline - INFO - Training baseline model with 100 samples | module=src.models.baseline
+2025-07-14 14:38:55,162 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:55,213 - src.models.baseline - INFO - Selected 50 features out of 212 | module=src.models.baseline
+2025-07-14 14:38:55,220 - src.models.baseline - INFO - Fitted ridge regression with alpha=1.0 | module=src.models.baseline
+2025-07-14 14:38:55,222 - src.models.baseline - INFO - Training completed. R² score: 0.5836 | module=src.models.baseline
+2025-07-14 14:38:55,224 - src.models.baseline - INFO - Training baseline model with 100 samples | module=src.models.baseline
+2025-07-14 14:38:55,224 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:55,274 - src.models.baseline - INFO - Selected 50 features out of 212 | module=src.models.baseline
+2025-07-14 14:38:55,281 - src.models.baseline - INFO - Fitted ridge regression with alpha=1.0 | module=src.models.baseline
+2025-07-14 14:38:55,282 - src.models.baseline - INFO - Training completed. R² score: 0.5836 | module=src.models.baseline
+2025-07-14 14:38:55,282 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:55,326 - src.models.baseline - INFO - Training baseline model with 100 samples | module=src.models.baseline
+2025-07-14 14:38:55,326 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:55,377 - src.models.baseline - INFO - Selected 50 features out of 212 | module=src.models.baseline
+2025-07-14 14:38:55,383 - src.models.baseline - INFO - Fitted ridge regression with alpha=1.0 | module=src.models.baseline
+2025-07-14 14:38:55,385 - src.models.baseline - INFO - Training completed. R² score: 0.5836 | module=src.models.baseline
+2025-07-14 14:38:55,385 - src.models.baseline - INFO - Training baseline model with 100 samples | module=src.models.baseline
+2025-07-14 14:38:55,385 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:55,433 - src.models.baseline - INFO - Selected 50 features out of 212 | module=src.models.baseline
+2025-07-14 14:38:55,440 - src.models.baseline - INFO - Fitted lasso regression with alpha=0.1 | module=src.models.baseline
+2025-07-14 14:38:55,441 - src.models.baseline - INFO - Training completed. R² score: 0.0000 | module=src.models.baseline
+2025-07-14 14:38:55,441 - src.models.baseline - INFO - Training baseline model with 100 samples | module=src.models.baseline
+2025-07-14 14:38:55,441 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:55,489 - src.models.baseline - INFO - Selected 50 features out of 212 | module=src.models.baseline
+2025-07-14 14:38:55,496 - src.models.baseline - INFO - Fitted elastic regression with alpha=0.1 | module=src.models.baseline
+2025-07-14 14:38:55,497 - src.models.baseline - INFO - Training completed. R² score: 0.0000 | module=src.models.baseline
+2025-07-14 14:38:55,499 - src.models.baseline - INFO - Training baseline model with 150 samples | module=src.models.baseline
+2025-07-14 14:38:55,500 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:55,556 - src.models.baseline - INFO - Selected 50 features out of 211 | module=src.models.baseline
+2025-07-14 14:38:55,655 - src.models.baseline - INFO - Fitted Random Forest with 10 estimators | module=src.models.baseline
+2025-07-14 14:38:55,670 - src.models.baseline - INFO - Training completed. R² score: 0.6807 | module=src.models.baseline
+2025-07-14 14:38:55,716 - src.models.baseline - INFO - Training baseline model with 150 samples | module=src.models.baseline
+2025-07-14 14:38:55,717 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:55,771 - src.models.baseline - INFO - Selected 50 features out of 211 | module=src.models.baseline
+2025-07-14 14:38:55,795 - src.models.baseline - INFO - Fitted Random Forest with 10 estimators | module=src.models.baseline
+2025-07-14 14:38:55,810 - src.models.baseline - INFO - Training completed. R² score: 0.6807 | module=src.models.baseline
+2025-07-14 14:38:55,810 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:55,866 - src.models.baseline - INFO - Training baseline model with 150 samples | module=src.models.baseline
+2025-07-14 14:38:55,867 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:55,920 - src.models.baseline - INFO - Selected 50 features out of 211 | module=src.models.baseline
+2025-07-14 14:38:55,927 - src.models.baseline - INFO - Performing hyperparameter tuning with grid search | module=src.models.baseline
+2025-07-14 14:38:59,709 - src.models.baseline - INFO - Best parameters: {'max_depth': 5, 'max_features': 0.3, 'min_samples_leaf': 4, 'min_samples_split': 10, 'n_estimators': 50} | module=src.models.baseline
+2025-07-14 14:38:59,709 - src.models.baseline - INFO - Best CV score: -0.0006 | module=src.models.baseline
+2025-07-14 14:38:59,712 - src.models.baseline - INFO - Training completed. R² score: 0.6612 | module=src.models.baseline
+2025-07-14 14:38:59,713 - src.models.baseline - INFO - Training baseline model with 200 samples | module=src.models.baseline
+2025-07-14 14:38:59,714 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:38:59,779 - src.models.baseline - INFO - Selected 50 features out of 211 | module=src.models.baseline
+2025-07-14 14:39:00,014 - src.models.baseline - INFO - Fitted ensemble model with Linear Regression, Random Forest, and Gradient Boosting | module=src.models.baseline
+2025-07-14 14:39:00,036 - src.models.baseline - INFO - Training completed. R² score: 0.8404 | module=src.models.baseline
+2025-07-14 14:39:00,038 - src.models.baseline - INFO - Training baseline model with 200 samples | module=src.models.baseline
+2025-07-14 14:39:00,038 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:39:00,099 - src.models.baseline - INFO - Selected 50 features out of 211 | module=src.models.baseline
+2025-07-14 14:39:00,326 - src.models.baseline - INFO - Fitted ensemble model with Linear Regression, Random Forest, and Gradient Boosting | module=src.models.baseline
+2025-07-14 14:39:00,345 - src.models.baseline - INFO - Training completed. R² score: 0.8404 | module=src.models.baseline
+2025-07-14 14:39:00,345 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:39:00,405 - src.models.baseline - INFO - Training baseline model with 200 samples | module=src.models.baseline
+2025-07-14 14:39:00,406 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:39:00,464 - src.models.baseline - INFO - Selected 50 features out of 211 | module=src.models.baseline
+2025-07-14 14:39:00,687 - src.models.baseline - INFO - Fitted ensemble model with Linear Regression, Random Forest, and Gradient Boosting | module=src.models.baseline
+2025-07-14 14:39:00,707 - src.models.baseline - INFO - Training completed. R² score: 0.8404 | module=src.models.baseline
+2025-07-14 14:39:00,707 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:39:00,764 - src.models.baseline - INFO - Training baseline model with 100 samples | module=src.models.baseline
+2025-07-14 14:39:00,764 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:39:00,822 - src.models.baseline - INFO - Selected 50 features out of 212 | module=src.models.baseline
+2025-07-14 14:39:00,829 - src.models.baseline - INFO - Fitted ridge regression with alpha=1.0 | module=src.models.baseline
+2025-07-14 14:39:00,830 - src.models.baseline - INFO - Training completed. R² score: 0.6037 | module=src.models.baseline
+2025-07-14 14:39:00,831 - src.models.baseline - INFO - Model saved to C:\Users\omkar\AppData\Local\Temp\tmp3d9kpdp2\test_model.joblib | module=src.models.baseline
+2025-07-14 14:39:00,832 - src.models.baseline - INFO - Model loaded from C:\Users\omkar\AppData\Local\Temp\tmp3d9kpdp2\test_model.joblib | module=src.models.baseline
+2025-07-14 14:39:00,832 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:39:00,870 - src.models.baseline - WARNING - Dropping 10 rows with remaining NaN values before prediction. | module=src.models.baseline
+2025-07-14 14:39:00,907 - src.models.baseline - INFO - Training baseline model with 100 samples | module=src.models.baseline
+2025-07-14 14:39:00,907 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:39:00,956 - src.models.baseline - INFO - Selected 50 features out of 208 | module=src.models.baseline
+2025-07-14 14:39:00,963 - src.models.baseline - INFO - Fitted ridge regression with alpha=1.0 | module=src.models.baseline
+2025-07-14 14:39:00,964 - src.models.baseline - INFO - Training completed. R² score: 0.6387 | module=src.models.baseline
+2025-07-14 14:39:00,965 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:39:01,004 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:40:15,077 - src.app.api - INFO - Shutting down StockSage.AI API | module=src.app.api
+2025-07-14 14:42:33,874 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:42:33,874 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:42:33,874 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:42:33,875 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:42:33,875 - system - INFO - Environment: development | module=system
+2025-07-14 14:42:38,509 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:42:38,509 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:42:38,509 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:42:38,509 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:42:38,510 - system - INFO - Environment: development | module=system
+2025-07-14 14:42:38,619 - src.data.validation - INFO - Starting validation for test_market_data (market) | module=src.data.validation
+2025-07-14 14:42:38,625 - src.data.validation - INFO - Validation completed for test_market_data. Quality score: 77.0 | module=src.data.validation
+2025-07-14 14:42:38,627 - src.data.validation - INFO - Starting validation for test_market_data (market) | module=src.data.validation
+2025-07-14 14:42:38,631 - src.data.validation - INFO - Validation completed for test_market_data. Quality score: 77.0 | module=src.data.validation
+2025-07-14 14:42:38,721 - src.data.validation - INFO - Starting validation for test_market_data (market) | module=src.data.validation
+2025-07-14 14:42:38,726 - src.data.validation - INFO - Validation completed for test_market_data. Quality score: 55.0 | module=src.data.validation
+2025-07-14 14:42:38,734 - src.data.validation - INFO - Starting validation for test_market_data (market) | module=src.data.validation
+2025-07-14 14:42:38,741 - src.data.validation - INFO - Validation completed for test_market_data. Quality score: 76.0 | module=src.data.validation
+2025-07-14 14:42:45,422 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:42:45,423 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:42:45,423 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:42:45,423 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:42:45,423 - system - INFO - Environment: development | module=system
+2025-07-14 14:42:51,919 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:42:51,919 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:42:51,919 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:42:51,919 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:42:51,919 - system - INFO - Environment: development | module=system
+2025-07-14 14:42:51,921 - src.data.validation - INFO - Starting validation for dataset (market) | module=src.data.validation
+2025-07-14 14:42:51,925 - src.data.validation - INFO - Validation completed for dataset. Quality score: 90.0 | module=src.data.validation
+2025-07-14 14:43:11,278 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:43:11,278 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:43:11,278 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:43:11,278 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:43:11,279 - system - INFO - Environment: development | module=system
+2025-07-14 14:43:11,280 - src.data.validation - INFO - Starting validation for dataset (market) | module=src.data.validation
+2025-07-14 14:43:11,284 - src.data.validation - INFO - Validation completed for dataset. Quality score: 60.0 | module=src.data.validation
+2025-07-14 14:43:32,553 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:43:32,554 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:43:32,554 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:43:32,555 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:43:32,555 - system - INFO - Environment: development | module=system
+2025-07-14 14:43:32,559 - src.models.baseline - INFO - Training baseline model with 100 samples | module=src.models.baseline
+2025-07-14 14:43:32,559 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:43:32,614 - src.models.baseline - INFO - Selected 50 features out of 210 | module=src.models.baseline
+2025-07-14 14:43:32,622 - src.models.baseline - INFO - Fitted ridge regression with alpha=1.0 | module=src.models.baseline
+2025-07-14 14:43:32,623 - src.models.baseline - INFO - Training completed. R² score: 0.4378 | module=src.models.baseline
+2025-07-14 14:43:32,624 - src.models.baseline - INFO - Model saved to C:\Users\omkar\AppData\Local\Temp\tmp1ul2hf80\test_model.joblib | module=src.models.baseline
+2025-07-14 14:43:32,625 - src.models.baseline - INFO - Model loaded from C:\Users\omkar\AppData\Local\Temp\tmp1ul2hf80\test_model.joblib | module=src.models.baseline
+2025-07-14 14:43:32,625 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:43:32,665 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:43:36,261 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:43:36,262 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:43:36,262 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:43:36,262 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:43:36,262 - system - INFO - Environment: development | module=system
+2025-07-14 14:43:36,378 - src.data.validation - INFO - Starting validation for test_market_data (market) | module=src.data.validation
+2025-07-14 14:43:36,384 - src.data.validation - INFO - Validation completed for test_market_data. Quality score: 76.0 | module=src.data.validation
+2025-07-14 14:43:36,386 - src.data.validation - INFO - Starting validation for test_market_data (market) | module=src.data.validation
+2025-07-14 14:43:36,390 - src.data.validation - INFO - Validation completed for test_market_data. Quality score: 88.0 | module=src.data.validation
+2025-07-14 14:43:36,392 - src.data.validation - INFO - Starting validation for test_market_data (market) | module=src.data.validation
+2025-07-14 14:43:36,397 - src.data.validation - INFO - Validation completed for test_market_data. Quality score: 57.0 | module=src.data.validation
+2025-07-14 14:43:36,399 - src.data.validation - INFO - Starting validation for test_market_data (market) | module=src.data.validation
+2025-07-14 14:43:36,403 - src.data.validation - INFO - Validation completed for test_market_data. Quality score: 77.0 | module=src.data.validation
+2025-07-14 14:43:40,631 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:43:40,632 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:43:40,632 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:43:40,632 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:43:40,632 - system - INFO - Environment: development | module=system
+2025-07-14 14:43:44,846 - src.app.api - ERROR - Error fetching data for 123: No data returned for 123 | module=src.app.api
+2025-07-14 14:43:44,846 - src.app.api - ERROR - Prediction failed for 123: No data returned for 123 | module=src.app.api
+2025-07-14 14:43:44,861 - src.app.api - WARNING - No model available for AAPL, using simple prediction | module=src.app.api
+2025-07-14 14:43:48,886 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:43:48,886 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:43:48,887 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:43:48,887 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:43:48,887 - system - INFO - Environment: development | module=system
+2025-07-14 14:43:49,000 - src.app.api - ERROR - Batch prediction failed for INVALID: Invalid symbol | module=src.app.api
+2025-07-14 14:43:52,514 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:43:52,514 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:43:52,514 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:43:52,514 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:43:52,514 - system - INFO - Environment: development | module=system
+2025-07-14 14:43:52,630 - src.app.api - ERROR - Prediction failed for AAPL: Unexpected error | module=src.app.api
+2025-07-14 14:43:59,467 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:43:59,467 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:43:59,467 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:43:59,469 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:43:59,469 - system - INFO - Environment: development | module=system
+2025-07-14 14:43:59,960 - src.app.api - WARNING - No model available for AAPL, using simple prediction | module=src.app.api
+2025-07-14 14:44:00,007 - src.app.api - WARNING - No model available for AAPL, using simple prediction | module=src.app.api
+2025-07-14 14:44:35,505 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:44:35,505 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:44:35,505 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:44:35,507 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:44:35,507 - system - INFO - Environment: development | module=system
+2025-07-14 14:45:03,857 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:45:03,857 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:45:03,857 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:45:03,858 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:45:03,858 - system - INFO - Environment: development | module=system
+2025-07-14 14:45:03,949 - src.app.api - INFO - Starting StockSage.AI API | module=src.app.api
+2025-07-14 14:45:03,949 - src.app.api - WARNING - Model directory results\model_training not found, creating mock models | module=src.app.api
+2025-07-14 14:45:03,950 - src.app.api - INFO - Successfully loaded 5 models | module=src.app.api
+2025-07-14 14:45:32,063 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:45:32,064 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:45:32,064 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:45:32,064 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:45:32,064 - system - INFO - Environment: development | module=system
+2025-07-14 14:45:37,786 - src.app.api - ERROR - Error fetching data for 123: No data returned for 123 | module=src.app.api
+2025-07-14 14:45:37,786 - src.app.api - ERROR - Prediction failed for 123: No data returned for 123 | module=src.app.api
+2025-07-14 14:45:37,801 - src.app.api - WARNING - No model available for AAPL, using simple prediction | module=src.app.api
+2025-07-14 14:45:37,813 - src.app.api - ERROR - Batch prediction failed for INVALID: Invalid symbol | module=src.app.api
+2025-07-14 14:45:37,834 - src.app.api - ERROR - Prediction failed for AAPL: Unexpected error | module=src.app.api
+2025-07-14 14:45:38,162 - src.app.api - WARNING - No model available for AAPL, using simple prediction | module=src.app.api
+2025-07-14 14:45:38,258 - src.data.validation - INFO - Starting validation for test_market_data (market) | module=src.data.validation
+2025-07-14 14:45:38,263 - src.data.validation - INFO - Validation completed for test_market_data. Quality score: 78.0 | module=src.data.validation
+2025-07-14 14:45:38,265 - src.data.validation - INFO - Starting validation for test_market_data (market) | module=src.data.validation
+2025-07-14 14:45:38,269 - src.data.validation - INFO - Validation completed for test_market_data. Quality score: 87.0 | module=src.data.validation
+2025-07-14 14:45:38,271 - src.data.validation - INFO - Starting validation for test_market_data (market) | module=src.data.validation
+2025-07-14 14:45:38,275 - src.data.validation - INFO - Validation completed for test_market_data. Quality score: 57.0 | module=src.data.validation
+2025-07-14 14:45:38,278 - src.data.validation - INFO - Starting validation for test_market_data (market) | module=src.data.validation
+2025-07-14 14:45:38,282 - src.data.validation - INFO - Validation completed for test_market_data. Quality score: 77.0 | module=src.data.validation
+2025-07-14 14:45:38,284 - src.data.validation - INFO - Starting validation for test_market_data (market) | module=src.data.validation
+2025-07-14 14:45:38,289 - src.data.validation - INFO - Validation completed for test_market_data. Quality score: 77.0 | module=src.data.validation
+2025-07-14 14:45:38,329 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:45:38,400 - src.models.baseline - INFO - Training baseline model with 100 samples | module=src.models.baseline
+2025-07-14 14:45:38,400 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:45:38,453 - src.models.baseline - INFO - Selected 50 features out of 212 | module=src.models.baseline
+2025-07-14 14:45:38,460 - src.models.baseline - INFO - Fitted ridge regression with alpha=1.0 | module=src.models.baseline
+2025-07-14 14:45:38,462 - src.models.baseline - INFO - Training completed. R² score: 0.5836 | module=src.models.baseline
+2025-07-14 14:45:38,464 - src.models.baseline - INFO - Training baseline model with 100 samples | module=src.models.baseline
+2025-07-14 14:45:38,464 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:45:38,514 - src.models.baseline - INFO - Selected 50 features out of 212 | module=src.models.baseline
+2025-07-14 14:45:38,521 - src.models.baseline - INFO - Fitted ridge regression with alpha=1.0 | module=src.models.baseline
+2025-07-14 14:45:38,522 - src.models.baseline - INFO - Training completed. R² score: 0.5836 | module=src.models.baseline
+2025-07-14 14:45:38,523 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:45:38,565 - src.models.baseline - INFO - Training baseline model with 100 samples | module=src.models.baseline
+2025-07-14 14:45:38,566 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:45:38,618 - src.models.baseline - INFO - Selected 50 features out of 212 | module=src.models.baseline
+2025-07-14 14:45:38,625 - src.models.baseline - INFO - Fitted ridge regression with alpha=1.0 | module=src.models.baseline
+2025-07-14 14:45:38,627 - src.models.baseline - INFO - Training completed. R² score: 0.5836 | module=src.models.baseline
+2025-07-14 14:45:38,627 - src.models.baseline - INFO - Training baseline model with 100 samples | module=src.models.baseline
+2025-07-14 14:45:38,627 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:45:38,680 - src.models.baseline - INFO - Selected 50 features out of 212 | module=src.models.baseline
+2025-07-14 14:45:38,687 - src.models.baseline - INFO - Fitted lasso regression with alpha=0.1 | module=src.models.baseline
+2025-07-14 14:45:38,688 - src.models.baseline - INFO - Training completed. R² score: 0.0000 | module=src.models.baseline
+2025-07-14 14:45:38,688 - src.models.baseline - INFO - Training baseline model with 100 samples | module=src.models.baseline
+2025-07-14 14:45:38,688 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:45:38,736 - src.models.baseline - INFO - Selected 50 features out of 212 | module=src.models.baseline
+2025-07-14 14:45:38,743 - src.models.baseline - INFO - Fitted elastic regression with alpha=0.1 | module=src.models.baseline
+2025-07-14 14:45:38,745 - src.models.baseline - INFO - Training completed. R² score: 0.0000 | module=src.models.baseline
+2025-07-14 14:45:38,746 - src.models.baseline - INFO - Training baseline model with 150 samples | module=src.models.baseline
+2025-07-14 14:45:38,747 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:45:38,801 - src.models.baseline - INFO - Selected 50 features out of 211 | module=src.models.baseline
+2025-07-14 14:45:38,826 - src.models.baseline - INFO - Fitted Random Forest with 10 estimators | module=src.models.baseline
+2025-07-14 14:45:38,841 - src.models.baseline - INFO - Training completed. R² score: 0.6807 | module=src.models.baseline
+2025-07-14 14:45:38,891 - src.models.baseline - INFO - Training baseline model with 150 samples | module=src.models.baseline
+2025-07-14 14:45:38,891 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:45:38,947 - src.models.baseline - INFO - Selected 50 features out of 211 | module=src.models.baseline
+2025-07-14 14:45:38,971 - src.models.baseline - INFO - Fitted Random Forest with 10 estimators | module=src.models.baseline
+2025-07-14 14:45:38,987 - src.models.baseline - INFO - Training completed. R² score: 0.6807 | module=src.models.baseline
+2025-07-14 14:45:38,987 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:45:39,047 - src.models.baseline - INFO - Training baseline model with 150 samples | module=src.models.baseline
+2025-07-14 14:45:39,047 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:45:39,101 - src.models.baseline - INFO - Selected 50 features out of 211 | module=src.models.baseline
+2025-07-14 14:45:39,107 - src.models.baseline - INFO - Performing hyperparameter tuning with grid search | module=src.models.baseline
+2025-07-14 14:45:43,123 - src.models.baseline - INFO - Best parameters: {'max_depth': 5, 'max_features': 0.3, 'min_samples_leaf': 4, 'min_samples_split': 10, 'n_estimators': 50} | module=src.models.baseline
+2025-07-14 14:45:43,123 - src.models.baseline - INFO - Best CV score: -0.0006 | module=src.models.baseline
+2025-07-14 14:45:43,127 - src.models.baseline - INFO - Training completed. R² score: 0.6612 | module=src.models.baseline
+2025-07-14 14:45:43,129 - src.models.baseline - INFO - Training baseline model with 200 samples | module=src.models.baseline
+2025-07-14 14:45:43,130 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:45:43,194 - src.models.baseline - INFO - Selected 50 features out of 211 | module=src.models.baseline
+2025-07-14 14:45:43,491 - src.models.baseline - INFO - Fitted ensemble model with Linear Regression, Random Forest, and Gradient Boosting | module=src.models.baseline
+2025-07-14 14:45:43,511 - src.models.baseline - INFO - Training completed. R² score: 0.8404 | module=src.models.baseline
+2025-07-14 14:45:43,512 - src.models.baseline - INFO - Training baseline model with 200 samples | module=src.models.baseline
+2025-07-14 14:45:43,512 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:45:43,577 - src.models.baseline - INFO - Selected 50 features out of 211 | module=src.models.baseline
+2025-07-14 14:45:43,802 - src.models.baseline - INFO - Fitted ensemble model with Linear Regression, Random Forest, and Gradient Boosting | module=src.models.baseline
+2025-07-14 14:45:43,821 - src.models.baseline - INFO - Training completed. R² score: 0.8404 | module=src.models.baseline
+2025-07-14 14:45:43,821 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:45:43,882 - src.models.baseline - INFO - Training baseline model with 200 samples | module=src.models.baseline
+2025-07-14 14:45:43,882 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:45:43,950 - src.models.baseline - INFO - Selected 50 features out of 211 | module=src.models.baseline
+2025-07-14 14:45:44,178 - src.models.baseline - INFO - Fitted ensemble model with Linear Regression, Random Forest, and Gradient Boosting | module=src.models.baseline
+2025-07-14 14:45:44,197 - src.models.baseline - INFO - Training completed. R² score: 0.8404 | module=src.models.baseline
+2025-07-14 14:45:44,198 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:45:44,257 - src.models.baseline - INFO - Training baseline model with 100 samples | module=src.models.baseline
+2025-07-14 14:45:44,257 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:45:44,306 - src.models.baseline - INFO - Selected 50 features out of 212 | module=src.models.baseline
+2025-07-14 14:45:44,314 - src.models.baseline - INFO - Fitted ridge regression with alpha=1.0 | module=src.models.baseline
+2025-07-14 14:45:44,315 - src.models.baseline - INFO - Training completed. R² score: 0.6037 | module=src.models.baseline
+2025-07-14 14:45:44,317 - src.models.baseline - INFO - Model saved to C:\Users\omkar\AppData\Local\Temp\tmpkm698bz9\test_model.joblib | module=src.models.baseline
+2025-07-14 14:45:44,318 - src.models.baseline - INFO - Model loaded from C:\Users\omkar\AppData\Local\Temp\tmpkm698bz9\test_model.joblib | module=src.models.baseline
+2025-07-14 14:45:44,318 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:45:44,363 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:45:44,407 - src.models.baseline - INFO - Training baseline model with 100 samples | module=src.models.baseline
+2025-07-14 14:45:44,407 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:45:44,468 - src.models.baseline - INFO - Selected 50 features out of 208 | module=src.models.baseline
+2025-07-14 14:45:44,475 - src.models.baseline - INFO - Fitted ridge regression with alpha=1.0 | module=src.models.baseline
+2025-07-14 14:45:44,476 - src.models.baseline - INFO - Training completed. R² score: 0.6387 | module=src.models.baseline
+2025-07-14 14:45:44,476 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:45:44,514 - src.models.baseline - INFO - Adding technical indicators | module=src.models.baseline
+2025-07-14 14:46:02,741 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-14 14:46:02,742 - system - INFO - Python version: 3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)] | module=system
+2025-07-14 14:46:02,742 - system - INFO - Working directory: D:\StockSage.AI | module=system
+2025-07-14 14:46:02,742 - system - INFO - Log level: INFO | module=system
+2025-07-14 14:46:02,742 - system - INFO - Environment: development | module=system
+2025-07-14 14:46:10,306 - src.app.api - WARNING - Model AAPL_baseline_ensemble not found, using AAPL_ensemble | module=src.app.api
+2025-07-14 14:46:10,307 - src.app.api - WARNING - No model available for AAPL, using simple prediction | module=src.app.api
+2025-07-14 14:46:12,437 - src.app.api - WARNING - Model AAPL_baseline_ensemble not found, using AAPL_ensemble | module=src.app.api
+2025-07-14 14:46:30,654 - src.app.api - WARNING - Model AAPL_baseline_ensemble not found, using AAPL_ensemble | module=src.app.api
+2025-07-14 14:46:30,654 - src.app.api - WARNING - No model available for AAPL, using simple prediction | module=src.app.api
+2025-07-14 14:46:32,737 - src.app.api - WARNING - Model AAPL_baseline_ensemble not found, using AAPL_ensemble | module=src.app.api
+2025-07-14 14:48:12,813 - src.app.api - INFO - Shutting down StockSage.AI API | module=src.app.api

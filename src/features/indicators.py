@@ -567,6 +567,13 @@ def add_all_technical_indicators(
         if high_col in df.columns and low_col in df.columns:
             df = _calculate_cci(df, high_col, low_col, price_col)
     
+    # Clean up NaN values that might have been created
+    # Replace infinite values with NaN first
+    df = df.replace([np.inf, -np.inf], np.nan)
+    
+    # Fill NaN values with forward fill, then backward fill, then 0
+    df = df.fillna(method='ffill').fillna(method='bfill').fillna(0)
+    
     # Summary statistics
     technical_cols = [col for col in df.columns if any(indicator in col for indicator in 
                      ['SMA', 'EMA', 'RSI', 'MACD', 'BB', 'Volume', 'OBV', 'ROC', 'Momentum'])]

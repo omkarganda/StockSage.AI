@@ -93,7 +93,7 @@ class TestPredictionEndpoint:
     
     @patch('src.app.api.get_stock_data')
     @patch('src.app.api.get_model_for_symbol')
-    async def test_predict_success(self, mock_get_model, mock_get_data, client):
+    def test_predict_success(self, mock_get_model, mock_get_data, client):
         """Test successful prediction"""
         # Mock stock data
         mock_data = pd.DataFrame({
@@ -154,7 +154,7 @@ class TestPredictionEndpoint:
         assert response.status_code == 422
     
     @patch('src.app.api.get_stock_data')
-    async def test_predict_no_data(self, mock_get_data, client):
+    def test_predict_no_data(self, mock_get_data, client):
         """Test prediction when no stock data available"""
         # Mock empty data
         mock_get_data.return_value = pd.DataFrame()
@@ -171,7 +171,7 @@ class TestPredictionEndpoint:
     
     @patch('src.app.api.get_stock_data')
     @patch('src.app.api.get_model_for_symbol')
-    async def test_predict_fallback(self, mock_get_model, mock_get_data, client):
+    def test_predict_fallback(self, mock_get_model, mock_get_data, client):
         """Test prediction fallback when model not available"""
         # Mock stock data
         mock_data = pd.DataFrame({
@@ -197,7 +197,7 @@ class TestBatchPredictionEndpoint:
     """Test batch prediction endpoint"""
     
     @patch('src.app.api.predict_single')
-    async def test_batch_predict_success(self, mock_predict, client):
+    def test_batch_predict_success(self, mock_predict, client):
         """Test successful batch prediction"""
         # Mock individual predictions
         async def mock_prediction(symbol, horizon, include_confidence):
@@ -264,7 +264,7 @@ class TestBatchPredictionEndpoint:
         assert 'Maximum 50 symbols' in str(data)
     
     @patch('src.app.api.predict_single')
-    async def test_batch_predict_partial_failure(self, mock_predict, client):
+    def test_batch_predict_partial_failure(self, mock_predict, client):
         """Test batch prediction with some failures"""
         # Mock predictions with one failure
         async def mock_prediction(symbol, horizon, include_confidence):
@@ -397,7 +397,7 @@ class TestErrorHandling:
         assert response.status_code in [422, 400]
     
     @patch('src.app.api.get_stock_data')
-    async def test_internal_server_error(self, mock_get_data, client):
+    def test_internal_server_error(self, mock_get_data, client):
         """Test internal server error handling"""
         # Mock unexpected error
         mock_get_data.side_effect = Exception("Unexpected error")
@@ -447,9 +447,9 @@ class TestRequestValidation:
         # String instead of int for horizon
         response = client.get("/predict/AAPL?horizon=abc")
         assert response.status_code == 422
-        
-        # String instead of bool
-        response = client.get("/predict/AAPL?include_confidence=yes")
+
+        # Invalid boolean value (FastAPI accepts 'yes' as True, so use an invalid value)
+        response = client.get("/predict/AAPL?include_confidence=invalid_bool")
         assert response.status_code == 422
 
 

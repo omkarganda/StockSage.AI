@@ -301,8 +301,15 @@ class BaselineModel:
         X, selected_features = self._select_features(X, y)
         self.feature_names = selected_features
         
-        # Handle missing values
-        X = X.fillna(X.median())
+        # Handle missing values more robustly
+        # First, fill with forward fill, then backward fill, then median
+        X = X.fillna(method='ffill').fillna(method='bfill').fillna(X.median())
+        # Drop any remaining rows with NaN values
+        nan_rows = X.isnull().any(axis=1)
+        if nan_rows.any():
+            logger.warning(f"Dropping {nan_rows.sum()} rows with remaining NaN values before model fitting.")
+            X = X[~nan_rows]
+            y = y.loc[X.index]
         
         # Scale features
         if self.scaling_method != 'none':
@@ -367,8 +374,14 @@ class BaselineModel:
                     X[feature] = 0
             X = X[self.feature_names]
         
-        # Handle missing values
-        X = X.fillna(X.median() if len(X) > 0 else 0)
+        # Handle missing values more robustly
+        # First, fill with forward fill, then backward fill, then median
+        X = X.fillna(method='ffill').fillna(method='bfill').fillna(X.median() if len(X) > 0 else 0)
+        # Drop any remaining rows with NaN values
+        nan_rows = X.isnull().any(axis=1)
+        if nan_rows.any():
+            logger.warning(f"Dropping {nan_rows.sum()} rows with remaining NaN values before prediction.")
+            X = X[~nan_rows]
         
         # Scale features
         if self.scaler is not None:
@@ -571,8 +584,14 @@ class LinearRegressionBaseline(BaselineModel):
                     X[feature] = 0
             X = X[self.feature_names]
         
-        # Handle missing values
-        X = X.fillna(X.median() if len(X) > 0 else 0)
+        # Handle missing values more robustly
+        # First, fill with forward fill, then backward fill, then median
+        X = X.fillna(method='ffill').fillna(method='bfill').fillna(X.median() if len(X) > 0 else 0)
+        # Drop any remaining rows with NaN values
+        nan_rows = X.isnull().any(axis=1)
+        if nan_rows.any():
+            logger.warning(f"Dropping {nan_rows.sum()} rows with remaining NaN values before prediction.")
+            X = X[~nan_rows]
         
         # Scale features
         if self.scaler is not None:

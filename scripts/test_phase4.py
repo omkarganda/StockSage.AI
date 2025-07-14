@@ -97,9 +97,8 @@ def test_models():
         
         # Test model operations
         model.fit(data)
-        predictions = model.predict(data.tail(10))
-        
-        if len(predictions) == 10:
+        predictions = model.predict(data.tail(30))
+        if len(predictions) == 30:
             print("✅ Model training and prediction successful")
             return True
         else:
@@ -116,7 +115,7 @@ def test_data_pipeline():
     print("\nTesting data pipeline...")
     
     try:
-        from src.features.indicators import add_moving_averages
+        from src.features.indicators import calculate_moving_averages
         import pandas as pd
         import numpy as np
         
@@ -127,9 +126,9 @@ def test_data_pipeline():
         })
         
         # Test feature engineering
-        result = add_moving_averages(data)
+        result = calculate_moving_averages(data)
         
-        if 'MA_10' in result.columns:
+        if 'SMA_10' in result.columns:
             print("✅ Feature engineering successful")
             return True
         else:
