@@ -33,6 +33,8 @@ import logging
 # Import our models
 from src.models.baseline import create_baseline_models
 from src.models.neuralforecast_model import create_neural_forecasting_models
+# Advanced hybrid DL models (LSTM + Transformer attention)
+from src.models.lstm_attention_model import create_deep_learning_models
 from src.models.sktime_model import create_statistical_models
 
 # Import data processing
@@ -238,6 +240,18 @@ class ModelTrainer:
         except Exception as e:
             logger.error(f"Error creating statistical models: {e}")
         
+        # Deep learning hybrid models (if not quick test)
+        if not self.quick_test:
+            try:
+                dl_models = create_deep_learning_models(
+                    context_length=60,
+                    horizon=self.forecast_horizon,
+                )
+                models.update({f"dl_{k}": v for k, v in dl_models.items()})
+                logger.info(f"Created {len(dl_models)} deep learning models")
+            except Exception as e:
+                logger.warning(f"Error creating deep learning models: {e}")
+
         logger.info(f"Total models created: {len(models)}")
         return models
     
