@@ -173,9 +173,9 @@ def merge_market_economic_data(
         logger.info(f"Applying fill method: {fill_method}")
         with logger.timer(f"fill_missing_{fill_method}"):
             if fill_method == 'ffill':
-                merged_df = merged_df.ffill()
+                merged_df = merged_df.fillna(method='ffill')
             elif fill_method == 'bfill':
-                merged_df = merged_df.bfill()
+                merged_df = merged_df.fillna(method='bfill')
             elif fill_method == 'interpolate':
                 numeric_cols = merged_df.select_dtypes(include=[np.number]).columns
                 merged_df[numeric_cols] = merged_df[numeric_cols].interpolate(method='linear')

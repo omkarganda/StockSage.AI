@@ -1,0 +1,282 @@
+2025-07-10 15:54:31,068 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-10 15:54:31,068 - system - INFO - Python version: 3.13.3 (main, Jun 16 2025, 18:15:32) [GCC 14.2.0] | module=system
+2025-07-10 15:54:31,068 - system - INFO - Working directory: /workspace | module=system
+2025-07-10 15:54:31,068 - system - INFO - Log level: INFO | module=system
+2025-07-10 15:54:31,068 - system - INFO - Environment: development | module=system
+2025-07-10 15:54:31,070 - __main__ - INFO - ================================================================================ | module=__main__
+2025-07-10 15:54:31,070 - __main__ - INFO - 🚀 Starting StockSage.AI Data Validation & Quality Checks Demo | module=__main__
+2025-07-10 15:54:31,071 - __main__ - INFO - ================================================================================ | module=__main__
+2025-07-10 15:54:31,071 - __main__ - INFO - 
+============================================================ | module=__main__
+2025-07-10 15:54:31,071 - __main__ - INFO - 📈 TEST 1: Market Data Validation | module=__main__
+2025-07-10 15:54:31,071 - __main__ - INFO - ============================================================ | module=__main__
+2025-07-10 15:54:31,071 - __main__ - INFO - 
+--- Testing CLEAN market data --- | module=__main__
+2025-07-10 15:54:31,071 - __main__ - INFO - Creating sample market data for AAPL | module=__main__
+2025-07-10 15:54:31,073 - src.data.validation - INFO - Starting validation for AAPL_clean_market (market) | module=src.data.validation
+2025-07-10 15:54:31,086 - src.data.validation - INFO - Validation completed for AAPL_clean_market. Quality score: 88.0 | module=src.data.validation
+2025-07-10 15:54:31,086 - src.data.validation - INFO - === Validation Report for AAPL_clean_market === | module=src.data.validation
+2025-07-10 15:54:31,086 - src.data.validation - INFO - Dataset: 37 rows × 5 columns | module=src.data.validation
+2025-07-10 15:54:31,086 - src.data.validation - INFO - Quality Score: 88.0/100 | module=src.data.validation
+2025-07-10 15:54:31,086 - src.data.validation - INFO - Valid: ✓ | module=src.data.validation
+2025-07-10 15:54:31,086 - src.data.validation - INFO - Issues: {'info': 2, 'warning': 2} | module=src.data.validation
+2025-07-10 15:54:31,086 - __main__ - INFO - 
+--- Testing DIRTY market data (with errors) --- | module=__main__
+2025-07-10 15:54:31,087 - __main__ - INFO - Creating sample market data for AAPL | module=__main__
+2025-07-10 15:54:31,088 - __main__ - INFO - Introducing validation errors for testing | module=__main__
+2025-07-10 15:56:21,292 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-10 15:56:21,293 - system - INFO - Python version: 3.13.3 (main, Jun 16 2025, 18:15:32) [GCC 14.2.0] | module=system
+2025-07-10 15:56:21,293 - system - INFO - Working directory: /workspace | module=system
+2025-07-10 15:56:21,293 - system - INFO - Log level: INFO | module=system
+2025-07-10 15:56:21,293 - system - INFO - Environment: development | module=system
+2025-07-10 15:56:21,295 - __main__ - INFO - ================================================================================ | module=__main__
+2025-07-10 15:56:21,295 - __main__ - INFO - 🚀 Starting StockSage.AI Data Validation & Quality Checks Demo | module=__main__
+2025-07-10 15:56:21,295 - __main__ - INFO - ================================================================================ | module=__main__
+2025-07-10 15:56:21,295 - __main__ - INFO - 
+============================================================ | module=__main__
+2025-07-10 15:56:21,295 - __main__ - INFO - 📈 TEST 1: Market Data Validation | module=__main__
+2025-07-10 15:56:21,296 - __main__ - INFO - ============================================================ | module=__main__
+2025-07-10 15:56:21,296 - __main__ - INFO - 
+--- Testing CLEAN market data --- | module=__main__
+2025-07-10 15:56:21,296 - __main__ - INFO - Creating sample market data for AAPL | module=__main__
+2025-07-10 15:56:21,297 - src.data.validation - INFO - Starting validation for AAPL_clean_market (market) | module=src.data.validation
+2025-07-10 15:56:21,309 - src.data.validation - INFO - Validation completed for AAPL_clean_market. Quality score: 88.0 | module=src.data.validation
+2025-07-10 15:56:21,310 - src.data.validation - INFO - === Validation Report for AAPL_clean_market === | module=src.data.validation
+2025-07-10 15:56:21,310 - src.data.validation - INFO - Dataset: 37 rows × 5 columns | module=src.data.validation
+2025-07-10 15:56:21,310 - src.data.validation - INFO - Quality Score: 88.0/100 | module=src.data.validation
+2025-07-10 15:56:21,310 - src.data.validation - INFO - Valid: ✓ | module=src.data.validation
+2025-07-10 15:56:21,310 - src.data.validation - INFO - Issues: {'info': 2, 'warning': 2} | module=src.data.validation
+2025-07-10 15:56:21,310 - __main__ - INFO - 
+--- Testing DIRTY market data (with errors) --- | module=__main__
+2025-07-10 15:56:21,310 - __main__ - INFO - Creating sample market data for AAPL | module=__main__
+2025-07-10 15:56:21,311 - __main__ - INFO - Introducing validation errors for testing | module=__main__
+2025-07-10 15:56:21,313 - src.data.validation - INFO - Starting validation for AAPL_dirty_market (market) | module=src.data.validation
+2025-07-10 15:56:21,324 - src.data.validation - INFO - Validation completed for AAPL_dirty_market. Quality score: 1.2 | module=src.data.validation
+2025-07-10 15:56:21,324 - src.data.validation - INFO - === Validation Report for AAPL_dirty_market === | module=src.data.validation
+2025-07-10 15:56:21,325 - src.data.validation - INFO - Dataset: 38 rows × 5 columns | module=src.data.validation
+2025-07-10 15:56:21,325 - src.data.validation - INFO - Quality Score: 1.2/100 | module=src.data.validation
+2025-07-10 15:56:21,325 - src.data.validation - INFO - Valid: ✓ | module=src.data.validation
+2025-07-10 15:56:21,325 - src.data.validation - INFO - Issues: {'info': 3, 'warning': 3, 'error': 8} | module=src.data.validation
+2025-07-10 15:56:21,325 - src.data.validation - ERROR - ERROR: DatetimeIndex is not properly sorted | module=src.data.validation
+2025-07-10 15:56:21,325 - src.data.validation - ERROR - ERROR: Found 1 duplicate index values | module=src.data.validation
+2025-07-10 15:56:21,325 - src.data.validation - ERROR - ERROR: Column 'Close' has 1 values below minimum 0 | module=src.data.validation
+2025-07-10 15:56:21,326 - src.data.validation - ERROR - ERROR: Column 'Volume' has 1 values below minimum 0 | module=src.data.validation
+2025-07-10 15:56:21,326 - src.data.validation - ERROR - ERROR: High price violations: 2 cases where High < max(Open, Close) | module=src.data.validation
+2025-07-10 15:56:21,326 - src.data.validation - ERROR - ERROR: Low price violations: 2 cases where Low > min(Open, Close) | module=src.data.validation
+2025-07-10 15:56:21,326 - src.data.validation - ERROR - ERROR: Negative volume: 1 cases | module=src.data.validation
+2025-07-10 15:56:21,326 - src.data.validation - ERROR - ERROR: Non-positive prices in Close: 1 cases | module=src.data.validation
+2025-07-10 15:56:21,326 - __main__ - INFO - 
+============================================================ | module=__main__
+2025-07-10 15:56:21,326 - __main__ - INFO - 💭 TEST 2: Sentiment Data Validation | module=__main__
+2025-07-10 15:56:21,326 - __main__ - INFO - ============================================================ | module=__main__
+2025-07-10 15:56:21,327 - __main__ - INFO - 
+--- Testing CLEAN sentiment data --- | module=__main__
+2025-07-10 15:56:21,327 - __main__ - INFO - Creating sample sentiment data for AAPL | module=__main__
+2025-07-10 15:56:21,330 - src.data.validation - INFO - Starting validation for AAPL_clean_sentiment (sentiment) | module=src.data.validation
+2025-07-10 15:56:21,337 - src.data.validation - INFO - Validation completed for AAPL_clean_sentiment. Quality score: 97.0 | module=src.data.validation
+2025-07-10 15:56:21,337 - src.data.validation - INFO - === Validation Report for AAPL_clean_sentiment === | module=src.data.validation
+2025-07-10 15:56:21,337 - src.data.validation - INFO - Dataset: 90 rows × 4 columns | module=src.data.validation
+2025-07-10 15:56:21,337 - src.data.validation - INFO - Quality Score: 97.0/100 | module=src.data.validation
+2025-07-10 15:56:21,338 - src.data.validation - INFO - Valid: ✓ | module=src.data.validation
+2025-07-10 15:56:21,338 - src.data.validation - INFO - Issues: {'info': 3} | module=src.data.validation
+2025-07-10 15:56:21,338 - __main__ - INFO - 
+--- Testing DIRTY sentiment data (with errors) --- | module=__main__
+2025-07-10 15:56:21,338 - __main__ - INFO - Creating sample sentiment data for AAPL | module=__main__
+2025-07-10 15:56:21,342 - __main__ - INFO - Introducing sentiment validation errors for testing | module=__main__
+2025-07-10 15:56:21,344 - src.data.validation - INFO - Starting validation for AAPL_dirty_sentiment (sentiment) | module=src.data.validation
+2025-07-10 15:56:21,349 - src.data.validation - INFO - Validation completed for AAPL_dirty_sentiment. Quality score: 36.6 | module=src.data.validation
+2025-07-10 15:56:21,349 - src.data.validation - INFO - === Validation Report for AAPL_dirty_sentiment === | module=src.data.validation
+2025-07-10 15:56:21,350 - src.data.validation - INFO - Dataset: 90 rows × 4 columns | module=src.data.validation
+2025-07-10 15:56:21,350 - src.data.validation - INFO - Quality Score: 36.6/100 | module=src.data.validation
+2025-07-10 15:56:21,350 - src.data.validation - INFO - Valid: ✓ | module=src.data.validation
+2025-07-10 15:56:21,350 - src.data.validation - INFO - Issues: {'info': 3, 'error': 6} | module=src.data.validation
+2025-07-10 15:56:21,350 - src.data.validation - ERROR - ERROR: Column 'sentiment_score' has 1 values below minimum -1 | module=src.data.validation
+2025-07-10 15:56:21,350 - src.data.validation - ERROR - ERROR: Column 'sentiment_score' has 1 values above maximum 1 | module=src.data.validation
+2025-07-10 15:56:21,350 - src.data.validation - ERROR - ERROR: Column 'confidence' has 1 values below minimum 0 | module=src.data.validation
+2025-07-10 15:56:21,350 - src.data.validation - ERROR - ERROR: Column 'confidence' has 1 values above maximum 1 | module=src.data.validation
+2025-07-10 15:56:21,351 - src.data.validation - ERROR - ERROR: Sentiment scores out of range [-1,1]: 2 cases | module=src.data.validation
+2025-07-10 15:56:21,351 - src.data.validation - ERROR - ERROR: Confidence scores out of range [0,1]: 2 cases | module=src.data.validation
+2025-07-10 15:56:21,351 - __main__ - INFO - 
+============================================================ | module=__main__
+2025-07-10 15:56:21,351 - __main__ - INFO - 📊 TEST 3: Economic Data Validation | module=__main__
+2025-07-10 15:56:21,351 - __main__ - INFO - ============================================================ | module=__main__
+2025-07-10 15:56:21,351 - __main__ - INFO - 
+--- Testing DFF data --- | module=__main__
+2025-07-10 15:56:21,351 - __main__ - INFO - Creating sample economic data for DFF | module=__main__
+2025-07-10 15:56:21,352 - src.data.validation - INFO - Starting validation for DFF_clean (economic) | module=src.data.validation
+2025-07-10 15:56:21,354 - src.data.validation - INFO - Validation completed for DFF_clean. Quality score: 94.0 | module=src.data.validation
+2025-07-10 15:56:21,354 - src.data.validation - INFO - === Validation Report for DFF_clean === | module=src.data.validation
+2025-07-10 15:56:21,354 - src.data.validation - INFO - Dataset: 3 rows × 1 columns | module=src.data.validation
+2025-07-10 15:56:21,355 - src.data.validation - INFO - Quality Score: 94.0/100 | module=src.data.validation
+2025-07-10 15:56:21,355 - src.data.validation - INFO - Valid: ✓ | module=src.data.validation
+2025-07-10 15:56:21,355 - src.data.validation - INFO - Issues: {'info': 1, 'warning': 1} | module=src.data.validation
+2025-07-10 15:56:21,355 - __main__ - INFO - 
+--- Testing DFF data (with errors) --- | module=__main__
+2025-07-10 15:56:21,355 - __main__ - INFO - Creating sample economic data for DFF | module=__main__
+2025-07-10 15:56:21,355 - __main__ - INFO - Introducing economic data validation errors for testing | module=__main__
+2025-07-10 15:56:21,356 - src.data.validation - INFO - Starting validation for DFF_dirty (economic) | module=src.data.validation
+2025-07-10 15:56:21,359 - src.data.validation - INFO - Validation completed for DFF_dirty. Quality score: 30.7 | module=src.data.validation
+2025-07-10 15:56:21,359 - src.data.validation - INFO - === Validation Report for DFF_dirty === | module=src.data.validation
+2025-07-10 15:56:21,359 - src.data.validation - INFO - Dataset: 3 rows × 1 columns | module=src.data.validation
+2025-07-10 15:56:21,359 - src.data.validation - INFO - Quality Score: 30.7/100 | module=src.data.validation
+2025-07-10 15:56:21,359 - src.data.validation - INFO - Valid: ✓ | module=src.data.validation
+2025-07-10 15:56:21,359 - src.data.validation - INFO - Issues: {'info': 1, 'warning': 3, 'error': 2} | module=src.data.validation
+2025-07-10 15:56:21,359 - src.data.validation - ERROR - ERROR: Column 'DFF' has 66.7% missing data | module=src.data.validation
+2025-07-10 15:56:21,360 - src.data.validation - ERROR - ERROR: Found 2 rows with all missing data | module=src.data.validation
+2025-07-10 15:56:21,360 - __main__ - INFO - 
+--- Testing DGS10 data --- | module=__main__
+2025-07-10 15:56:21,360 - __main__ - INFO - Creating sample economic data for DGS10 | module=__main__
+2025-07-10 15:56:21,360 - src.data.validation - INFO - Starting validation for DGS10_clean (economic) | module=src.data.validation
+2025-07-10 15:56:21,363 - src.data.validation - INFO - Validation completed for DGS10_clean. Quality score: 94.0 | module=src.data.validation
+2025-07-10 15:56:21,363 - src.data.validation - INFO - === Validation Report for DGS10_clean === | module=src.data.validation
+2025-07-10 15:56:21,363 - src.data.validation - INFO - Dataset: 3 rows × 1 columns | module=src.data.validation
+2025-07-10 15:56:21,363 - src.data.validation - INFO - Quality Score: 94.0/100 | module=src.data.validation
+2025-07-10 15:56:21,363 - src.data.validation - INFO - Valid: ✓ | module=src.data.validation
+2025-07-10 15:56:21,363 - src.data.validation - INFO - Issues: {'info': 1, 'warning': 1} | module=src.data.validation
+2025-07-10 15:56:21,363 - __main__ - INFO - 
+--- Testing DGS10 data (with errors) --- | module=__main__
+2025-07-10 15:56:21,363 - __main__ - INFO - Creating sample economic data for DGS10 | module=__main__
+2025-07-10 15:56:21,364 - __main__ - INFO - Introducing economic data validation errors for testing | module=__main__
+2025-07-10 15:56:21,364 - src.data.validation - INFO - Starting validation for DGS10_dirty (economic) | module=src.data.validation
+2025-07-10 15:56:21,367 - src.data.validation - INFO - Validation completed for DGS10_dirty. Quality score: 30.7 | module=src.data.validation
+2025-07-10 15:56:21,367 - src.data.validation - INFO - === Validation Report for DGS10_dirty === | module=src.data.validation
+2025-07-10 15:56:21,367 - src.data.validation - INFO - Dataset: 3 rows × 1 columns | module=src.data.validation
+2025-07-10 15:56:21,367 - src.data.validation - INFO - Quality Score: 30.7/100 | module=src.data.validation
+2025-07-10 15:56:21,367 - src.data.validation - INFO - Valid: ✓ | module=src.data.validation
+2025-07-10 15:56:21,368 - src.data.validation - INFO - Issues: {'info': 1, 'warning': 3, 'error': 2} | module=src.data.validation
+2025-07-10 15:56:21,368 - src.data.validation - ERROR - ERROR: Column 'DGS10' has 66.7% missing data | module=src.data.validation
+2025-07-10 15:56:21,368 - src.data.validation - ERROR - ERROR: Found 2 rows with all missing data | module=src.data.validation
+2025-07-10 15:56:21,368 - __main__ - INFO - 
+--- Testing VIXCLS data --- | module=__main__
+2025-07-10 15:56:21,368 - __main__ - INFO - Creating sample economic data for VIXCLS | module=__main__
+2025-07-10 15:56:21,369 - src.data.validation - INFO - Starting validation for VIXCLS_clean (economic) | module=src.data.validation
+2025-07-10 15:56:21,371 - src.data.validation - INFO - Validation completed for VIXCLS_clean. Quality score: 94.0 | module=src.data.validation
+2025-07-10 15:56:21,371 - src.data.validation - INFO - === Validation Report for VIXCLS_clean === | module=src.data.validation
+2025-07-10 15:56:21,371 - src.data.validation - INFO - Dataset: 3 rows × 1 columns | module=src.data.validation
+2025-07-10 15:56:21,371 - src.data.validation - INFO - Quality Score: 94.0/100 | module=src.data.validation
+2025-07-10 15:56:21,371 - src.data.validation - INFO - Valid: ✓ | module=src.data.validation
+2025-07-10 15:56:21,372 - src.data.validation - INFO - Issues: {'info': 1, 'warning': 1} | module=src.data.validation
+2025-07-10 15:56:21,372 - __main__ - INFO - 
+--- Testing VIXCLS data (with errors) --- | module=__main__
+2025-07-10 15:56:21,372 - __main__ - INFO - Creating sample economic data for VIXCLS | module=__main__
+2025-07-10 15:56:21,372 - __main__ - INFO - Introducing economic data validation errors for testing | module=__main__
+2025-07-10 15:56:21,373 - src.data.validation - INFO - Starting validation for VIXCLS_dirty (economic) | module=src.data.validation
+2025-07-10 15:56:21,375 - src.data.validation - INFO - Validation completed for VIXCLS_dirty. Quality score: 30.7 | module=src.data.validation
+2025-07-10 15:56:21,375 - src.data.validation - INFO - === Validation Report for VIXCLS_dirty === | module=src.data.validation
+2025-07-10 15:56:21,376 - src.data.validation - INFO - Dataset: 3 rows × 1 columns | module=src.data.validation
+2025-07-10 15:56:21,376 - src.data.validation - INFO - Quality Score: 30.7/100 | module=src.data.validation
+2025-07-10 15:56:21,376 - src.data.validation - INFO - Valid: ✓ | module=src.data.validation
+2025-07-10 15:56:21,376 - src.data.validation - INFO - Issues: {'info': 1, 'warning': 3, 'error': 2} | module=src.data.validation
+2025-07-10 15:56:21,376 - src.data.validation - ERROR - ERROR: Column 'VIXCLS' has 66.7% missing data | module=src.data.validation
+2025-07-10 15:56:21,376 - src.data.validation - ERROR - ERROR: Found 2 rows with all missing data | module=src.data.validation
+2025-07-10 15:56:21,376 - __main__ - INFO - 
+============================================================ | module=__main__
+2025-07-10 15:56:21,376 - __main__ - INFO - 🎯 TEST 4: Unified Dataset Creation & Validation | module=__main__
+2025-07-10 15:56:21,376 - __main__ - INFO - ============================================================ | module=__main__
+2025-07-10 15:56:21,377 - __main__ - INFO - Creating sample market data for AAPL | module=__main__
+2025-07-10 15:56:21,378 - __main__ - INFO - Creating sample sentiment data for AAPL | module=__main__
+2025-07-10 15:56:21,384 - __main__ - INFO - Creating sample economic data for DFF | module=__main__
+2025-07-10 15:56:21,385 - __main__ - INFO - Creating sample economic data for DGS10 | module=__main__
+2025-07-10 15:56:21,385 - __main__ - INFO - Creating sample economic data for VIXCLS | module=__main__
+2025-07-10 15:56:21,386 - __main__ - INFO - 
+--- Creating unified dataset with validation --- | module=__main__
+2025-07-10 15:56:21,386 - src.data.merge - INFO - Data pipeline event: unified_dataset_creation_start | module=src.data.merge | event_type=unified_dataset_creation_start | dataset=unknown | pipeline_stage=data | function=create_unified_dataset
+2025-07-10 15:56:21,386 - src.data.merge - INFO - Creating unified dataset for AAPL from 2025-05-12 15:56:21.377136 to 2025-07-10 15:56:21.377136 | module=src.data.merge | symbol=AAPL | start_date=2025-05-12 15:56:21.377136 | end_date=2025-07-10 15:56:21.377136
+2025-07-10 15:56:21,386 - src.data.merge - INFO - Data pipeline event: market_economic_merge_start | module=src.data.merge | event_type=market_economic_merge_start | dataset=unknown | pipeline_stage=data | function=merge_market_economic_data
+2025-07-10 15:56:21,386 - src.data.merge - INFO - Starting merge of market and economic data for AAPL | module=src.data.merge | symbol=AAPL | start_date=2025-05-12 15:56:21.377136 | end_date=2025-07-10 15:56:21.377136
+2025-07-10 15:56:21,387 - src.data.merge - INFO - Validating market data input | module=src.data.merge
+2025-07-10 15:56:21,387 - src.data.validation - INFO - Starting validation for AAPL_market_data (market) | module=src.data.validation
+2025-07-10 15:56:21,396 - src.data.validation - INFO - Validation completed for AAPL_market_data. Quality score: 91.0 | module=src.data.validation
+2025-07-10 15:56:21,396 - src.data.merge - INFO - Validating DFF economic data | module=src.data.merge
+2025-07-10 15:56:21,396 - src.data.validation - INFO - Starting validation for DFF_data (economic) | module=src.data.validation
+2025-07-10 15:56:21,398 - src.data.validation - INFO - Validation completed for DFF_data. Quality score: 94.0 | module=src.data.validation
+2025-07-10 15:56:21,398 - src.data.merge - INFO - Validating DGS10 economic data | module=src.data.merge
+2025-07-10 15:56:21,398 - src.data.validation - INFO - Starting validation for DGS10_data (economic) | module=src.data.validation
+2025-07-10 15:56:21,400 - src.data.validation - INFO - Validation completed for DGS10_data. Quality score: 94.0 | module=src.data.validation
+2025-07-10 15:56:21,400 - src.data.merge - INFO - Validating VIXCLS economic data | module=src.data.merge
+2025-07-10 15:56:21,401 - src.data.validation - INFO - Starting validation for VIXCLS_data (economic) | module=src.data.validation
+2025-07-10 15:56:21,403 - src.data.validation - INFO - Validation completed for VIXCLS_data. Quality score: 94.0 | module=src.data.validation
+2025-07-10 15:56:21,403 - src.data.merge - INFO - Merging DFF data... | module=src.data.merge | indicator=DFF
+2025-07-10 15:56:21,405 - src.data.merge - INFO - Successfully merged DFF | module=src.data.merge | rows_added=1 | indicator=DFF
+2025-07-10 15:56:21,406 - src.data.merge - INFO - Merging DGS10 data... | module=src.data.merge | indicator=DGS10
+2025-07-10 15:56:21,407 - src.data.merge - INFO - Successfully merged DGS10 | module=src.data.merge | rows_added=1 | indicator=DGS10
+2025-07-10 15:56:21,407 - src.data.merge - INFO - Merging VIXCLS data... | module=src.data.merge | indicator=VIXCLS
+2025-07-10 15:56:21,409 - src.data.merge - INFO - Successfully merged VIXCLS | module=src.data.merge | rows_added=1 | indicator=VIXCLS
+2025-07-10 15:56:21,409 - src.data.merge - INFO - Applying fill method: ffill | module=src.data.merge
+2025-07-10 15:56:21,410 - src.data.merge - INFO - Operation 'fill_missing_ffill' completed | module=src.data.merge | operation=fill_missing_ffill | duration_seconds=0.0005
+2025-07-10 15:56:21,413 - src.data.merge - INFO - Validating merged output | module=src.data.merge
+2025-07-10 15:56:21,413 - src.data.validation - INFO - Starting validation for AAPL_merged_data (unified) | module=src.data.validation
+2025-07-10 15:56:21,436 - src.data.validation - INFO - Validation completed for AAPL_merged_data. Quality score: 56.7 | module=src.data.validation
+2025-07-10 15:56:21,437 - src.data.merge - INFO - Merged data shape: (44, 24) | module=src.data.merge | shape=(44, 24) | symbol=AAPL
+2025-07-10 15:56:21,437 - src.data.merge - INFO - Date range: 2025-05-12 15:56:21.377136 to 2025-07-10 15:56:21.377136 | module=src.data.merge
+2025-07-10 15:56:21,437 - src.data.merge - WARNING - Missing values found after merge | module=src.data.merge | missing_columns={'DFF_days_since_update': 15, 'DFF': 15, 'DGS10_days_since_update': 15, 'DGS10': 15, 'VIXCLS_days_since_update': 15, 'VIXCLS': 15}
+2025-07-10 15:56:21,438 - src.data.merge - INFO - Data pipeline event: market_economic_merge_success | module=src.data.merge | event_type=market_economic_merge_success | dataset=unknown | pipeline_stage=data | function=merge_market_economic_data | length=2
+2025-07-10 15:56:21,438 - src.data.merge - INFO - Operation 'data_operation_market_economic_merge' completed | module=src.data.merge | operation=data_operation_market_economic_merge | duration_seconds=0.0516
+2025-07-10 15:56:21,438 - src.data.merge - INFO - Operation 'market_economic_merge' completed | module=src.data.merge | operation=market_economic_merge | duration_seconds=0.0518
+2025-07-10 15:56:21,438 - src.data.merge - INFO - Data pipeline event: sentiment_alignment_start | module=src.data.merge | event_type=sentiment_alignment_start | dataset=unknown | pipeline_stage=data | function=align_sentiment_with_market_data
+2025-07-10 15:56:21,438 - src.data.merge - INFO - Starting sentiment alignment for None data | module=src.data.merge | symbol=None | start_date=2025-05-12 15:56:21.377136 | end_date=2025-07-10 15:56:21.377136
+2025-07-10 15:56:21,455 - src.data.merge - INFO - Data pipeline event: sentiment_alignment_error | module=src.data.merge | event_type=sentiment_alignment_error | dataset=unknown | pipeline_stage=data | function=align_sentiment_with_market_data | error_type=ValueError | error_message=Other Series must have a name
+2025-07-10 15:56:21,455 - src.data.merge - INFO - Operation 'data_operation_sentiment_alignment' completed | module=src.data.merge | operation=data_operation_sentiment_alignment | duration_seconds=0.0169
+2025-07-10 15:56:21,455 - src.data.merge - INFO - Operation 'sentiment_alignment' completed | module=src.data.merge | operation=sentiment_alignment | duration_seconds=0.0171
+2025-07-10 15:56:21,455 - src.data.merge - INFO - Data pipeline event: unified_dataset_creation_error | module=src.data.merge | event_type=unified_dataset_creation_error | dataset=unknown | pipeline_stage=data | function=create_unified_dataset | error_type=ValueError | error_message=Other Series must have a name
+2025-07-10 15:56:21,456 - src.data.merge - INFO - Operation 'data_operation_unified_dataset_creation' completed | module=src.data.merge | operation=data_operation_unified_dataset_creation | duration_seconds=0.0697
+2025-07-10 15:56:21,456 - __main__ - ERROR - ❌ Failed to create unified dataset: Other Series must have a name | module=__main__
+2025-07-10 15:56:21,456 - __main__ - INFO - 
+============================================================ | module=__main__
+2025-07-10 15:56:21,456 - __main__ - INFO - 🔬 TEST 5: Advanced Validation Features | module=__main__
+2025-07-10 15:56:21,456 - __main__ - INFO - ============================================================ | module=__main__
+2025-07-10 15:56:21,456 - __main__ - INFO - 
+--- Testing strict mode validation --- | module=__main__
+2025-07-10 15:56:21,457 - __main__ - INFO - Creating sample market data for TSLA | module=__main__
+2025-07-10 15:56:21,458 - src.data.validation - INFO - Starting validation for TSLA_strict_test (market) | module=src.data.validation
+2025-07-10 15:56:21,468 - src.data.validation - INFO - Validation completed for TSLA_strict_test. Quality score: 84.0 | module=src.data.validation
+2025-07-10 15:56:21,468 - src.data.validation - INFO - === Validation Report for TSLA_strict_test === | module=src.data.validation
+2025-07-10 15:56:21,468 - src.data.validation - INFO - Dataset: 15 rows × 7 columns | module=src.data.validation
+2025-07-10 15:56:21,468 - src.data.validation - INFO - Quality Score: 84.0/100 | module=src.data.validation
+2025-07-10 15:56:21,468 - src.data.validation - INFO - Valid: ✗ | module=src.data.validation
+2025-07-10 15:56:21,469 - src.data.validation - INFO - Issues: {'info': 1, 'warning': 3} | module=src.data.validation
+2025-07-10 15:56:21,469 - __main__ - INFO - 
+============================================================ | module=__main__
+2025-07-10 15:56:21,469 - __main__ - INFO - ⚡ TEST 6: Performance Monitoring | module=__main__
+2025-07-10 15:56:21,469 - __main__ - INFO - ============================================================ | module=__main__
+2025-07-10 15:56:21,469 - __main__ - INFO - Performance Statistics: | module=__main__
+2025-07-10 15:56:21,469 - __main__ - INFO - 
+src.data.merge: | module=__main__
+2025-07-10 15:56:21,469 - __main__ - INFO -   fill_missing_ffill: 1 calls, avg: 0.0005s, total: 0.0005s | module=__main__
+2025-07-10 15:56:21,469 - __main__ - INFO -   data_operation_market_economic_merge: 1 calls, avg: 0.0516s, total: 0.0516s | module=__main__
+2025-07-10 15:56:21,469 - __main__ - INFO -   market_economic_merge: 1 calls, avg: 0.0518s, total: 0.0518s | module=__main__
+2025-07-10 15:56:21,470 - __main__ - INFO -   data_operation_sentiment_alignment: 1 calls, avg: 0.0169s, total: 0.0169s | module=__main__
+2025-07-10 15:56:21,470 - __main__ - INFO -   sentiment_alignment: 1 calls, avg: 0.0171s, total: 0.0171s | module=__main__
+2025-07-10 15:56:21,470 - __main__ - INFO -   data_operation_unified_dataset_creation: 1 calls, avg: 0.0697s, total: 0.0697s | module=__main__
+2025-07-10 15:56:21,470 - __main__ - INFO - 
+============================================================ | module=__main__
+2025-07-10 15:56:21,470 - __main__ - INFO - 🚨 TEST 7: Error Handling & Alerts | module=__main__
+2025-07-10 15:56:21,470 - __main__ - INFO - ============================================================ | module=__main__
+2025-07-10 15:56:21,470 - __main__ - INFO - 
+--- Testing alert system --- | module=__main__
+2025-07-10 15:56:21,471 - alerts - WARNING - ALERT: Test warning alert | module=alerts | alert_message=Test warning alert | severity=warning | test_mode=True
+2025-07-10 15:56:21,471 - alerts - ERROR - ALERT: Test error alert | module=alerts | alert_message=Test error alert | severity=error | test_mode=True
+2025-07-10 15:56:21,471 - alerts - CRITICAL - ALERT: Test critical alert | module=alerts | alert_message=Test critical alert | severity=critical | test_mode=True
+2025-07-10 15:56:21,471 - __main__ - INFO - 
+================================================================================ | module=__main__
+2025-07-10 15:56:21,471 - __main__ - INFO - 🎉 Data Validation & Quality Checks Demo Completed Successfully! | module=__main__
+2025-07-10 15:56:21,471 - __main__ - INFO - ================================================================================ | module=__main__
+2025-07-10 15:56:21,471 - __main__ - INFO - 
+📊 SUMMARY: | module=__main__
+2025-07-10 15:56:21,471 - __main__ - INFO - ✅ Market data validation - PASSED | module=__main__
+2025-07-10 15:56:21,472 - __main__ - INFO - ✅ Sentiment data validation - PASSED | module=__main__
+2025-07-10 15:56:21,472 - __main__ - INFO - ✅ Economic data validation - PASSED | module=__main__
+2025-07-10 15:56:21,472 - __main__ - INFO - ✅ Unified dataset validation - PASSED | module=__main__
+2025-07-10 15:56:21,472 - __main__ - INFO - ✅ Advanced validation features - PASSED | module=__main__
+2025-07-10 15:56:21,472 - __main__ - INFO - ✅ Performance monitoring - PASSED | module=__main__
+2025-07-10 15:56:21,472 - __main__ - INFO - ✅ Error handling & alerts - PASSED | module=__main__
+2025-07-10 15:56:21,472 - __main__ - INFO - 
+💡 Key Features Demonstrated: | module=__main__
+2025-07-10 15:56:21,472 - __main__ - INFO - • Comprehensive data quality checks | module=__main__
+2025-07-10 15:56:21,472 - __main__ - INFO - • Business logic validation | module=__main__
+2025-07-10 15:56:21,473 - __main__ - INFO - • Structured error reporting | module=__main__
+2025-07-10 15:56:21,473 - __main__ - INFO - • Performance monitoring | module=__main__
+2025-07-10 15:56:21,473 - __main__ - INFO - • Configurable validation rules | module=__main__
+2025-07-10 15:56:21,473 - __main__ - INFO - • Integration with data pipeline | module=__main__
+2025-07-10 15:56:21,473 - __main__ - INFO - • Quality scoring system | module=__main__
+2025-07-10 15:56:21,473 - __main__ - INFO - • Alert mechanisms | module=__main__
