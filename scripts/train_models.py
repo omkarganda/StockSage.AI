@@ -38,6 +38,8 @@ from src.models.sktime_model import create_statistical_models
 # Import data processing
 from src.data.merge import create_unified_dataset
 from src.features.indicators import add_all_technical_indicators
+# NEW: data cleaning & validation utilities
+from src.data.cleaning import clean_market_data
 
 # Setup logging
 logging.basicConfig(
@@ -146,11 +148,14 @@ class ModelTrainer:
             # Remove dividends and stock splits for now
             data = data[['Open', 'High', 'Low', 'Close', 'Volume']]
             
-            # Add technical indicators
+            # First pass cleaning to remove duplicates / bad rows
+            data = clean_market_data(data, symbol=symbol, validate=True)
+
+            # Add technical indicators (after base cleaning)
             logger.info(f"Adding technical indicators for {symbol}...")
             data = add_all_technical_indicators(data)
-            
-            # Handle missing values
+
+            # A second fill to cover any NaNs introduced by indicator calc
             data = data.fillna(method='ffill').fillna(method='bfill')
             
             logger.info(f"Downloaded {len(data)} rows for {symbol}")

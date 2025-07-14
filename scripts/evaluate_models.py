@@ -302,30 +302,38 @@ class ModelEvaluator:
                 if hasattr(model, 'predict'):
                     predictions = model.predict(fresh_data)
                     
-                    # Calculate metrics
-                    actual = fresh_data['Close'].values[-forecast_horizon:]
-                    pred_values = predictions[:len(actual)] if hasattr(predictions, '__len__') else [predictions] * len(actual)
-                    
+                    # Compute actual future returns matching the model's target horizon
+                    actual_returns = (
+                        fresh_data['Close'].pct_change(forecast_horizon).shift(-forecast_horizon)
+                    )
+                    # Drop NaNs introduced by pct_change/shift
+                    actual_returns = actual_returns.dropna()
+
+                    # Align predictions with actuals (take the last `forecast_horizon` samples)
+                    pred_values = predictions[-forecast_horizon:] if hasattr(predictions, '__len__') else [predictions] * forecast_horizon
+                    actual = actual_returns.values[-forecast_horizon:]
+
                     if len(pred_values) > 0 and len(actual) > 0:
-                        # Align lengths
+                        # Align lengths safely
                         min_len = min(len(actual), len(pred_values))
                         actual = actual[:min_len]
                         pred_values = pred_values[:min_len]
-                        
-                        # Calculate metrics
+
+                        # Calculate metrics on returns
                         mse = np.mean((actual - pred_values) ** 2)
                         mae = np.mean(np.abs(actual - pred_values))
                         rmse = np.sqrt(mse)
-                        mape = np.mean(np.abs((actual - pred_values) / actual)) * 100
-                        
-                        # Direction accuracy
-                        actual_directions = np.diff(actual) > 0
-                        pred_directions = np.diff(pred_values) > 0
+                        # Use small epsilon to avoid division by zero in MAPE
+                        mape = np.mean(np.abs((actual - pred_values) / (actual + 1e-8))) * 100
+
+                        # Direction accuracy (sign of returns)
+                        actual_directions = actual > 0
+                        pred_directions = pred_values > 0
                         direction_accuracy = np.mean(actual_directions == pred_directions) * 100 if len(actual_directions) > 0 else 0
-                        
+
                         # Correlation
                         correlation = np.corrcoef(actual, pred_values)[0, 1] if len(actual) > 1 else 0
-                        
+
                         evaluation_results[model_name] = {
                             'mse': float(mse),
                             'mae': float(mae),
@@ -333,8 +341,8 @@ class ModelEvaluator:
                             'mape': float(mape),
                             'direction_accuracy': float(direction_accuracy),
                             'correlation': float(correlation),
-                            'predictions': pred_values.tolist()[:10],  # First 10 predictions
-                            'actual': actual.tolist()[:10]  # First 10 actual values
+                            'predictions': pred_values[:10].tolist() if hasattr(pred_values, 'tolist') else list(pred_values[:10]),
+                            'actual': actual[:10].tolist() if hasattr(actual, 'tolist') else list(actual[:10])
                         }
                         
                         logger.info(f"✅ {model_name}: MAPE={mape:.2f}%, Dir_Acc={direction_accuracy:.1f}%")
