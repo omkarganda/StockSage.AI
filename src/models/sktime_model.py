@@ -145,6 +145,9 @@ class StatisticalForecastingModel:
         # Store feature names used during training for consistency
         self.exog_feature_names = None
         
+        # Store training data for generating exogenous features during prediction
+        self._training_data = None
+        
         # Data preprocessing components
         self.log_transformer = None
         self.differencer = None
@@ -256,10 +259,14 @@ class StatisticalForecastingModel:
                     y_processed.index.freq = inferred_freq
                     logger.info(f"Inferred frequency: {inferred_freq}")
                 else:
-                    y_processed = y_processed.asfreq('B', method='ffill')
+                    with warnings.catch_warnings():
+                        warnings.filterwarnings("ignore", category=FutureWarning)
+                        y_processed = y_processed.asfreq('B', method='ffill')
                     logger.info("Set frequency to business daily (B)")
             except Exception:
-                y_processed = y_processed.asfreq('D', method='ffill')
+                with warnings.catch_warnings():
+                    warnings.filterwarnings("ignore", category=FutureWarning)
+                    y_processed = y_processed.asfreq('D', method='ffill')
                 logger.info("Set frequency to daily (D)")
         
         # Ensure positive values for log transformation
@@ -346,6 +353,9 @@ class StatisticalForecastingModel:
         logger.info(f"Training {self.model_type} model on {len(df)} samples")
         
         try:
+            # Store training data for generating exogenous features during prediction
+            self._training_data = df.copy()
+            
             # Extract target series
             if target_col not in df.columns:
                 raise ValueError(f"Target column '{target_col}' not found in data")
@@ -378,14 +388,19 @@ class StatisticalForecastingModel:
             # Convert to PeriodIndex for specific models that require it
             if self.model_type in ['theta', 'ensemble'] and isinstance(y_processed.index, pd.DatetimeIndex):
                 try:
-                    # Convert to PeriodIndex with business day frequency
-                    y_processed.index = y_processed.index.to_period(freq='B')
-                    logger.info("Converted index to PeriodIndex with 'B' frequency")
-                    
-                    # Also convert exogenous features index if present
-                    if X is not None and isinstance(X.index, pd.DatetimeIndex):
-                        X.index = X.index.to_period(freq='B')
-                        logger.info("Converted exogenous features index to PeriodIndex")
+                    # Suppress FutureWarning for deprecated Period frequency
+                    with warnings.catch_warnings():
+                        warnings.filterwarnings("ignore", category=FutureWarning, message=".*Period.*BDay.*")
+                        warnings.filterwarnings("ignore", category=FutureWarning, message=".*PeriodDtype.*")
+                        
+                        # Convert to PeriodIndex with business day frequency
+                        y_processed.index = y_processed.index.to_period(freq='B')
+                        logger.info("Converted index to PeriodIndex with 'B' frequency")
+                        
+                        # Also convert exogenous features index if present
+                        if X is not None and isinstance(X.index, pd.DatetimeIndex):
+                            X.index = X.index.to_period(freq='B')
+                            logger.info("Converted exogenous features index to PeriodIndex")
                         
                 except Exception as e:
                     logger.warning(f"Failed to convert to PeriodIndex with 'B' frequency: {e}. Trying with inferred frequency.")
@@ -481,6 +496,34 @@ class StatisticalForecastingModel:
             # Ensure fh is in a format sktime understands (list, array, or int)
             if isinstance(fh, range):
                 fh = list(fh)
+
+            # Generate exogenous features automatically if needed but not provided
+            if X is None and self.model_type in ['prophet', 'arima'] and self.exog_feature_names is not None:
+                if self._training_data is not None:
+                    # Create future index for forecast horizon
+                    last_date = self._training_data.index[-1]
+                    future_dates = pd.date_range(
+                        start=last_date + pd.Timedelta(days=1),
+                        periods=max(fh) if isinstance(fh, list) else fh,
+                        freq='B'  # Business day frequency for financial data
+                    )
+                    
+                    # Create a dummy dataframe with the same structure as training data
+                    # Use the last known values for volume-based features
+                    last_row = self._training_data.iloc[-1:].copy()
+                    future_df = pd.DataFrame(
+                        index=future_dates,
+                        columns=self._training_data.columns,
+                        data=last_row.values.repeat(len(future_dates), axis=0)
+                    )
+                    
+                    # Generate exogenous features for the future period
+                    X = self._add_exogenous_features(future_df)
+                    if X is not None:
+                        # Select only the features that were used during training
+                        X = X[self.exog_feature_names]
+                    
+                    logger.info(f"Auto-generated exogenous features for prediction: {list(X.columns) if X is not None else 'None'}")
 
             # Make point predictions
             if X is not None and self.model_type in ['prophet', 'arima']:
