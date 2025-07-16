@@ -438,9 +438,8 @@ class BaselineModel:
                 'mse': np.nan,
                 'rmse': np.nan,
                 'mae': np.nan,
-                'mape': np.nan,
+                'smape': np.nan,
                 'r2': np.nan,
-                'directional_accuracy': np.nan,
                 'note': 'No evaluation data available - expected for forecasting on test sets'
             }
         
