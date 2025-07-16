@@ -108,13 +108,24 @@ def merge_market_economic_data(
                            indicator=indicator_name, symbol=symbol)
                 econ_report.print_summary()
     
-    # If data not provided, we would load it here
-    # For now, we'll work with provided data or create sample structure
+    # If data not provided, download it automatically
     if market_data is None:
-        logger.warning(f"No market data provided for {symbol}. Creating empty structure.")
-        date_range = pd.date_range(start=start_date, end=end_date, freq='B')  # Business days
-        market_data = pd.DataFrame(index=date_range)
-        market_data.index.name = 'Date'
+        logger.info(f"No market data provided for {symbol}. Downloading from yfinance...")
+        try:
+            from .download_market import download_stock_data
+            market_data = download_stock_data(
+                symbol=symbol,
+                start_date=start_date,
+                end_date=end_date,
+                interval='1d'
+            )
+            logger.info(f"Successfully downloaded market data for {symbol}: {len(market_data)} rows")
+        except Exception as e:
+            logger.error(f"Failed to download market data for {symbol}: {e}")
+            # Fall back to empty structure if download fails
+            date_range = pd.date_range(start=start_date, end=end_date, freq='B')  # Business days
+            market_data = pd.DataFrame(index=date_range)
+            market_data.index.name = 'Date'
     
     # Ensure market data has datetime index
     if not isinstance(market_data.index, pd.DatetimeIndex):

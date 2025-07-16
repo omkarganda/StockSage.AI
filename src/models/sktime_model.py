@@ -353,6 +353,18 @@ class StatisticalForecastingModel:
         logger.info(f"Training {self.model_type} model on {len(df)} samples")
         
         try:
+            # Check data sufficiency for seasonal models
+            min_samples_for_seasonal = self.seasonal_period * 2  # Need at least 2 full cycles
+            if len(df) < min_samples_for_seasonal and self.seasonal_period > 1:
+                logger.warning(f"Insufficient data for seasonal model. Need {min_samples_for_seasonal} samples "
+                             f"for seasonal_period={self.seasonal_period}, but got {len(df)}. "
+                             f"Reinitializing as non-seasonal model.")
+                # Reinitialize without seasonality
+                original_seasonal_period = self.seasonal_period
+                self.seasonal_period = 1
+                self._initialize_model()
+                logger.info(f"Model reinitialized without seasonality (was {original_seasonal_period})")
+            
             # Store training data for generating exogenous features during prediction
             self._training_data = df.copy()
             
