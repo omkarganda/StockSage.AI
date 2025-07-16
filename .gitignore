@@ -6,6 +6,21 @@ __pycache__/
 # large/raw data
 data/raw/
 temp_backup/
+*.html
+*.csv
+*.json
+*.jsonl
+*.jsonl.gz
+*.jsonl.gz.part
+*.jsonl.gz.part.1
+*.jsonl.gz.part.2
+*.joblib
+*.joblib.gz
+*.joblib.gz.part
+*.joblib.gz.part.1
+*.joblib.gz.part.2
+*.joblib.gz.part.3
+*.joblib.gz.part.4
 
 # logs & caches
 logs/
