@@ -141,44 +141,111 @@ class ModelTrainer:
         Returns:
         --------
         pd.DataFrame
-            Preprocessed stock data with technical indicators
+            Preprocessed stock data with technical indicators and sentiment features
         """
-        logger.info(f"Downloading data for {symbol}...")
+        logger.info(f"Downloading and processing unified data for {symbol}...")
         
         try:
-            # Download data from Yahoo Finance
-            ticker = yf.Ticker(symbol)
-            data = ticker.history(start=self.start_date, end=self.end_date)
+            # Use the unified dataset creation instead of just market data
+            logger.info(f"Creating unified dataset for {symbol}...")
+            unified_data, validation_reports = create_unified_dataset(
+                symbol=symbol,
+                start_date=self.start_date,
+                end_date=self.end_date,
+                market_data=None,  # Let it download automatically
+                economic_data=None,  # Let it download automatically
+                sentiment_data=None,  # Let it download automatically
+                include_technical_indicators=True,
+                include_market_regime=True,
+                include_sentiment=True,
+                include_llm_sentiment=True,
+                handle_missing='interpolate',
+                validate_inputs=True,
+                validate_output=True
+            )
             
-            if data.empty:
-                raise ValueError(f"No data found for {symbol}")
+            if unified_data.empty:
+                raise ValueError(f"No unified data created for {symbol}")
             
-            # Rename columns to match our expected format
-            data.columns = ['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits']
+            # Log validation results
+            for report in validation_reports:
+                if report.has_critical_issues():
+                    logger.warning(f"Critical issues in {report.dataset_name}: {report.issues}")
+                else:
+                    logger.info(f"Validation passed for {report.dataset_name} (score: {report.quality_score:.1f})")
             
-            # Remove dividends and stock splits for now
-            data = data[['Open', 'High', 'Low', 'Close', 'Volume']]
+            # Ensure we have essential columns for modeling
+            essential_columns = ['Close']
+            missing_columns = [col for col in essential_columns if col not in unified_data.columns]
+            if missing_columns:
+                logger.warning(f"Missing essential columns: {missing_columns}")
+                
+                # If we don't have market data, fall back to direct download
+                logger.info("Falling back to direct market data download...")
+                ticker = yf.Ticker(symbol)
+                market_data = ticker.history(start=self.start_date, end=self.end_date)
+                
+                if market_data.empty:
+                    raise ValueError(f"No market data found for {symbol}")
+                
+                # Rename columns to match our expected format
+                market_data.columns = ['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits']
+                market_data = market_data[['Open', 'High', 'Low', 'Close', 'Volume']]
+                
+                # Clean the market data
+                market_data = clean_market_data(market_data, symbol=symbol, validate=True)
+                
+                # Add technical indicators
+                market_data = add_all_technical_indicators(market_data)
+                
+                # Fill any remaining NaNs
+                unified_data = market_data.fillna(method='ffill').fillna(method='bfill')
             
-            # First pass cleaning to remove duplicates / bad rows
-            if not isinstance(data, pd.DataFrame):
-                raise TypeError(f"Expected a pandas DataFrame, but got {type(data)}")
-            data = clean_market_data(data, symbol=symbol, validate=True)
-
-            # Add technical indicators (after base cleaning)
-            logger.info(f"Adding technical indicators for {symbol}...")
-            data = add_all_technical_indicators(data)
-
-            # A second fill to cover any NaNs introduced by indicator calc
-            data = data.fillna(method='ffill').fillna(method='bfill')
+            logger.info(f"Downloaded unified dataset with {len(unified_data)} rows and {len(unified_data.columns)} features for {symbol}")
+            logger.info(f"Date range: {unified_data.index.min()} to {unified_data.index.max()}")
             
-            logger.info(f"Downloaded {len(data)} rows for {symbol}")
-            logger.info(f"Date range: {data.index.min()} to {data.index.max()}")
+            # Log feature breakdown
+            feature_types = {
+                'market': len([c for c in unified_data.columns if any(x in c.lower() for x in ['open', 'high', 'low', 'close', 'volume'])]),
+                'technical': len([c for c in unified_data.columns if any(x in c.lower() for x in ['sma', 'ema', 'rsi', 'macd', 'bb_'])]),
+                'sentiment': len([c for c in unified_data.columns if 'sentiment' in c.lower()]),
+                'llm': len([c for c in unified_data.columns if 'llm_' in c.lower()]),
+                'other': len([c for c in unified_data.columns if not any(
+                    x in c.lower() for x in ['open', 'high', 'low', 'close', 'volume', 'sma', 'ema', 'rsi', 'macd', 'bb_', 'sentiment', 'llm_']
+                )])
+            }
             
-            return data
+            logger.info(f"Feature breakdown for {symbol}: {feature_types}")
+            
+            return unified_data
             
         except Exception as e:
-            logger.error(f"Error downloading data for {symbol}: {e}")
-            raise
+            logger.error(f"Error downloading unified data for {symbol}: {e}")
+            logger.info(f"Falling back to basic market data for {symbol}")
+            
+            # Fallback to basic market data download
+            try:
+                ticker = yf.Ticker(symbol)
+                data = ticker.history(start=self.start_date, end=self.end_date)
+                
+                if data.empty:
+                    raise ValueError(f"No data found for {symbol}")
+                
+                # Rename columns to match our expected format
+                data.columns = ['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits']
+                data = data[['Open', 'High', 'Low', 'Close', 'Volume']]
+                
+                # Clean and add technical indicators
+                data = clean_market_data(data, symbol=symbol, validate=True)
+                data = add_all_technical_indicators(data)
+                data = data.fillna(method='ffill').fillna(method='bfill')
+                
+                logger.info(f"Downloaded basic market data for {symbol} with {len(data)} rows")
+                return data
+                
+            except Exception as fallback_error:
+                logger.error(f"Fallback also failed for {symbol}: {fallback_error}")
+                raise
     
     def split_data(self, data: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
