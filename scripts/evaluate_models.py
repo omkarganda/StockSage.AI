@@ -362,14 +362,39 @@ class ModelEvaluator:
                         actual = actual[:min_len]
                         pred_values = pred_values[:min_len]
 
+                        # Verify alignment by checking temporal consistency
+                        if min_len > 1:
+                            # Check for potential index shift by comparing correlation at different lags
+                            correlations = []
+                            for lag in range(-3, 4):  # Check lags from -3 to +3
+                                if lag == 0:
+                                    corr = np.corrcoef(actual, pred_values)[0, 1] if np.std(actual) > 0 and np.std(pred_values) > 0 else 0
+                                elif lag > 0 and len(actual) > lag:
+                                    corr = np.corrcoef(actual[:-lag], pred_values[lag:])[0, 1] if np.std(actual[:-lag]) > 0 and np.std(pred_values[lag:]) > 0 else 0
+                                elif lag < 0 and len(pred_values) > abs(lag):
+                                    corr = np.corrcoef(actual[abs(lag):], pred_values[:lag])[0, 1] if np.std(actual[abs(lag):]) > 0 and np.std(pred_values[:lag]) > 0 else 0
+                                else:
+                                    corr = 0
+                                correlations.append((lag, corr if not np.isnan(corr) else 0))
+                            
+                            # Find the lag with highest absolute correlation
+                            best_lag, best_corr = max(correlations, key=lambda x: abs(x[1]))
+                            if abs(best_corr) > 0.1 and best_lag != 0:
+                                logger.warning(f"[ALIGNMENT WARNING] {model_name}: Best correlation at lag {best_lag} (corr={best_corr:.3f})")
+
                         # Calculate metrics on returns
                         if min_len > 0:
                             mse = np.mean((actual - pred_values) ** 2)
                             mae = np.mean(np.abs(actual - pred_values))
                             rmse = np.sqrt(mse)
-                            # Use SMAPE (Symmetric Mean Absolute Percentage Error) instead of MAPE
+                            
+                            # Improved SMAPE calculation (Symmetric Mean Absolute Percentage Error)
                             # SMAPE is more robust to values near zero
-                            smape = np.mean(2 * np.abs(actual - pred_values) / (np.abs(actual) + np.abs(pred_values) + 1e-8)) * 100
+                            # Standard formula: SMAPE = (100/n) * Σ(|actual - predicted| / ((|actual| + |predicted|)/2))
+                            denominator = (np.abs(actual) + np.abs(pred_values)) / 2.0
+                            # Add small epsilon to avoid division by zero
+                            denominator = np.where(denominator < 1e-8, 1e-8, denominator)
+                            smape = np.mean(np.abs(actual - pred_values) / denominator) * 100
 
                             # Direction accuracy (sign of returns)
                             actual_directions = actual > 0
@@ -382,6 +407,12 @@ class ModelEvaluator:
                             if np.isnan(correlation):
                                 correlation = 0.0
 
+                            # Additional diagnostic metrics
+                            mean_actual = np.mean(actual)
+                            mean_predicted = np.mean(pred_values)
+                            std_actual = np.std(actual)
+                            std_predicted = np.std(pred_values)
+
                             evaluation_results[model_name] = {
                                 'mse': float(mse),
                                 'mae': float(mae),
@@ -390,10 +421,21 @@ class ModelEvaluator:
                                 'direction_accuracy': float(direction_accuracy),
                                 'correlation': float(correlation),
                                 'predictions': pred_values[:10].tolist() if hasattr(pred_values, 'tolist') else list(pred_values[:10]),
-                                'actual': actual[:10].tolist() if hasattr(actual, 'tolist') else list(actual[:10])
+                                'actual': actual[:10].tolist() if hasattr(actual, 'tolist') else list(actual[:10]),
+                                # Diagnostic metrics
+                                'mean_actual': float(mean_actual),
+                                'mean_predicted': float(mean_predicted),
+                                'std_actual': float(std_actual),
+                                'std_predicted': float(std_predicted),
+                                'prediction_bias': float(mean_predicted - mean_actual),
+                                'best_lag': best_lag if min_len > 1 else 0,
+                                'best_lag_correlation': float(best_corr) if min_len > 1 else 0.0,
+                                'num_samples': min_len
                             }
                             
-                            logger.info(f"[SUCCESS] {model_name}: SMAPE={smape:.2f}%, Dir_Acc={direction_accuracy:.1f}%")
+                            logger.info(f"[SUCCESS] {model_name}: SMAPE={smape:.2f}%, Dir_Acc={direction_accuracy:.1f}%, Corr={correlation:.3f}")
+                            if min_len > 1 and best_lag != 0:
+                                logger.info(f"[ALIGNMENT] {model_name}: Best lag={best_lag}, lag_corr={best_corr:.3f}")
                         else:
                             logger.warning(f"[WARNING] No valid predictions for {model_name}")
                     else:

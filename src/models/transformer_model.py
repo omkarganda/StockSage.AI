@@ -92,9 +92,11 @@ class TransformerModel:
         nhead: int = 4,
         num_layers: int = 2,
         dropout: float = 0.1,
-        epochs: int = 50,
+        epochs: int = 100,  # Increased from 50 to 100 for better training
         batch_size: int = 32,
         lr: float = 1e-3,
+        patience: int = 15,  # Increased patience for early stopping
+        min_delta: float = 1e-6,  # Minimum change to qualify as an improvement
         device: str = None,
     ):
         # Ensure d_model is divisible by nhead
@@ -112,6 +114,8 @@ class TransformerModel:
         self.epochs = epochs
         self.batch_size = batch_size
         self.lr = lr
+        self.patience = patience
+        self.min_delta = min_delta
         if device is None or device == "auto":
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
         else:
@@ -139,6 +143,7 @@ class TransformerModel:
 
     # ------------------------------ API ------------------------------
     def fit(self, df: pd.DataFrame) -> "TransformerModel":
+        logger.info(f"[Transformer] Training with {len(df)} rows")
         if "Close" not in df.columns:
             raise ValueError("Close column required")
         feats_df = self._prepare_features(df)
@@ -161,11 +166,19 @@ class TransformerModel:
         ).to(self.device)
 
         crit = nn.MSELoss()
-        opt = torch.optim.AdamW(self.model.parameters(), lr=self.lr)
+        opt = torch.optim.AdamW(self.model.parameters(), lr=self.lr, weight_decay=1e-5)
+        
+        # Add learning rate scheduler
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            opt, mode='min', factor=0.5, patience=5, min_lr=1e-6, verbose=True
+        )
+        
         self.model.train()
         best_loss = float('inf')
         patience_counter = 0
-        patience = 10  # Early stopping patience
+        train_losses = []
+        
+        logger.info(f"Starting training for {self.epochs} epochs with patience {self.patience}")
         
         for epoch in range(1, self.epochs + 1):
             epoch_losses = []
@@ -176,23 +189,44 @@ class TransformerModel:
                 pred = self.model(xb)
                 loss = crit(pred, yb)
                 loss.backward()
+                # Add gradient clipping to prevent exploding gradients
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
                 opt.step()
                 epoch_losses.append(loss.item())
             
             current_loss = np.mean(epoch_losses)
-            logger.debug(f"Epoch {epoch}/{self.epochs} – loss {current_loss:.6f}")
+            train_losses.append(current_loss)
             
-            # Early stopping check
-            if current_loss < best_loss:
+            # Update learning rate scheduler
+            scheduler.step(current_loss)
+            
+            # Log progress every 10 epochs
+            if epoch % 10 == 0 or epoch <= 5:
+                current_lr = opt.param_groups[0]['lr']
+                logger.info(f"Epoch {epoch}/{self.epochs} – loss: {current_loss:.6f}, lr: {current_lr:.2e}")
+            
+            # Early stopping check with minimum delta
+            if current_loss < best_loss - self.min_delta:
                 best_loss = current_loss
                 patience_counter = 0
+                # Save best model state
+                best_model_state = self.model.state_dict().copy()
             else:
                 patience_counter += 1
-                if patience_counter >= patience:
+                if patience_counter >= self.patience:
                     logger.info(f"Early stopping at epoch {epoch} (best loss: {best_loss:.6f})")
+                    # Restore best model state
+                    self.model.load_state_dict(best_model_state)
                     break
-        self.training_metrics = {"train_mse": float(np.mean(epoch_losses))}
+                    
+        self.training_metrics = {
+            "train_mse": float(best_loss),
+            "final_epoch": epoch,
+            "train_losses": train_losses[-10:],  # Store last 10 losses
+            "early_stopped": patience_counter >= self.patience
+        }
         self.is_fitted = True
+        logger.info(f"[Transformer] Training completed after {epoch} epochs (best loss: {best_loss:.6f})")
         return self
 
     def predict(self, df: pd.DataFrame) -> np.ndarray:

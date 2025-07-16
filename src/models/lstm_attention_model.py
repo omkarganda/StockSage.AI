@@ -62,9 +62,11 @@ class LSTMAttentionModel:
         hidden_size: int = 64,
         num_layers: int = 2,
         attention_heads: int = 4,
-        epochs: int = 50,
+        epochs: int = 100,  # Increased from 50 to 100 for better training
         batch_size: int = 32,
         lr: float = 1e-3,
+        patience: int = 15,  # Increased patience for early stopping
+        min_delta: float = 1e-6,  # Minimum change to qualify as an improvement
         device: Optional[str] = None,
     ):
         # Ensure hidden_size is divisible by attention_heads
@@ -81,6 +83,8 @@ class LSTMAttentionModel:
         self.epochs = epochs
         self.batch_size = batch_size
         self.lr = lr
+        self.patience = patience
+        self.min_delta = min_delta
         if device is None or device == "auto":
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
         else:
@@ -148,6 +152,7 @@ class LSTMAttentionModel:
 
         self.input_dim = X.shape[-1]
         assert self.input_dim is not None
+
         self.model = _LSTMAttentionNet(
             input_dim=self.input_dim,
             hidden_size=self.hidden_size,
@@ -157,12 +162,19 @@ class LSTMAttentionModel:
         ).to(self.device)
 
         criterion = nn.MSELoss()
-        optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.lr)
+        optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.lr, weight_decay=1e-5)
+        
+        # Add learning rate scheduler
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer, mode='min', factor=0.5, patience=5, min_lr=1e-6, verbose=True
+        )
 
         self.model.train()
         best_loss = float('inf')
         patience_counter = 0
-        patience = 10  # Early stopping patience
+        train_losses = []
+        
+        logger.info(f"Starting training for {self.epochs} epochs with patience {self.patience}")
         
         for epoch in range(1, self.epochs + 1):
             epoch_losses = []
@@ -181,25 +193,44 @@ class LSTMAttentionModel:
                         yb = yb.squeeze(-1)  # Remove last dimension if it's 1
                 loss = criterion(pred, yb)
                 loss.backward()
+                # Add gradient clipping to prevent exploding gradients
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
                 optimizer.step()
                 epoch_losses.append(loss.item())
             
             current_loss = np.mean(epoch_losses)
-            logger.debug(f"Epoch {epoch}/{self.epochs} – loss {current_loss:.6f}")
+            train_losses.append(current_loss)
             
-            # Early stopping check
-            if current_loss < best_loss:
+            # Update learning rate scheduler
+            scheduler.step(current_loss)
+            
+            # Log progress every 10 epochs
+            if epoch % 10 == 0 or epoch <= 5:
+                current_lr = optimizer.param_groups[0]['lr']
+                logger.info(f"Epoch {epoch}/{self.epochs} – loss: {current_loss:.6f}, lr: {current_lr:.2e}")
+            
+            # Early stopping check with minimum delta
+            if current_loss < best_loss - self.min_delta:
                 best_loss = current_loss
                 patience_counter = 0
+                # Save best model state
+                best_model_state = self.model.state_dict().copy()
             else:
                 patience_counter += 1
-                if patience_counter >= patience:
+                if patience_counter >= self.patience:
                     logger.info(f"Early stopping at epoch {epoch} (best loss: {best_loss:.6f})")
+                    # Restore best model state
+                    self.model.load_state_dict(best_model_state)
                     break
 
         self.is_fitted = True
-        self.training_metrics = {"train_mse": float(np.mean(epoch_losses))}
-        logger.info("[LSTM-Attention] Training done")
+        self.training_metrics = {
+            "train_mse": float(best_loss),
+            "final_epoch": epoch,
+            "train_losses": train_losses[-10:],  # Store last 10 losses
+            "early_stopped": patience_counter >= self.patience
+        }
+        logger.info(f"[LSTM-Attention] Training completed after {epoch} epochs (best loss: {best_loss:.6f})")
         return self
 
     def predict(self, df: pd.DataFrame) -> np.ndarray:
