@@ -65,8 +65,14 @@ class LSTMAttentionModel:
         epochs: int = 10,
         batch_size: int = 32,
         lr: float = 1e-3,
-        device: str = "auto",
+        device: str = None,
     ):
+        # Ensure hidden_size is divisible by attention_heads
+        if hidden_size % attention_heads != 0:
+            # Adjust hidden_size to be divisible by attention_heads
+            hidden_size = ((hidden_size // attention_heads) + 1) * attention_heads
+            logger.info(f"Adjusted hidden_size to {hidden_size} to be divisible by {attention_heads} attention heads")
+        
         self.context_length = context_length
         self.horizon = horizon
         self.hidden_size = hidden_size
@@ -75,7 +81,7 @@ class LSTMAttentionModel:
         self.epochs = epochs
         self.batch_size = batch_size
         self.lr = lr
-        if device == "auto":
+        if device is None or device == "auto":
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
         else:
             self.device = device
@@ -129,7 +135,7 @@ class LSTMAttentionModel:
             raise ValueError("Not enough data to build training sequences")
 
         dataset = _SeqDataset(X, y)
-        loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True, drop_last=True)
+        loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True, drop_last=False)
 
         self.input_dim = X.shape[-1]
         self.model = _LSTMAttentionNet(
@@ -151,6 +157,14 @@ class LSTMAttentionModel:
                 yb = yb.to(self.device)
                 optimizer.zero_grad()
                 pred = self.model(xb)
+                # Ensure pred and yb have compatible shapes for loss calculation
+                if pred.dim() != yb.dim():
+                    if pred.dim() == 1 and yb.dim() == 1:
+                        pass  # Both are 1D, shapes should match
+                    elif pred.dim() == 2 and pred.shape[1] == 1:
+                        pred = pred.squeeze(-1)  # Remove last dimension if it's 1
+                    elif yb.dim() == 2 and yb.shape[1] == 1:
+                        yb = yb.squeeze(-1)  # Remove last dimension if it's 1
                 loss = criterion(pred, yb)
                 loss.backward()
                 optimizer.step()

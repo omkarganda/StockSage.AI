@@ -120,6 +120,10 @@ def merge_market_economic_data(
     if not isinstance(market_data.index, pd.DatetimeIndex):
         market_data.index = pd.to_datetime(market_data.index)
     
+    # Convert to timezone-naive to avoid comparison issues
+    if hasattr(market_data.index, 'tz') and market_data.index.tz is not None:
+        market_data.index = market_data.index.tz_localize(None)
+    
     # Start with market data as base
     merged_df = market_data.copy()
     
@@ -136,6 +140,10 @@ def merge_market_economic_data(
                 # Ensure datetime index
                 if not isinstance(indicator_df.index, pd.DatetimeIndex):
                     indicator_df.index = pd.to_datetime(indicator_df.index)
+                
+                # Convert to timezone-naive to avoid comparison issues
+                if hasattr(indicator_df.index, 'tz') and indicator_df.index.tz is not None:
+                    indicator_df.index = indicator_df.index.tz_localize(None)
                 
                 # Rename columns to avoid conflicts
                 indicator_df = indicator_df.copy()

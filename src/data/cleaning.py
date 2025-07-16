@@ -49,6 +49,11 @@ def clean_market_data(df: pd.DataFrame, symbol: str = "dataset", *, validate: bo
     # 1) Index handling — coerce to datetime & sort
     if not isinstance(df.index, pd.DatetimeIndex):
         df.index = pd.to_datetime(df.index, errors="coerce")
+    
+    # Convert to timezone-naive to avoid comparison issues
+    if hasattr(df.index, 'tz') and df.index.tz is not None:
+        df.index = df.index.tz_localize(None)
+    
     df = df.sort_index()
 
     # 2) Remove duplicate datetime rows (keeps first to preserve earliest quote)

@@ -327,21 +327,16 @@ class ModelTrainer:
             # Train the model
             model.fit(train_data)
             
+            # Log training completion
             training_time = time.time() - start_time
-            training_result.update({
-                'status': 'success',
-                'training_time': training_time
-            })
+            training_result['training_time'] = training_time
+            training_result['status'] = 'success'
+            training_result['training_metrics'] = {
+                'training_time': training_time,
+                'train_samples': len(train_data)
+            }
             
-            # Get training metrics if available
-            if hasattr(model, 'training_metrics'):
-                training_result['training_metrics'] = model.training_metrics
-            elif hasattr(model, 'get_model_summary'):
-                summary = model.get_model_summary()
-                if 'training_metrics' in summary:
-                    training_result['training_metrics'] = summary['training_metrics']
-            
-            logger.info(f"✅ {model_name} training completed in {training_time:.2f}s")
+            logger.info(f"SUCCESS: {model_name} training completed in {training_time:.2f}s")
             
         except Exception as e:
             training_time = time.time() - start_time
@@ -352,7 +347,7 @@ class ModelTrainer:
                 'training_time': training_time
             })
             
-            logger.error(f"❌ {model_name} training failed: {error_msg}")
+            logger.error(f"FAILED: {model_name} training failed: {error_msg}")
         
         return training_result
     
@@ -364,7 +359,7 @@ class ModelTrainer:
         symbol: str
     ) -> Dict[str, Any]:
         """
-        Evaluate a trained model on test data.
+        Evaluate a single model and return evaluation metrics.
         
         Parameters:
         -----------
@@ -384,14 +379,16 @@ class ModelTrainer:
         """
         logger.info(f"Evaluating {model_name} for {symbol}...")
         
+        start_time = time.time()
         evaluation_result = {
             'model_name': model_name,
             'symbol': symbol,
             'test_samples': len(test_data),
+            'start_time': start_time,
             'status': 'failed',
             'error': None,
             'evaluation_metrics': {},
-            'predictions': None
+            'evaluation_time': 0
         }
         
         try:
@@ -429,9 +426,15 @@ class ModelTrainer:
                 except Exception as metric_error:
                     logger.warning(f"Could not calculate metrics for {model_name}: {metric_error}")
             
+            # Log evaluation completion
+            evaluation_time = time.time() - start_time
+            evaluation_result['evaluation_time'] = evaluation_time
             evaluation_result['status'] = 'success'
-            logger.info(f"✅ {model_name} evaluation completed")
             
+            logger.info(f"SUCCESS: {model_name} evaluation completed")
+            
+            return evaluation_result
+        
         except Exception as e:
             error_msg = str(e)
             evaluation_result.update({
@@ -439,7 +442,7 @@ class ModelTrainer:
                 'error': error_msg
             })
             
-            logger.error(f"❌ {model_name} evaluation failed: {error_msg}")
+            logger.error(f"FAILED: {model_name} evaluation failed: {error_msg}")
         
         return evaluation_result
     
@@ -548,7 +551,7 @@ class ModelTrainer:
                     'success_rate': successful_models / len(models) * 100 if models else 0
                 }
                 
-                logger.info(f"\n📊 {symbol} Summary:")
+                logger.info(f"\n{symbol} Summary:")
                 logger.info(f"Total models: {len(models)}")
                 logger.info(f"Successful: {successful_models}")
                 logger.info(f"Failed: {failed_models}")
@@ -613,7 +616,7 @@ class ModelTrainer:
             
             # Print top performers
             if 'mape' in summary_df.columns:
-                logger.info("\n🏆 Top 5 Models by MAPE:")
+                logger.info("\nTop 5 Models by MAPE:")
                 top_models = summary_df.nsmallest(5, 'mape')[['symbol', 'model', 'mape', 'rmse']]
                 for _, row in top_models.iterrows():
                     logger.info(f"  {row['symbol']:6} | {row['model']:20} | MAPE: {row['mape']:6.2f}% | RMSE: {row['rmse']:8.2f}")
@@ -621,7 +624,7 @@ class ModelTrainer:
     def print_final_summary(self, results: Dict[str, Any]):
         """Print a comprehensive summary of all results."""
         logger.info(f"\n{'='*60}")
-        logger.info("🎯 FINAL TRAINING SUMMARY")
+        logger.info("FINAL TRAINING SUMMARY")
         logger.info(f"{'='*60}")
         
         total_symbols = len(results)
@@ -633,13 +636,13 @@ class ModelTrainer:
                 total_models_attempted += symbol_results['summary']['total_models']
                 total_models_successful += symbol_results['summary']['successful_models']
         
-        logger.info(f"📈 Symbols processed: {total_symbols}")
-        logger.info(f"🤖 Models attempted: {total_models_attempted}")
-        logger.info(f"✅ Models successful: {total_models_successful}")
-        logger.info(f"📊 Overall success rate: {total_models_successful/total_models_attempted*100:.1f}%" if total_models_attempted > 0 else "📊 Overall success rate: 0%")
+        logger.info(f"Symbols processed: {total_symbols}")
+        logger.info(f"Models attempted: {total_models_attempted}")
+        logger.info(f"Models successful: {total_models_successful}")
+        logger.info(f"Overall success rate: {total_models_successful/total_models_attempted*100:.1f}%" if total_models_attempted > 0 else "Overall success rate: 0%")
         
-        logger.info(f"\n💾 Results saved in: {self.results_dir}")
-        logger.info(f"📁 Model files saved: {self.save_models}")
+        logger.info(f"\nResults saved in: {self.results_dir}")
+        logger.info(f"Model files saved: {self.save_models}")
         
         # Model type breakdown
         model_types = {}
@@ -653,7 +656,7 @@ class ModelTrainer:
                     if eval_result['status'] == 'success':
                         model_types[model_type]['success'] += 1
         
-        logger.info(f"\n📋 Model Type Performance:")
+        logger.info(f"\nModel Type Performance:")
         for model_type, stats in model_types.items():
             success_rate = stats['success'] / stats['total'] * 100 if stats['total'] > 0 else 0
             logger.info(f"  {model_type.capitalize():12} | {stats['success']:2}/{stats['total']:2} | {success_rate:5.1f}%")
@@ -740,7 +743,7 @@ def load_config(config_path: str) -> Dict[str, Any]:
 
 def main():
     """Main training function."""
-    print("🚀 StockSage.AI Model Training Script")
+    print("StockSage.AI Model Training Script")
     print("=====================================\n")
     
     # Parse arguments
@@ -775,8 +778,8 @@ def main():
     try:
         results = trainer.train_all_models()
         
-        print("\n🎉 Training completed successfully!")
-        print(f"📊 Check results in: {trainer.results_dir}")
+        print("\nTraining completed successfully!")
+        print(f"Check results in: {trainer.results_dir}")
         
         return 0
         

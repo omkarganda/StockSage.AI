@@ -221,3 +221,55 @@ top_features.6.feature
 2025-07-14 14:45:37,786 - src.app.api - ERROR - Prediction failed for 123: No data returned for 123 | module=src.app.api
 2025-07-14 14:45:37,813 - src.app.api - ERROR - Batch prediction failed for INVALID: Invalid symbol | module=src.app.api
 2025-07-14 14:45:37,834 - src.app.api - ERROR - Prediction failed for AAPL: Unexpected error | module=src.app.api
+2025-07-14 16:46:20,544 - src.app.api - ERROR - Error fetching data for 123: No data returned for 123 | module=src.app.api
+2025-07-14 16:46:20,544 - src.app.api - ERROR - Prediction failed for 123: No data returned for 123 | module=src.app.api
+2025-07-14 16:46:20,573 - src.app.api - ERROR - Batch prediction failed for INVALID: Invalid symbol | module=src.app.api
+2025-07-14 16:46:20,596 - src.app.api - ERROR - Prediction failed for AAPL: Unexpected error | module=src.app.api
+2025-07-14 16:46:32,402 - src.app.api - ERROR - Error fetching data for 123: No data returned for 123 | module=src.app.api
+2025-07-14 16:46:32,402 - src.app.api - ERROR - Prediction failed for 123: No data returned for 123 | module=src.app.api
+2025-07-14 16:46:32,427 - src.app.api - ERROR - Batch prediction failed for INVALID: Invalid symbol | module=src.app.api
+2025-07-14 16:46:32,448 - src.app.api - ERROR - Prediction failed for AAPL: Unexpected error | module=src.app.api
+2025-07-14 16:52:05,308 - src.models.sktime_model - ERROR - Failed to initialize auto_arima: AutoARIMA.__init__() got an unexpected keyword argument 'm' | module=src.models.sktime_model
+2025-07-15 17:22:16,373 - src.models.sktime_model - ERROR - Failed to initialize auto_arima: AutoARIMA.__init__() got an unexpected keyword argument 'm' | module=src.models.sktime_model
+2025-07-15 17:22:51,989 - src.models.sktime_model - ERROR - Failed to initialize auto_arima: AutoARIMA.__init__() got an unexpected keyword argument 'm' | module=src.models.sktime_model
+2025-07-15 17:23:11,254 - src.models.sktime_model - ERROR - Failed to initialize auto_arima: AutoARIMA.__init__() got an unexpected keyword argument 'm' | module=src.models.sktime_model
+2025-07-15 17:38:55,332 - src.models.sktime_model - ERROR - Failed to initialize auto_arima: AutoARIMA requires package 'pmdarima' to be present in the python environment, but 'pmdarima' was not found. 'pmdarima' is a dependency of AutoARIMA and required to construct it. To install the requirement 'pmdarima', please run: `pip install pmdarima`  | module=src.models.sktime_model
+2025-07-15 17:39:55,823 - src.models.sktime_model - ERROR - Failed to initialize auto_arima: AutoARIMA requires package 'pmdarima' to be present in the python environment, but 'pmdarima' was not found. 'pmdarima' is a dependency of AutoARIMA and required to construct it. To install the requirement 'pmdarima', please run: `pip install pmdarima`  | module=src.models.sktime_model
+2025-07-15 17:42:41,877 - src.models.sktime_model - ERROR - Failed to initialize auto_arima: AutoARIMA requires package 'pmdarima' to be present in the python environment, but 'pmdarima' was not found. 'pmdarima' is a dependency of AutoARIMA and required to construct it. To install the requirement 'pmdarima', please run: `pip install pmdarima`  | module=src.models.sktime_model
+2025-07-15 17:47:58,909 - src.models.sktime_model - ERROR - Failed to initialize auto_arima: AutoARIMA requires package 'pmdarima' to be present in the python environment, but 'pmdarima' was not found. 'pmdarima' is a dependency of AutoARIMA and required to construct it. To install the requirement 'pmdarima', please run: `pip install pmdarima`  | module=src.models.sktime_model
+2025-07-15 17:48:21,424 - src.models.sktime_model - ERROR - Failed to initialize auto_arima: ARIMA requires package 'pmdarima' to be present in the python environment, but 'pmdarima' was not found. 'pmdarima' is a dependency of ARIMA and required to construct it. To install the requirement 'pmdarima', please run: `pip install pmdarima`  | module=src.models.sktime_model
+2025-07-15 17:50:52,366 - src.models.sktime_model - ERROR - Failed to initialize ensemble: name 'AutoARIMA' is not defined | module=src.models.sktime_model
+2025-07-15 17:51:07,092 - src.models.sktime_model - ERROR - Error training exp_smoothing model: unsupported operand type(s) for *: 'int' and 'NoneType' | module=src.models.sktime_model
+2025-07-15 17:51:07,788 - src.models.sktime_model - ERROR - Error training theta model: frequency is missing | module=src.models.sktime_model
+2025-07-15 17:51:09,704 - src.models.sktime_model - ERROR - Error training prophet model: unsupported operand type(s) for *: 'int' and 'NoneType' | module=src.models.sktime_model
+2025-07-15 17:53:10,119 - src.models.sktime_model - ERROR - Failed to initialize ensemble: name 'AutoARIMA' is not defined | module=src.models.sktime_model
+2025-07-15 17:53:24,510 - src.models.sktime_model - ERROR - Error training exp_smoothing model: unsupported operand type(s) for *: 'int' and 'NoneType' | module=src.models.sktime_model
+2025-07-15 17:53:24,519 - src.models.sktime_model - ERROR - Error training theta model: frequency is missing | module=src.models.sktime_model
+2025-07-15 17:53:25,392 - src.models.sktime_model - ERROR - Error training prophet model: unsupported operand type(s) for *: 'int' and 'NoneType' | module=src.models.sktime_model
+2025-07-15 17:56:27,878 - src.models.sktime_model - ERROR - Failed to initialize ensemble: name 'AutoARIMA' is not defined | module=src.models.sktime_model
+2025-07-15 17:56:43,192 - src.models.sktime_model - ERROR - Error training exp_smoothing model: unsupported operand type(s) for *: 'int' and 'NoneType' | module=src.models.sktime_model
+2025-07-15 17:56:43,200 - src.models.sktime_model - ERROR - Error training theta model: frequency is missing | module=src.models.sktime_model
+2025-07-15 17:56:44,093 - src.models.sktime_model - ERROR - Error training prophet model: unsupported operand type(s) for *: 'int' and 'NoneType' | module=src.models.sktime_model
+2025-07-15 17:57:17,540 - src.models.sktime_model - ERROR - Failed to initialize ensemble: name 'AutoARIMA' is not defined | module=src.models.sktime_model
+2025-07-15 17:57:33,347 - src.models.sktime_model - ERROR - Error training exp_smoothing model: unsupported operand type(s) for *: 'int' and 'NoneType' | module=src.models.sktime_model
+2025-07-15 17:57:33,356 - src.models.sktime_model - ERROR - Error training theta model: frequency is missing | module=src.models.sktime_model
+2025-07-15 17:57:34,322 - src.models.sktime_model - ERROR - Error training prophet model: unsupported operand type(s) for *: 'int' and 'NoneType' | module=src.models.sktime_model
+2025-07-15 17:57:37,546 - src.models.sktime_model - ERROR - Failed to initialize ensemble: name 'AutoARIMA' is not defined | module=src.models.sktime_model
+2025-07-15 17:58:51,159 - src.models.sktime_model - ERROR - Error training exp_smoothing model: unsupported operand type(s) for *: 'int' and 'NoneType' | module=src.models.sktime_model
+2025-07-15 17:58:51,167 - src.models.sktime_model - ERROR - Error training theta model: frequency is missing | module=src.models.sktime_model
+2025-07-15 17:58:52,114 - src.models.sktime_model - ERROR - Error training prophet model: unsupported operand type(s) for *: 'int' and 'NoneType' | module=src.models.sktime_model
+2025-07-15 17:58:52,138 - src.models.sktime_model - ERROR - Error training ensemble model: frequency is missing | module=src.models.sktime_model
+2025-07-15 18:00:19,144 - src.models.sktime_model - ERROR - Error training exp_smoothing model: unsupported operand type(s) for *: 'int' and 'NoneType' | module=src.models.sktime_model
+2025-07-15 18:00:19,152 - src.models.sktime_model - ERROR - Error training theta model: frequency is missing | module=src.models.sktime_model
+2025-07-15 18:00:20,122 - src.models.sktime_model - ERROR - Error training prophet model: unsupported operand type(s) for *: 'int' and 'NoneType' | module=src.models.sktime_model
+2025-07-15 18:00:20,146 - src.models.sktime_model - ERROR - Error training ensemble model: frequency is missing | module=src.models.sktime_model
+2025-07-15 18:05:03,678 - src.models.sktime_model - ERROR - Error making predictions: BaseForecaster.predict() got an unexpected keyword argument 'return_pred_int' | module=src.models.sktime_model
+2025-07-15 18:05:03,690 - src.models.sktime_model - ERROR - Error training theta model: Index type not supported. Please consider using pd.PeriodIndex. | module=src.models.sktime_model
+2025-07-15 18:05:03,700 - src.models.sktime_model - ERROR - Error training prophet model: (time) indices of series 0 are not contained in index of series 0, extra indices are: DatetimeIndex(['2021-01-18', '2021-02-15', '2021-04-02', '2021-05-31',
+               '2021-07-05', '2021-09-06', '2021-11-25', '2021-12-24',
+               '2022-01-17', '2022-02-21', '2022-04-15', '2022-05-30',
+               '2022-06-20', '2022-07-04', '2022-09-05', '2022-11-24',
+               '2022-12-26', '2023-01-02', '2023-01-16', '2023-02-20',
+               '2023-04-07'],
+              dtype='datetime64[ns]', name='Date', freq=None) | module=src.models.sktime_model
+2025-07-15 18:05:03,935 - src.models.sktime_model - ERROR - Error training ensemble model: Index type not supported. Please consider using pd.PeriodIndex. | module=src.models.sktime_model

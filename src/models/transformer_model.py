@@ -93,8 +93,14 @@ class TransformerModel:
         epochs: int = 10,
         batch_size: int = 32,
         lr: float = 1e-3,
-        device: str = "auto",
+        device: str = None,
     ):
+        # Ensure d_model is divisible by nhead
+        if d_model % nhead != 0:
+            # Adjust d_model to be divisible by nhead
+            d_model = ((d_model // nhead) + 1) * nhead
+            logger.info(f"Adjusted d_model to {d_model} to be divisible by {nhead} attention heads")
+        
         self.context_length = context_length
         self.horizon = horizon
         self.d_model = d_model
@@ -104,7 +110,10 @@ class TransformerModel:
         self.epochs = epochs
         self.batch_size = batch_size
         self.lr = lr
-        self.device = "cuda" if device == "auto" and torch.cuda.is_available() else device
+        if device is None or device == "auto":
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        else:
+            self.device = device
 
         self.model: Optional[nn.Module] = None
         self.scaler: Optional[StandardScaler] = None
@@ -137,8 +146,8 @@ class TransformerModel:
         X, y = self._make_sequences(feats_scaled, close_arr)
         if len(X) == 0:
             raise ValueError("Not enough data for sequences")
-        ds = _SeqDataset(X, y)
-        loader = DataLoader(ds, batch_size=self.batch_size, shuffle=True, drop_last=True)
+        dataset = _SeqDataset(X, y)
+        loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True, drop_last=False)
 
         self.model = _TransformerNet(
             input_dim=X.shape[-1],
@@ -152,19 +161,24 @@ class TransformerModel:
         crit = nn.MSELoss()
         opt = torch.optim.AdamW(self.model.parameters(), lr=self.lr)
         self.model.train()
-        for ep in range(1, self.epochs + 1):
-            losses = []
+        for epoch in range(1, self.epochs + 1):
+            epoch_losses = []
             for xb, yb in loader:
                 xb = xb.to(self.device)
                 yb = yb.to(self.device)
                 opt.zero_grad()
                 pred = self.model(xb)
+                # Ensure pred and yb have the same shape
+                if pred.shape != yb.shape:
+                    min_len = min(pred.shape[0], yb.shape[0])
+                    pred = pred[:min_len]
+                    yb = yb[:min_len]
                 loss = crit(pred, yb)
                 loss.backward()
                 opt.step()
-                losses.append(loss.item())
-            logger.debug(f"[Transformer] epoch {ep}/{self.epochs} loss {np.mean(losses):.6f}")
-        self.training_metrics = {"train_mse": float(np.mean(losses))}
+                epoch_losses.append(loss.item())
+            logger.debug(f"Epoch {epoch}/{self.epochs} – loss {np.mean(epoch_losses):.6f}")
+        self.training_metrics = {"train_mse": float(np.mean(epoch_losses))}
         self.is_fitted = True
         return self
 

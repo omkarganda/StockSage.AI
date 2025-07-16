@@ -1,0 +1,185 @@
+{
+  "AAPL": {
+    "symbol": "AAPL",
+    "data_info": {
+      "total_samples": 753,
+      "train_samples": 602,
+      "test_samples": 151,
+      "features": 141,
+      "date_range": "2021-01-04 00:00:00 to 2023-12-29 00:00:00"
+    },
+    "training_results": {
+      "baseline_linear_regression": {
+        "model_name": "baseline_linear_regression",
+        "symbol": "AAPL",
+        "train_samples": 602,
+        "start_time": 1752623915.8945243,
+        "status": "success",
+        "error": null,
+        "training_metrics": {
+          "training_time": 0.10273861885070801,
+          "train_samples": 602
+        },
+        "training_time": 0.10273861885070801
+      },
+      "baseline_random_forest": {
+        "model_name": "baseline_random_forest",
+        "symbol": "AAPL",
+        "train_samples": 602,
+        "start_time": 1752623916.1457362,
+        "status": "success",
+        "error": null,
+        "training_metrics": {
+          "training_time": 13.882858753204346,
+          "train_samples": 602
+        },
+        "training_time": 13.882858753204346
+      },
+      "baseline_ensemble": {
+        "model_name": "baseline_ensemble",
+        "symbol": "AAPL",
+        "train_samples": 602,
+        "start_time": 1752623930.1981122,
+        "status": "success",
+        "error": null,
+        "training_metrics": {
+          "training_time": 0.7424654960632324,
+          "train_samples": 602
+        },
+        "training_time": 0.7424654960632324
+      },
+      "statistical_exp_smoothing": {
+        "model_name": "statistical_exp_smoothing",
+        "symbol": "AAPL",
+        "train_samples": 602,
+        "start_time": 1752623931.1394446,
+        "status": "failed",
+        "error": "unsupported operand type(s) for *: 'int' and 'NoneType'",
+        "training_metrics": {},
+        "training_time": 0.020005464553833008
+      },
+      "statistical_theta": {
+        "model_name": "statistical_theta",
+        "symbol": "AAPL",
+        "train_samples": 602,
+        "start_time": 1752623931.1597831,
+        "status": "failed",
+        "error": "frequency is missing",
+        "training_metrics": {},
+        "training_time": 0.008076190948486328
+      },
+      "statistical_prophet": {
+        "model_name": "statistical_prophet",
+        "symbol": "AAPL",
+        "train_samples": 602,
+        "start_time": 1752623931.1682372,
+        "status": "failed",
+        "error": "unsupported operand type(s) for *: 'int' and 'NoneType'",
+        "training_metrics": {},
+        "training_time": 0.9461550712585449
+      },
+      "statistical_ensemble": {
+        "model_name": "statistical_ensemble",
+        "symbol": "AAPL",
+        "train_samples": 602,
+        "start_time": 1752623932.1146636,
+        "status": "failed",
+        "error": "frequency is missing",
+        "training_metrics": {},
+        "training_time": 0.024529695510864258
+      }
+    },
+    "evaluation_results": {
+      "baseline_linear_regression": {
+        "model_name": "baseline_linear_regression",
+        "symbol": "AAPL",
+        "test_samples": 151,
+        "start_time": 1752623915.997445,
+        "status": "success",
+        "error": null,
+        "evaluation_metrics": {
+          "mse": 0.018112847347843346,
+          "rmse": 0.13458397879332942,
+          "mae": 0.12001408989973406,
+          "r2": -2.955524593561786,
+          "mape": 449.3791712702203
+        },
+        "evaluation_time": 0.14663100242614746,
+        "predictions": [
+          0.06283304945941103,
+          0.07064204311434656,
+          0.07989210859534777,
+          0.07993993341606527,
+          0.08396061859913527,
+          0.09125600123360726,
+          0.09044900936137383,
+          0.08361675720843294,
+          0.09188041599740306,
+          0.0914991253399136
+        ]
+      },
+      "baseline_random_forest": {
+        "model_name": "baseline_random_forest",
+        "symbol": "AAPL",
+        "test_samples": 151,
+        "start_time": 1752623930.028813,
+        "status": "success",
+        "error": null,
+        "evaluation_metrics": {
+          "mse": 0.006006702695443254,
+          "rmse": 0.07750292056073277,
+          "mae": 0.061246533409602434,
+          "r2": -0.3117573279205421,
+          "mape": 142.29021677887195
+        },
+        "evaluation_time": 0.16334104537963867,
+        "predictions": [
+          -0.03865811207752973,
+          -0.04090944781898822,
+          -0.04401760541697396,
+          -0.04372602086295762,
+          -0.042372705493329034,
+          -0.04007675011172508,
+          -0.04037471494587142,
+          -0.04037471494587142,
+          -0.040327074548641775,
+          -0.04037471494587142
+        ]
+      },
+      "baseline_ensemble": {
+        "model_name": "baseline_ensemble",
+        "symbol": "AAPL",
+        "test_samples": 151,
+        "start_time": 1752623930.9410903,
+        "status": "success",
+        "error": null,
+        "evaluation_metrics": {
+          "mse": 0.003560102699987873,
+          "rmse": 0.059666596182352094,
+          "mae": 0.05055113397816622,
+          "r2": 0.22253671579225953,
+          "mape": 95.58183965010447
+        },
+        "evaluation_time": 0.1846151351928711,
+        "predictions": [
+          -0.0383014371813156,
+          -0.03662964094045085,
+          -0.03409870652028447,
+          -0.03400930046791476,
+          -0.024495233929023516,
+          -0.022804620086348096,
+          -0.02432431891921345,
+          -0.025750116631647516,
+          -0.02378402457617829,
+          -0.021847362086585585
+        ]
+      }
+    },
+    "summary": {
+      "total_models": 7,
+      "successful_models": 3,
+      "failed_models": 4,
+      "success_rate": 42.857142857142854
+    }
+  }
+}

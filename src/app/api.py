@@ -111,6 +111,16 @@ class ExplanationResponse(BaseModel):
     recent_predictions_accuracy: Optional[Dict[str, float]] = None
     explanation_text: str
     timestamp: str
+    
+    @validator('top_features')
+    def validate_top_features(cls, v):
+        """Ensure feature names are strings and importance values are floats"""
+        for item in v:
+            if 'feature' in item and not isinstance(item['feature'], str):
+                item['feature'] = str(item['feature'])
+            if 'importance' in item and not isinstance(item['importance'], (int, float)):
+                item['importance'] = float(item['importance'])
+        return v
 
 
 # Initialize app with lifespan management

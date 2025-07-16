@@ -22,15 +22,21 @@ import warnings
 from pathlib import Path
 import joblib
 
+# Local imports
+from ..utils.logging import get_logger
+from ..features.indicators import add_all_technical_indicators
+
+# Configure logging
+logger = get_logger(__name__)
+
 # Core sktime imports
 try:
-    from sktime.forecasting.arima import ARIMA, AutoARIMA
-    from sktime.forecasting.ets import ExponentialSmoothing
+    from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     from sktime.forecasting.theta import ThetaForecaster
     from sktime.forecasting.trend import PolynomialTrendForecaster
     from sktime.forecasting.naive import NaiveForecaster
     from sktime.forecasting.fbprophet import Prophet
-    from sktime.forecasting.ensemble import EnsembleForecaster
+    from sktime.forecasting.compose import EnsembleForecaster
     from sktime.forecasting.model_selection import (
         temporal_train_test_split, ForecastingGridSearchCV,
         SlidingWindowSplitter, ExpandingWindowSplitter
@@ -45,6 +51,7 @@ try:
     from sktime.performance_metrics.forecasting import (
         mean_absolute_error, mean_squared_error, mean_absolute_percentage_error
     )
+    
     SKTIME_AVAILABLE = True
 except ImportError:
     SKTIME_AVAILABLE = False
@@ -68,13 +75,6 @@ except ImportError:
     STATSMODELS_AVAILABLE = False
     warnings.warn("Statsmodels not available for some advanced models")
 
-# Local imports
-from ..utils.logging import get_logger
-from ..features.indicators import add_all_technical_indicators
-
-# Configure logging
-logger = get_logger(__name__)
-
 
 class StatisticalForecastingModel:
     """
@@ -86,7 +86,7 @@ class StatisticalForecastingModel:
     
     def __init__(
         self,
-        model_type: str = 'auto_arima',
+        model_type: str = 'exp_smoothing',
         forecast_horizon: int = 30,
         confidence_level: float = 0.95,
         seasonal_period: Optional[int] = None,
@@ -123,7 +123,8 @@ class StatisticalForecastingModel:
         self.model_type = model_type
         self.forecast_horizon = forecast_horizon
         self.confidence_level = confidence_level
-        self.seasonal_period = seasonal_period
+        # Ensure seasonal_period is never None
+        self.seasonal_period = seasonal_period if seasonal_period is not None else 1
         self.use_log_transform = use_log_transform
         self.use_differencing = use_differencing
         self.handle_volatility_clustering = handle_volatility_clustering
@@ -148,52 +149,31 @@ class StatisticalForecastingModel:
         logger.info(f"Initializing {self.model_type} forecasting model")
         
         try:
-            if self.model_type == 'auto_arima':
-                self.model = AutoARIMA(
-                    start_p=0, max_p=5,
-                    start_q=0, max_q=5,
-                    seasonal=True if self.seasonal_period else False,
-                    m=self.seasonal_period or 1,
-                    suppress_warnings=True,
-                    random_state=self.random_state,
-                    n_jobs=-1
+            if self.model_type == 'exp_smoothing':
+                self.model = ExponentialSmoothing(
+                    trend='add',
+                    seasonal='add' if self.seasonal_period > 1 else None,
+                    sp=self.seasonal_period
                 )
-                
-            elif self.model_type == 'arima':
-                self.model = ARIMA(
-                    order=(1, 1, 1),
-                    seasonal_order=(1, 1, 1, self.seasonal_period) if self.seasonal_period else None,
-                    suppress_warnings=True
+            elif self.model_type == 'theta':
+                # ThetaForecaster requires frequency parameter
+                self.model = ThetaForecaster(
+                    sp=self.seasonal_period
                 )
-                
             elif self.model_type == 'prophet' and PROPHET_AVAILABLE:
                 self.model = Prophet(
                     seasonality_mode='multiplicative',
-                    daily_seasonality=True,
-                    weekly_seasonality=True,
-                    yearly_seasonality=True,
+                    daily_seasonality='auto',
+                    weekly_seasonality='auto',
+                    yearly_seasonality='auto',
                     changepoint_prior_scale=0.05,
                     seasonality_prior_scale=10.0,
                     add_country_holidays={'country_name': 'US'}
                 )
-                
-            elif self.model_type == 'ets':
-                self.model = ExponentialSmoothing(
-                    trend='add',
-                    seasonal='add' if self.seasonal_period else None,
-                    sp=self.seasonal_period or 1
-                )
-                
-            elif self.model_type == 'theta':
-                self.model = ThetaForecaster(
-                    sp=self.seasonal_period or 1
-                )
-                
             elif self.model_type == 'ensemble':
                 self.model = self._create_ensemble_model()
-                
             else:
-                raise ValueError(f"Unknown model type: {self.model_type}")
+                raise ValueError(f"Unknown or unsupported model type: {self.model_type}")
             
             logger.info(f"Model {self.model_type} initialized successfully")
             
@@ -206,32 +186,20 @@ class StatisticalForecastingModel:
         # Define individual models for ensemble
         forecasters = []
         
-        # ARIMA component
-        if SKTIME_AVAILABLE:
-            arima_model = AutoARIMA(
-                start_p=0, max_p=3,
-                start_q=0, max_q=3,
-                seasonal=True if self.seasonal_period else False,
-                m=self.seasonal_period or 1,
-                suppress_warnings=True,
-                random_state=self.random_state
-            )
-            forecasters.append(('arima', arima_model))
-        
         # ETS component
         ets_model = ExponentialSmoothing(
             trend='add',
-            seasonal='add' if self.seasonal_period else None,
-            sp=self.seasonal_period or 1
+            seasonal='add' if self.seasonal_period > 1 else None,
+            sp=self.seasonal_period
         )
         forecasters.append(('ets', ets_model))
         
         # Theta component
-        theta_model = ThetaForecaster(sp=self.seasonal_period or 1)
+        theta_model = ThetaForecaster(sp=self.seasonal_period)
         forecasters.append(('theta', theta_model))
         
         # Naive baseline
-        naive_model = NaiveForecaster(strategy='last', sp=self.seasonal_period or 1)
+        naive_model = NaiveForecaster(strategy='last', sp=self.seasonal_period)
         forecasters.append(('naive', naive_model))
         
         # Create ensemble with equal weights
@@ -262,6 +230,22 @@ class StatisticalForecastingModel:
         if y_processed.isnull().any():
             logger.warning("Missing values detected, forward filling")
             y_processed = y_processed.fillna(method='ffill').fillna(method='bfill')
+        
+        # Ensure proper frequency for the time series
+        if not hasattr(y_processed.index, 'freq') or y_processed.index.freq is None:
+            # Infer frequency from the data
+            try:
+                y_processed.index.freq = pd.infer_freq(y_processed.index)
+                if y_processed.index.freq is None:
+                    # If inference fails, assume business daily frequency
+                    y_processed = y_processed.asfreq('B', method='ffill')
+                    logger.info("Set frequency to business daily (B)")
+                else:
+                    logger.info(f"Inferred frequency: {y_processed.index.freq}")
+            except Exception:
+                # If all else fails, set to daily frequency
+                y_processed = y_processed.asfreq('D', method='ffill')
+                logger.info("Set frequency to daily (D)")
         
         # Ensure positive values for log transformation
         if self.use_log_transform:
@@ -841,43 +825,19 @@ def create_statistical_models(
     include_automl: bool = True
 ) -> Dict[str, Any]:
     """
-    Create a suite of statistical forecasting models.
-    
-    Parameters:
-    -----------
-    forecast_horizon : int, default=30
-        Forecast horizon
-    seasonal_period : int, optional
-        Seasonal period
-    include_automl : bool, default=True
-        Whether to include AutoML forecaster
-        
-    Returns:
-    --------
-    dict
-        Dictionary of statistical models
+    Factory function to create a dictionary of statistical forecasting models.
+    Only includes models that do not require pmdarima.
     """
     models = {}
-    
-    # Individual models
-    model_types = ['auto_arima', 'ets', 'theta', 'ensemble']
-    if PROPHET_AVAILABLE:
-        model_types.append('prophet')
-    
-    for model_type in model_types:
-        models[model_type] = StatisticalForecastingModel(
-            model_type=model_type,
-            forecast_horizon=forecast_horizon,
-            seasonal_period=seasonal_period
-        )
-    
-    # AutoML forecaster
-    if include_automl:
-        models['automl'] = AutoMLForecaster(
-            models_to_try=model_types,
-            forecast_horizon=forecast_horizon
-        )
-    
+    for model_type in ['exp_smoothing', 'theta', 'prophet', 'ensemble']:
+        try:
+            models[model_type] = StatisticalForecastingModel(
+                model_type=model_type,
+                forecast_horizon=forecast_horizon,
+                seasonal_period=seasonal_period
+            )
+        except Exception as e:
+            logger.warning(f"Skipping {model_type} due to error: {e}")
     return models
 
 
