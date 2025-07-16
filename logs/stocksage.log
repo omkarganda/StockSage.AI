@@ -3069,3 +3069,13 @@ Date                                                                            
 2024-12-30 00:00:00-05:00  251.623020  252.889969  250.146586  251.593094  35557500  255.439816  ...  -53.523005                      0                    0   49.649903               0             0
 
 [251 rows x 141 columns] | module=src.models.sktime_model
+2025-07-16 21:10:18,449 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-16 21:10:18,449 - system - INFO - Python version: 3.13.3 (main, Jun 16 2025, 18:15:32) [GCC 14.2.0] | module=system
+2025-07-16 21:10:18,449 - system - INFO - Working directory: /workspace | module=system
+2025-07-16 21:10:18,449 - system - INFO - Log level: INFO | module=system
+2025-07-16 21:10:18,449 - system - INFO - Environment: development | module=system
+2025-07-16 21:10:38,839 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-16 21:10:38,840 - system - INFO - Python version: 3.13.3 (main, Jun 16 2025, 18:15:32) [GCC 14.2.0] | module=system
+2025-07-16 21:10:38,840 - system - INFO - Working directory: /workspace | module=system
+2025-07-16 21:10:38,840 - system - INFO - Log level: INFO | module=system
+2025-07-16 21:10:38,840 - system - INFO - Environment: development | module=system

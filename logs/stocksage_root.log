@@ -10313,3 +10313,55 @@ Date                                                                            
 2025-07-16 14:35:17,270 - __main__ - INFO - Saved prediction plot: reports\evaluation\AAPL_predictions_vs_actual.html
 2025-07-16 14:35:17,270 - __main__ - INFO - Performing statistical significance tests for AAPL...
 2025-07-16 14:35:17,275 - __main__ - INFO - Saved comparison CSV: reports\evaluation\model_comparison_20250716_143517.csv
+2025-07-16 21:10:18,449 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-16 21:10:18,449 - system - INFO - Python version: 3.13.3 (main, Jun 16 2025, 18:15:32) [GCC 14.2.0] | module=system
+2025-07-16 21:10:18,449 - system - INFO - Working directory: /workspace | module=system
+2025-07-16 21:10:18,449 - system - INFO - Log level: INFO | module=system
+2025-07-16 21:10:18,449 - system - INFO - Environment: development | module=system
+2025-07-16 21:10:18,450 - __main__ - ERROR - ✗ Volume_ma fix test failed: name 'EnsembleForecaster' is not defined
+2025-07-16 21:10:18,450 - __main__ - INFO - 
+--- FutureWarning Fix ---
+2025-07-16 21:10:18,450 - __main__ - INFO - Testing FutureWarning suppression...
+2025-07-16 21:10:18,452 - __main__ - INFO - ✓ Period conversion completed without visible warnings
+2025-07-16 21:10:18,452 - __main__ - INFO - ✓ No BDay-related FutureWarnings detected
+2025-07-16 21:10:18,452 - __main__ - INFO - 
+--- Frequency Setting ---
+2025-07-16 21:10:18,452 - __main__ - INFO - Testing frequency setting...
+2025-07-16 21:10:18,453 - __main__ - INFO - ✓ asfreq with warning suppression works
+2025-07-16 21:10:18,453 - __main__ - INFO - ✓ Original series: 31 points
+2025-07-16 21:10:18,453 - __main__ - INFO - ✓ Business day series: 22 points
+2025-07-16 21:10:18,453 - __main__ - INFO - 
+==================================================
+2025-07-16 21:10:18,453 - __main__ - INFO - TEST SUMMARY
+2025-07-16 21:10:18,453 - __main__ - INFO - ==================================================
+2025-07-16 21:10:18,454 - __main__ - INFO - Volume MA Fix: FAIL
+2025-07-16 21:10:18,454 - __main__ - INFO - FutureWarning Fix: PASS
+2025-07-16 21:10:18,454 - __main__ - INFO - Frequency Setting: PASS
+2025-07-16 21:10:18,454 - __main__ - ERROR - 
+❌ Some tests failed. Please check the fixes.
+2025-07-16 21:10:38,839 - system - INFO - StockSage.AI logging system initialized | module=system
+2025-07-16 21:10:38,840 - system - INFO - Python version: 3.13.3 (main, Jun 16 2025, 18:15:32) [GCC 14.2.0] | module=system
+2025-07-16 21:10:38,840 - system - INFO - Working directory: /workspace | module=system
+2025-07-16 21:10:38,840 - system - INFO - Log level: INFO | module=system
+2025-07-16 21:10:38,840 - system - INFO - Environment: development | module=system
+2025-07-16 21:10:38,845 - __main__ - ERROR - ✗ Volume_ma fix test failed: sktime is required but not available
+2025-07-16 21:10:38,845 - __main__ - INFO - 
+--- FutureWarning Fix ---
+2025-07-16 21:10:38,845 - __main__ - INFO - Testing FutureWarning suppression...
+2025-07-16 21:10:38,846 - __main__ - INFO - ✓ Period conversion completed without visible warnings
+2025-07-16 21:10:38,847 - __main__ - INFO - ✓ No BDay-related FutureWarnings detected
+2025-07-16 21:10:38,847 - __main__ - INFO - 
+--- Frequency Setting ---
+2025-07-16 21:10:38,847 - __main__ - INFO - Testing frequency setting...
+2025-07-16 21:10:38,848 - __main__ - INFO - ✓ asfreq with warning suppression works
+2025-07-16 21:10:38,848 - __main__ - INFO - ✓ Original series: 31 points
+2025-07-16 21:10:38,848 - __main__ - INFO - ✓ Business day series: 22 points
+2025-07-16 21:10:38,848 - __main__ - INFO - 
+==================================================
+2025-07-16 21:10:38,848 - __main__ - INFO - TEST SUMMARY
+2025-07-16 21:10:38,849 - __main__ - INFO - ==================================================
+2025-07-16 21:10:38,849 - __main__ - INFO - Volume MA Fix: FAIL
+2025-07-16 21:10:38,849 - __main__ - INFO - FutureWarning Fix: PASS
+2025-07-16 21:10:38,849 - __main__ - INFO - Frequency Setting: PASS
+2025-07-16 21:10:38,849 - __main__ - ERROR - 
+❌ Some tests failed. Please check the fixes.
