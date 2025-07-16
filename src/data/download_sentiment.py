@@ -498,7 +498,17 @@ class SentimentDataProcessor:
             articles_df['sentiment_neutral'] = 1.0
             articles_df['sentiment_positive'] = 0.0
             articles_df['sentiment_compound'] = 0.0
-        
+
+        # ------------------------------------------------------------------
+        # Augment with generative LLM sentiment features (optional)
+        # ------------------------------------------------------------------
+        try:
+            from src.features.generative_sentiment import add_llm_sentiment_features
+
+            articles_df = add_llm_sentiment_features(articles_df, text_columns=text_columns)
+        except Exception as exc:  # pragma: no cover – missing openai etc.
+            logger.debug("Skipping LLM sentiment augmentation – %s", exc)
+ 
         return articles_df
     
     def get_daily_sentiment(
