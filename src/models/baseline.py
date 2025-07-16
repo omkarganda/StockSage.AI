@@ -431,8 +431,17 @@ class BaselineModel:
         y_true = y[valid_mask]
         
         if len(y_true) == 0:
-            logger.warning("No valid samples for evaluation")
-            return {}
+            logger.warning("No valid samples for evaluation - this is expected for test sets where future data is not available")
+            logger.info("For time series forecasting, evaluation should be done using walk-forward validation")
+            # Return default metrics structure for consistency
+            return {
+                'mse': np.nan,
+                'rmse': np.nan,
+                'mae': np.nan,
+                'smape': np.nan,
+                'r2': np.nan,
+                'note': 'No evaluation data available - expected for forecasting on test sets'
+            }
         
         # Make predictions
         predictions = self.predict(df)

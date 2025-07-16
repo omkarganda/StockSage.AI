@@ -300,6 +300,17 @@ class NewsCollector:
         if isinstance(to_date, datetime):
             to_date = to_date.strftime('%Y-%m-%d')
         
+        # NewsAPI free tier limitation: only allows articles from the last 30 days
+        today = datetime.now()
+        earliest_allowed = (today - timedelta(days=30)).strftime('%Y-%m-%d')
+        
+        # Adjust date range if it's too far in the past
+        original_from_date = from_date
+        if from_date < earliest_allowed:
+            logger.warning(f"Requested from_date {from_date} is too far in the past for NewsAPI free tier. "
+                         f"Adjusting to {earliest_allowed}")
+            from_date = earliest_allowed
+        
         # Check cache
         cache_key = f"{query}_{from_date}_{to_date}"
         if self.cache:
@@ -307,7 +318,8 @@ class NewsCollector:
             if cached_data is not None:
                 return cached_data
         
-        logger.info(f"Fetching news for '{query}' from {from_date} to {to_date}")
+        logger.info(f"Fetching news for '{query}' from {from_date} to {to_date}"
+                   f"{' (adjusted from ' + original_from_date + ')' if original_from_date != from_date else ''}")
         
         # Prepare sources
         if sources:
@@ -350,7 +362,12 @@ class NewsCollector:
                 page += 1
                 
             except Exception as e:
-                logger.error(f"Error fetching news page {page}: {str(e)}")
+                error_msg = str(e)
+                if 'parameterInvalid' in error_msg and 'too far in the past' in error_msg:
+                    logger.warning(f"NewsAPI date limitation reached: {error_msg}")
+                    logger.info("Consider upgrading to a paid NewsAPI plan for historical data access")
+                else:
+                    logger.error(f"Error fetching news page {page}: {error_msg}")
                 break
         
         if not all_articles:

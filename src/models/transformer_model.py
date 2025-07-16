@@ -170,7 +170,7 @@ class TransformerModel:
         
         # Add learning rate scheduler
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            opt, mode='min', factor=0.5, patience=5, min_lr=1e-6, verbose=True
+            opt, mode='min', factor=0.5, patience=5, min_lr=1e-6
         )
         
         self.model.train()

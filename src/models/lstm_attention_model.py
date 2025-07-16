@@ -166,7 +166,7 @@ class LSTMAttentionModel:
         
         # Add learning rate scheduler
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, mode='min', factor=0.5, patience=5, min_lr=1e-6, verbose=True
+            optimizer, mode='min', factor=0.5, patience=5, min_lr=1e-6
         )
 
         self.model.train()
