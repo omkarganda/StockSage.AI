@@ -191,7 +191,7 @@ def get_explanation(symbol: str) -> Optional[Dict]:
                 {"feature": "economic_indicators", "importance": 0.05}
             ],
             "recent_predictions_accuracy": {
-                "mape": 8.5,
+                "smape": 8.5,
                 "directional_accuracy": 0.72,
                 "sharpe_ratio": 1.45
             },
@@ -496,7 +496,7 @@ def main():
                 col1, col2, col3 = st.columns(3)
                 
                 with col1:
-                    st.metric("MAPE", f"{acc.get('mape', 'N/A')}%")
+                    st.metric("SMAPE", f"{acc.get('smape', 'N/A')}%")
                 with col2:
                     st.metric("Direction Accuracy", f"{acc.get('directional_accuracy', 'N/A'):.2%}")
                 with col3:

@@ -367,8 +367,9 @@ class ModelEvaluator:
                             mse = np.mean((actual - pred_values) ** 2)
                             mae = np.mean(np.abs(actual - pred_values))
                             rmse = np.sqrt(mse)
-                            # Use small epsilon to avoid division by zero in MAPE
-                            mape = np.mean(np.abs((actual - pred_values) / (np.abs(actual) + 1e-8))) * 100
+                            # Use SMAPE (Symmetric Mean Absolute Percentage Error) instead of MAPE
+                            # SMAPE is more robust to values near zero
+                            smape = np.mean(2 * np.abs(actual - pred_values) / (np.abs(actual) + np.abs(pred_values) + 1e-8)) * 100
 
                             # Direction accuracy (sign of returns)
                             actual_directions = actual > 0
@@ -385,14 +386,14 @@ class ModelEvaluator:
                                 'mse': float(mse),
                                 'mae': float(mae),
                                 'rmse': float(rmse),
-                                'mape': float(mape),
+                                'smape': float(smape),
                                 'direction_accuracy': float(direction_accuracy),
                                 'correlation': float(correlation),
                                 'predictions': pred_values[:10].tolist() if hasattr(pred_values, 'tolist') else list(pred_values[:10]),
                                 'actual': actual[:10].tolist() if hasattr(actual, 'tolist') else list(actual[:10])
                             }
                             
-                            logger.info(f"[SUCCESS] {model_name}: MAPE={mape:.2f}%, Dir_Acc={direction_accuracy:.1f}%")
+                            logger.info(f"[SUCCESS] {model_name}: SMAPE={smape:.2f}%, Dir_Acc={direction_accuracy:.1f}%")
                         else:
                             logger.warning(f"[WARNING] No valid predictions for {model_name}")
                     else:
@@ -441,14 +442,14 @@ class ModelEvaluator:
         comparison_df = pd.DataFrame(comparison_data)
         
         if not comparison_df.empty:
-            # Sort by MAPE (lower is better)
-            comparison_df = comparison_df.sort_values('mape')
+            # Sort by SMAPE (lower is better)
+            comparison_df = comparison_df.sort_values('smape')
             
             # Add rank
             comparison_df['rank'] = range(1, len(comparison_df) + 1)
             
             # Reorder columns
-            cols = ['rank', 'model', 'symbol', 'mape', 'rmse', 'mae', 'direction_accuracy', 'correlation']
+            cols = ['rank', 'model', 'symbol', 'smape', 'rmse', 'mae', 'direction_accuracy', 'correlation']
             cols = [col for col in cols if col in comparison_df.columns]
             comparison_df = comparison_df[cols]
         
@@ -480,16 +481,16 @@ class ModelEvaluator:
         # Create subplots
         fig = make_subplots(
             rows=2, cols=2,
-            subplot_titles=('MAPE Comparison', 'RMSE Comparison', 
+            subplot_titles=('SMAPE Comparison', 'RMSE Comparison', 
                           'Direction Accuracy', 'Model Correlation'),
             specs=[[{"secondary_y": False}, {"secondary_y": False}],
                    [{"secondary_y": False}, {"secondary_y": False}]]
         )
         
-        # MAPE plot
+                # SMAPE plot
         fig.add_trace(
-            go.Bar(x=comparison_df['model'], y=comparison_df['mape'], 
-                   name='MAPE (%)', marker_color='lightblue'),
+            go.Bar(x=comparison_df['model'], y=comparison_df['smape'],
+                   name='SMAPE (%)', marker_color='lightblue'),
             row=1, col=1
         )
         
@@ -699,7 +700,7 @@ class ModelEvaluator:
                         <h2>{symbol} Performance Summary</h2>
                         <div class="metric">
                             <strong>Best Model:</strong> {comparison_df.iloc[0]['model']} 
-                            (MAPE: {comparison_df.iloc[0]['mape']:.2f}%)
+                            (SMAPE: {comparison_df.iloc[0]['smape']:.2f}%)
                         </div>
                         <div class="metric">
                             <strong>Models Evaluated:</strong> {len(comparison_df)}
@@ -715,7 +716,7 @@ class ModelEvaluator:
                 <h2>Methodology</h2>
                 <p>This evaluation used the following metrics:</p>
                 <ul>
-                    <li><strong>MAPE:</strong> Mean Absolute Percentage Error (lower is better)</li>
+                    <li><strong>SMAPE:</strong> Symmetric Mean Absolute Percentage Error (lower is better)</li>
                     <li><strong>RMSE:</strong> Root Mean Square Error (lower is better)</li>
                     <li><strong>MAE:</strong> Mean Absolute Error (lower is better)</li>
                     <li><strong>Direction Accuracy:</strong> Percentage of correct direction predictions (higher is better)</li>
@@ -874,7 +875,7 @@ def main():
                 if not comparison_df.empty:
                     print(f"\nTop 3 Models for {symbol}:")
                     for _, row in comparison_df.head(3).iterrows():
-                        print(f"  {row['rank']}. {row['model']} - MAPE: {row['mape']:.2f}%")
+                        print(f"  {row['rank']}. {row['model']} - SMAPE: {row['smape']:.2f}%")
         
         # Save results
         evaluator.save_results(symbols)

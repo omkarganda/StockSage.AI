@@ -590,11 +590,11 @@ class ModelTrainer:
             logger.info(f"Summary CSV saved to {summary_file}")
             
             # Print top performers
-            if 'mape' in summary_df.columns:
-                logger.info("\nTop 5 Models by MAPE:")
-                top_models = summary_df.nsmallest(5, 'mape')[['symbol', 'model', 'mape', 'rmse']]
+            if 'smape' in summary_df.columns:
+                logger.info("\nTop 5 Models by SMAPE:")
+                top_models = summary_df.nsmallest(5, 'smape')[['symbol', 'model', 'smape', 'rmse']]
                 for _, row in top_models.iterrows():
-                    logger.info(f"  {row['symbol']:6} | {row['model']:20} | MAPE: {row['mape']:6.2f}% | RMSE: {row['rmse']:8.2f}")
+                    logger.info(f"  {row['symbol']:6} | {row['model']:20} | SMAPE: {row['smape']:6.2f}% | RMSE: {row['rmse']:8.2f}")
     
     def print_final_summary(self, results: Dict[str, Any]):
         """Print a comprehensive summary of all results."""

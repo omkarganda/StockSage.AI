@@ -364,7 +364,7 @@ class TestExplanationEndpoint:
         # May or may not have accuracy metrics
         if 'recent_predictions_accuracy' in data and data['recent_predictions_accuracy']:
             acc = data['recent_predictions_accuracy']
-            assert 'mape' in acc
+            assert 'smape' in acc
             assert 'directional_accuracy' in acc
             assert 'sharpe_ratio' in acc
 

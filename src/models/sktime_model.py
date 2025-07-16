@@ -125,7 +125,12 @@ class StatisticalForecastingModel:
         self.confidence_level = confidence_level
         # Ensure seasonal_period is never None
         self.seasonal_period = seasonal_period if seasonal_period is not None else 1
-        self.use_log_transform = use_log_transform
+        # Disable log transform for ETS, Theta, and Ensemble models as per analysis recommendation
+        if model_type in ['ets', 'theta', 'ensemble']:
+            self.use_log_transform = False
+            logger.info(f"Disabled log transform for {model_type} model as recommended")
+        else:
+            self.use_log_transform = use_log_transform
         self.use_differencing = use_differencing
         self.handle_volatility_clustering = handle_volatility_clustering
         self.random_state = random_state
@@ -579,7 +584,7 @@ class StatisticalForecastingModel:
                 'mae': mean_absolute_error(y_true_aligned, y_pred_aligned),
                 'mse': mean_squared_error(y_true_aligned, y_pred_aligned),
                 'rmse': np.sqrt(mean_squared_error(y_true_aligned, y_pred_aligned)),
-                'mape': mean_absolute_percentage_error(y_true_aligned, y_pred_aligned, symmetric=False) * 100
+                'smape': mean_absolute_percentage_error(y_true_aligned, y_pred_aligned, symmetric=True) * 100
             }
             
             return metrics
@@ -852,7 +857,7 @@ class AutoMLForecaster:
         models_to_try: Optional[List[str]] = None,
         forecast_horizon: int = 30,
         cv_splits: int = 3,
-        metric: str = 'mape',
+        metric: str = 'smape',
         random_state: int = 42
     ):
         """
@@ -866,7 +871,7 @@ class AutoMLForecaster:
             Forecast horizon
         cv_splits : int, default=3
             Number of CV splits for model selection
-        metric : str, default='mape'
+        metric : str, default='smape'
             Metric to optimize
         random_state : int, default=42
             Random state

@@ -412,7 +412,7 @@ class TimesFMFinancialModel:
             # Calculate metrics
             mse = np.mean((actual_prices - predicted_prices) ** 2)
             mae = np.mean(np.abs(actual_prices - predicted_prices))
-            mape = np.mean(np.abs((actual_prices - predicted_prices) / actual_prices)) * 100
+            smape = np.mean(2 * np.abs(actual_prices - predicted_prices) / (np.abs(actual_prices) + np.abs(predicted_prices) + 1e-8)) * 100
             
             # Direction accuracy (up/down)
             actual_directions = np.diff(actual_prices) > 0
@@ -423,7 +423,7 @@ class TimesFMFinancialModel:
                 'mse': mse,
                 'rmse': np.sqrt(mse),
                 'mae': mae,
-                'mape': mape,
+                'smape': smape,
                 'direction_accuracy': direction_accuracy
             }
             
@@ -742,13 +742,13 @@ class NeuralForecastBaseline:
             
             mse = np.mean((actual - pred_values) ** 2)
             mae = np.mean(np.abs(actual - pred_values))
-            mape = np.mean(np.abs((actual - pred_values) / actual)) * 100
+            smape = np.mean(2 * np.abs(actual - pred_values) / (np.abs(actual) + np.abs(pred_values) + 1e-8)) * 100
             
             results[model_name] = {
                 'mse': mse,
                 'rmse': np.sqrt(mse),
                 'mae': mae,
-                'mape': mape
+                'smape': smape
             }
         
         return results
