@@ -126,9 +126,70 @@ class GPTClient:
         )
         return summary.strip()
 
+    # ------------------------------------------------------------------
+    # Narrative trend detection & scenario generation
+    # ------------------------------------------------------------------
+    def detect_trends(self, texts: List[str], max_trends: int = 5) -> List[str]:
+        """Extract high-level narrative trends from a collection of news texts.
+
+        Returns **up to** `max_trends` concise trend statements suitable for
+        downstream feature engineering (e.g. bag-of-trends frequency counts).
+        """
+        if not texts:
+            return []
+
+        joined_text = "\n".join(texts)[:6000]
+        prompt = (
+            "You are a financial news analyst. Identify the key narrative trends "
+            "in the following articles. Return a JSON list of at most "
+            f"{max_trends} short trend headline strings."
+        )
+        completion = self.chat(
+            [
+                {"role": "system", "content": prompt},
+                {"role": "user", "content": joined_text},
+            ],
+            max_tokens=128,
+        )
+        try:
+            import json
+
+            trends = json.loads(completion)
+            if isinstance(trends, list):
+                return [str(t).strip() for t in trends][:max_trends]
+        except Exception:
+            logger.warning("Failed to parse trend response – %s", completion)
+        return []
+
+    def generate_scenarios(self, symbol: str, horizon_days: int = 30, n_scenarios: int = 3) -> List[str]:
+        """Generate what-if market scenarios for a given symbol.
+
+        Each scenario should be a *single sentence* describing a plausible
+        market development within the forecast horizon. Returned as a list of
+        strings.
+        """
+        prompt = (
+            "You are a seasoned equity strategist. Generate "
+            f"{n_scenarios} plausible but diverse market scenarios for the stock "
+            f"{symbol} over the next {horizon_days} days. Each scenario must be a "
+            "single succinct sentence. Return the scenarios as a JSON array of strings."
+        )
+        completion = self.chat(
+            [{"role": "system", "content": prompt}],
+            max_tokens=128,
+        )
+        try:
+            import json
+
+            scenarios = json.loads(completion)
+            if isinstance(scenarios, list):
+                return [str(s).strip() for s in scenarios][:n_scenarios]
+        except Exception:
+            logger.warning("Failed to parse scenarios response – %s", completion)
+        return []
 
 # ----------------------------------------------------------------------
-# Convenience façade used by other modules
+# Safe façade wrappers
 # ----------------------------------------------------------------------
 
 def safe_score_sentiment(text: str) -> float:
@@ -147,3 +208,19 @@ def safe_summarise_texts(texts: List[str]) -> str:
         return client.summarise(texts)
     except LLMNotAvailableError:
         return ""
+
+
+def safe_detect_trends(texts: List[str]) -> List[str]:
+    try:
+        client = GPTClient()
+        return client.detect_trends(texts)
+    except LLMNotAvailableError:
+        return []
+
+
+def safe_generate_scenarios(symbol: str, horizon_days: int = 30) -> List[str]:
+    try:
+        client = GPTClient()
+        return client.generate_scenarios(symbol, horizon_days)
+    except LLMNotAvailableError:
+        return []

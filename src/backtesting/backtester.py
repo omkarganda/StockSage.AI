@@ -101,6 +101,42 @@ class Backtester:
 
         return BacktestResult(equity_curve=equity_curve, trades=trades, metrics=metrics)
 
+    # ------------------------------------------------------------------
+    # Parameter sweep helper
+    # ------------------------------------------------------------------
+    def run_parameter_sweep(
+        self,
+        price_series: pd.Series,
+        strategy_func,
+        param_grid: Dict[str, list],
+    ) -> pd.DataFrame:
+        """Run back-tests for each combination in the param grid.
+
+        Parameters
+        ----------
+        strategy_func  : callable(prices: pd.Series, **params) -> pd.Series
+            Function that generates signal series given prices and params.
+        param_grid     : Dict[str, list]
+            Parameter grid like {"short_window": [5, 10], "long_window": [20, 50]}.
+        Returns
+        -------
+        DataFrame with metrics per parameter combination.
+        """
+        import itertools
+
+        keys = list(param_grid.keys())
+        rows = []
+        for values in itertools.product(*[param_grid[k] for k in keys]):
+            params = dict(zip(keys, values))
+            try:
+                signals = strategy_func(price_series, **params)
+                res = self.run(price_series, signals)
+                metric_row = {**params, **res.metrics}
+                rows.append(metric_row)
+            except Exception as exc:
+                logger.warning("Sweep failed for params %s – %s", params, exc)
+        return pd.DataFrame(rows)
+
 
 # ----------------------------------------------------------------------
 # Helper functions
@@ -167,10 +203,29 @@ def _compute_metrics(equity_curve: pd.Series, daily_returns: pd.Series) -> Dict[
     drawdown = (equity_curve - cummax) / cummax
     max_dd = drawdown.min()
 
+    # Sortino ratio (downside deviation)
+    downside = daily_returns.clip(upper=0)
+    downside_std = downside.std() * np.sqrt(252)
+    sortino = ann_return / abs(downside_std) if downside_std != 0 else 0.0
+
+    # Calmar ratio
+    calmar = (-ann_return / max_dd) if max_dd < 0 else 0.0
+
+    # Win rate
+    win_rate = (daily_returns > 0).mean()
+
+    # Trade statistics (assuming positions changes define trades)
+    trade_count = (daily_returns != 0).sum()
+
     return {
         "cumulative_return": float(total_return),
         "annualised_return": float(ann_return),
         "annualised_volatility": float(ann_vol),
         "sharpe_ratio": float(sharpe),
         "max_drawdown": float(max_dd),
+        "sortino_ratio": float(sortino),
+        "calmar_ratio": float(calmar),
+        "win_rate": float(win_rate),
+        "trading_days": int(len(equity_curve)),
+        "trade_count": int(trade_count),
     }

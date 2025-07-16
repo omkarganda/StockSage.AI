@@ -25,6 +25,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+import plotly.graph_objects as go
+from subprocess import run, CalledProcessError
+
 from src.data.download_market import MarketDataDownloader
 from src.features.indicators import add_all_technical_indicators
 from src.backtesting import Backtester
@@ -40,6 +43,7 @@ def run_validation(days_back: int = 90):
     downloader = MarketDataDownloader(use_cache=True)
 
     metrics_list = []
+    equity_curves = {}
 
     for symbol in ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA"]:
         df = downloader.download_stock_data(symbol, start_dt.strftime("%Y-%m-%d"), end_dt.strftime("%Y-%m-%d"))
@@ -58,6 +62,8 @@ def run_validation(days_back: int = 90):
         backtester = Backtester()
         result = backtester.run(prices, signal)
 
+        equity_curves[symbol] = result.equity_curve
+
         metrics = result.metrics
         metrics["symbol"] = symbol
         metrics_list.append(metrics)
@@ -67,6 +73,37 @@ def run_validation(days_back: int = 90):
         return
 
     validation_df = pd.DataFrame(metrics_list)
+
+    # ------------------------------------------------------------------
+    # 3. (Optional) Model re-training – lightweight placeholder
+    # ------------------------------------------------------------------
+    try:
+        logger.info("Retraining models via scripts/train_models.py (lightweight mode)...")
+        run(["python", "scripts/train_models.py", "--light"], check=True)
+    except (FileNotFoundError, CalledProcessError):
+        logger.warning("Model retraining script not found or failed – skipping.")
+
+    # ------------------------------------------------------------------
+    # 4. Generate performance dashboard
+    # ------------------------------------------------------------------
+    try:
+        fig = go.Figure()
+        for sym, curve in equity_curves.items():
+            fig.add_trace(go.Scatter(x=curve.index, y=curve.values, name=sym))
+
+        fig.update_layout(
+            title="Equity Curves – Continuous Validation",
+            xaxis_title="Date",
+            yaxis_title="Equity ($)",
+            template="plotly_dark",
+        )
+
+        dashboard_path = Path("reports/evaluation/performance_dashboard.html")
+        dashboard_path.parent.mkdir(parents=True, exist_ok=True)
+        fig.write_html(dashboard_path)
+        logger.info("Saved performance dashboard to %s", dashboard_path)
+    except Exception as exc:
+        logger.warning("Failed to create performance dashboard – %s", exc)
 
     out_path = Path("reports/evaluation/latest_validation.json")
     out_path.parent.mkdir(parents=True, exist_ok=True)

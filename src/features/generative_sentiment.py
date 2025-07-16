@@ -20,6 +20,7 @@ from typing import List, Optional
 import pandas as pd
 
 from ..utils.llm import safe_score_sentiment, safe_summarise_texts
+from ..utils.llm import safe_detect_trends, safe_generate_scenarios
 from ..utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -108,6 +109,34 @@ def add_llm_sentiment_features(
     articles_df["llm_daily_summary"] = articles_df["date_only"].map(summaries).fillna("")
 
     return articles_df
+
+
+# ---------------------------------------------------------------------------
+# Narrative trends & Scenarios
+# ---------------------------------------------------------------------------
+
+
+def extract_narrative_trends(articles_df: pd.DataFrame, text_columns: Optional[List[str]] = None) -> List[str]:
+    """Return a list of high-level narrative trends detected in the articles."""
+    if text_columns is None:
+        text_columns = ["title", "description"]
+    texts = (
+        articles_df[text_columns]
+        .fillna("")
+        .astype(str)
+        .agg(" ".join, axis=1)
+        .tolist()
+    )
+    trends = safe_detect_trends(texts)
+    logger.info("Detected %d narrative trends", len(trends))
+    return trends
+
+
+def generate_market_scenarios(symbol: str, horizon_days: int = 30) -> List[str]:
+    """Generate plausible scenarios for the given symbol using LLM."""
+    scenarios = safe_generate_scenarios(symbol, horizon_days)
+    logger.info("Generated %d scenarios for %s", len(scenarios), symbol)
+    return scenarios
 
 
 def aggregate_llm_sentiment_daily(
