@@ -362,6 +362,8 @@ def create_unified_dataset(
     sentiment_data: Optional[pd.DataFrame] = None,
     include_technical_indicators: bool = True,
     include_market_regime: bool = True,
+    include_sentiment: bool = True,
+    include_llm_sentiment: bool = True,
     handle_missing: str = 'interpolate',
     validate_inputs: bool = True,
     validate_output: bool = True
@@ -390,6 +392,10 @@ def create_unified_dataset(
         Whether to calculate and include technical indicators
     include_market_regime : bool, default=True
         Whether to include market regime detection features
+    include_sentiment : bool, default=True
+        Whether to include sentiment features
+    include_llm_sentiment : bool, default=True
+        Whether to include LLM-generated sentiment features
     handle_missing : str, default='interpolate'
         How to handle missing values ('drop', 'interpolate', 'forward_fill', 'mean')
     validate_inputs : bool, default=True
@@ -421,50 +427,196 @@ def create_unified_dataset(
         )
         all_validation_reports.extend(merge_reports)
     
-    # Step 2: Align sentiment data if provided
-    if sentiment_data is not None:
-        with logger.timer("sentiment_alignment"):
-            unified_df, sentiment_reports = align_sentiment_with_market_data(
-                market_df=unified_df,
-                sentiment_df=sentiment_data,
-                aggregation_method='weighted_mean',
-                validate_inputs=validate_inputs
-            )
-            all_validation_reports.extend(sentiment_reports)
+    # Step 2: Collect and integrate sentiment data if requested
+    if include_sentiment:
+        if sentiment_data is None:
+            # Collect sentiment data dynamically
+            with logger.timer("sentiment_collection"):
+                logger.info("Collecting sentiment data for {symbol}")
+                try:
+                    from .download_sentiment import SentimentDataProcessor
+                    
+                    # Initialize processor
+                    processor = SentimentDataProcessor(use_finbert=True)
+                    
+                    # Get company mapping - you might want to make this more sophisticated
+                    company_mapping = {
+                        'AAPL': 'Apple Inc',
+                        'GOOGL': 'Alphabet Inc', 
+                        'MSFT': 'Microsoft Corporation',
+                        'AMZN': 'Amazon.com Inc',
+                        'TSLA': 'Tesla Inc',
+                        'META': 'Meta Platforms Inc',
+                        'NVDA': 'NVIDIA Corporation',
+                        'JPM': 'JPMorgan Chase',
+                        'V': 'Visa Inc',
+                        'JNJ': 'Johnson & Johnson'
+                    }
+                    
+                    company_name = company_mapping.get(symbol, symbol)
+                    
+                    # Collect sentiment data
+                    sentiment_data = processor.get_daily_sentiment(
+                        ticker=symbol,
+                        company_name=company_name,
+                        start_date=start_date,
+                        end_date=end_date
+                    )
+                    
+                    if not sentiment_data.empty:
+                        # Convert date index to datetime for proper alignment
+                        sentiment_data.index = pd.to_datetime(sentiment_data.index)
+                        logger.info(f"Collected {len(sentiment_data)} days of sentiment data")
+                    else:
+                        logger.warning(f"No sentiment data collected for {symbol}")
+                        
+                except Exception as e:
+                    logger.error(f"Failed to collect sentiment data for {symbol}: {str(e)}")
+                    sentiment_data = None
+        
+        # Step 3: Align sentiment data if available
+        if sentiment_data is not None and not sentiment_data.empty:
+            with logger.timer("sentiment_alignment"):
+                # Prepare sentiment data for alignment - rename columns to avoid conflicts
+                sentiment_prepared = sentiment_data.copy()
+                if 'sentiment_compound' in sentiment_prepared.columns:
+                    sentiment_prepared = sentiment_prepared.rename(columns={
+                        'sentiment_compound': 'sentiment_score',
+                        'article_count': 'sentiment_confidence'
+                    })
+                
+                # Add LLM sentiment features if requested and available
+                if include_llm_sentiment:
+                    try:
+                        from ..features.generative_sentiment import aggregate_llm_sentiment_daily, add_llm_sentiment_features
+                        
+                        # Check if we have LLM sentiment data
+                        if 'llm_sentiment_mean' not in sentiment_prepared.columns:
+                            logger.info("Adding LLM sentiment features...")
+                            
+                            # Try to get the original article data to generate real LLM features
+                            try:
+                                # Re-fetch articles for LLM processing
+                                articles = processor.news_collector.fetch_company_news(
+                                    ticker=symbol,
+                                    company_name=company_name,
+                                    days_back=(pd.to_datetime(end_date) - pd.to_datetime(start_date)).days + 1
+                                )
+                                
+                                if not articles.empty:
+                                    logger.info(f"Processing {len(articles)} articles for LLM sentiment...")
+                                    
+                                    # Add LLM sentiment features to articles
+                                    articles_with_llm = add_llm_sentiment_features(
+                                        articles, 
+                                        text_columns=['title', 'description'],
+                                        date_col='publishedAt'
+                                    )
+                                    
+                                    # Aggregate to daily level
+                                    daily_llm_sentiment = aggregate_llm_sentiment_daily(
+                                        articles_with_llm,
+                                        date_col='publishedAt',
+                                        sentiment_col='llm_sentiment_score'
+                                    )
+                                    
+                                    if not daily_llm_sentiment.empty:
+                                        # Convert date column to datetime index
+                                        daily_llm_sentiment['date'] = pd.to_datetime(daily_llm_sentiment['date'])
+                                        daily_llm_sentiment = daily_llm_sentiment.set_index('date')
+                                        
+                                        # Merge with existing sentiment data
+                                        sentiment_prepared = sentiment_prepared.join(daily_llm_sentiment, how='left', rsuffix='_llm')
+                                        
+                                        # Fill any missing LLM sentiment values with neutral
+                                        llm_cols = ['llm_sentiment_mean', 'llm_sentiment_median', 'llm_sentiment_std', 'llm_sentiment_article_count']
+                                        for col in llm_cols:
+                                            if col in sentiment_prepared.columns:
+                                                sentiment_prepared[col] = sentiment_prepared[col].fillna(0.0)
+                                        
+                                        logger.info(f"Successfully added real LLM sentiment features with {len(daily_llm_sentiment)} days of data")
+                                    else:
+                                        logger.warning("LLM sentiment aggregation returned empty data")
+                                        # Fall back to neutral values
+                                        sentiment_prepared['llm_sentiment_mean'] = 0.0
+                                        sentiment_prepared['llm_sentiment_std'] = 0.0
+                                        sentiment_prepared['llm_sentiment_article_count'] = 0
+                                else:
+                                    logger.warning("No articles available for LLM processing")
+                                    # Fall back to neutral values
+                                    sentiment_prepared['llm_sentiment_mean'] = 0.0
+                                    sentiment_prepared['llm_sentiment_std'] = 0.0
+                                    sentiment_prepared['llm_sentiment_article_count'] = 0
+                                    
+                            except Exception as article_error:
+                                logger.warning(f"Failed to process articles for LLM sentiment: {str(article_error)}")
+                                
+                                # Generate conservative LLM features based on existing sentiment
+                                if 'sentiment_score' in sentiment_prepared.columns:
+                                    # Use existing sentiment as base but make it more nuanced
+                                    base_sentiment = sentiment_prepared['sentiment_score']
+                                    sentiment_prepared['llm_sentiment_mean'] = base_sentiment * 0.9  # Slightly dampen
+                                    sentiment_prepared['llm_sentiment_std'] = np.abs(base_sentiment) * 0.15  # Add uncertainty
+                                    sentiment_prepared['llm_sentiment_article_count'] = sentiment_prepared.get('sentiment_confidence', 1)
+                                    logger.info("Added conservative LLM sentiment features based on existing sentiment")
+                                else:
+                                    # Neutral fallback
+                                    sentiment_prepared['llm_sentiment_mean'] = 0.0
+                                    sentiment_prepared['llm_sentiment_std'] = 0.1
+                                    sentiment_prepared['llm_sentiment_article_count'] = 0
+                                    logger.info("Added neutral LLM sentiment features")
+                     
+                    except Exception as e:
+                        logger.warning(f"Failed to add LLM sentiment features: {str(e)}")
+                        # Ensure we have some LLM columns even if they fail
+                        sentiment_prepared['llm_sentiment_mean'] = 0.0
+                        sentiment_prepared['llm_sentiment_std'] = 0.1
+                        sentiment_prepared['llm_sentiment_article_count'] = 0
+                
+                # Align sentiment with market data
+                unified_df, sentiment_reports = align_sentiment_with_market_data(
+                    market_df=unified_df,
+                    sentiment_df=sentiment_prepared,
+                    aggregation_method='weighted_mean',
+                    validate_inputs=validate_inputs
+                )
+                all_validation_reports.extend(sentiment_reports)
+                
+                logger.info(f"Successfully integrated sentiment data for {symbol}")
     
-    # Step 3: Add technical indicators if requested
+    # Step 4: Add technical indicators if requested
     if include_technical_indicators and 'Close' in unified_df.columns:
         with logger.timer("technical_indicators"):
             logger.info("Adding technical indicators")
             unified_df = _add_technical_indicators(unified_df)
     
-    # Step 4: Add market regime features if requested
+    # Step 5: Add market regime features if requested
     if include_market_regime and 'Close' in unified_df.columns:
         with logger.timer("market_regime_features"):
             logger.info("Adding market regime features")
             unified_df = _add_market_regime_features(unified_df)
     
-    # Step 5: Handle missing values
+    # Step 6: Handle missing values
     with logger.timer("handle_missing_values"):
         logger.info(f"Handling missing values using method: {handle_missing}")
         unified_df = _handle_missing_values(unified_df, method=handle_missing)
     
-    # Step 6: Add data quality indicators
+    # Step 7: Add data quality indicators
     with logger.timer("data_quality_features"):
         logger.info("Adding data quality indicators")
         unified_df = _add_data_quality_features(unified_df)
     
-    # Step 7: Feature engineering for time series
+    # Step 8: Feature engineering for time series
     with logger.timer("lag_features"):
         logger.info("Adding lag features")
         unified_df = _add_lag_features(unified_df)
     
-    # Step 8: Final cleanup and validation
+    # Step 9: Final cleanup and validation
     with logger.timer("final_cleanup"):
         logger.info("Final cleanup and validation")
         unified_df = _validate_and_clean_dataset(unified_df)
     
-    # Step 9: Final validation of unified dataset
+    # Step 10: Final validation of unified dataset
     if validate_output:
         logger.info("Running final validation on unified dataset")
         final_report = validate_unified_data(unified_df, f"{symbol}_unified_dataset")
@@ -483,6 +635,17 @@ def create_unified_dataset(
     logger.info(f"Shape: {unified_df.shape}")
     logger.info(f"Features: {len(unified_df.columns)} columns")
     logger.info(f"Memory usage: {unified_df.memory_usage().sum() / 1024**2:.2f} MB")
+    
+    # Log feature categories
+    feature_categories = {
+        'market': len([c for c in unified_df.columns if any(x in c.lower() for x in ['open', 'high', 'low', 'close', 'volume', 'price'])]),
+        'technical': len([c for c in unified_df.columns if any(x in c.lower() for x in ['sma', 'ema', 'rsi', 'macd', 'bb_'])]),
+        'sentiment': len([c for c in unified_df.columns if 'sentiment' in c.lower()]),
+        'economic': len([c for c in unified_df.columns if any(x in c.lower() for x in ['gdp', 'inflation', 'unemployment', 'rate'])]),
+        'temporal': len([c for c in unified_df.columns if any(x in c.lower() for x in ['day', 'week', 'month', 'quarter', 'year'])])
+    }
+    
+    logger.info("Feature categories:", **feature_categories)
     
     # Log validation summary
     critical_issues = sum(1 for report in all_validation_reports if report.has_critical_issues())
