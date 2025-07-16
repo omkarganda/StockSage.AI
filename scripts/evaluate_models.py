@@ -21,10 +21,18 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
-import plotly.graph_objects as go
-import plotly.express as px
-from plotly.subplots import make_subplots
+try:
+    import seaborn as sns
+    HAS_SEABORN = True
+except ImportError:
+    HAS_SEABORN = False
+try:
+    import plotly.graph_objects as go
+    import plotly.express as px
+    from plotly.subplots import make_subplots
+    HAS_PLOTLY = True
+except ImportError:
+    HAS_PLOTLY = False
 import argparse
 import json
 import joblib
@@ -39,6 +47,8 @@ from scipy import stats
 from src.models.baseline import LinearRegressionBaseline, RandomForestBaseline, EnsembleBaseline
 from src.models.neuralforecast_model import TimesFMFinancialModel, TTMFinancialModel, NeuralForecastBaseline
 from src.models.sktime_model import StatisticalForecastingModel, AutoMLForecaster
+from src.models.lstm_attention_model import LSTMAttentionModel
+from src.models.transformer_model import TransformerModel
 
 # Data imports
 import yfinance as yf
@@ -52,8 +62,13 @@ logger = logging.getLogger(__name__)
 warnings.filterwarnings('ignore')
 
 # Set style for matplotlib
-plt.style.use('seaborn-v0_8')
-sns.set_palette("husl")
+try:
+    plt.style.use('seaborn-v0_8')
+except:
+    plt.style.use('default')
+
+if HAS_SEABORN:
+    sns.set_palette("husl")
 
 
 class ModelEvaluator:
@@ -194,7 +209,13 @@ class ModelEvaluator:
                         model = AutoMLForecaster()
                     else:
                         model = StatisticalForecastingModel()
-                    
+                
+                elif model_name.startswith('dl_lstm_attention'):
+                    model = LSTMAttentionModel()
+                
+                elif model_name.startswith('dl_transformer'):
+                    model = TransformerModel()
+                
                 else:
                     logger.warning(f"Unknown model category: {model_name}")
                     continue
@@ -203,10 +224,10 @@ class ModelEvaluator:
                 model.load_model(model_file)
                 loaded_models[model_name] = model
                 
-                logger.info(f"✅ Loaded {model_name}")
+                logger.info(f"[SUCCESS] Loaded {model_name}")
                 
             except Exception as e:
-                logger.error(f"❌ Failed to load {model_name}: {e}")
+                logger.error(f"[ERROR] Failed to load {model_name}: {e}")
                 continue
         
         self.loaded_models[symbol] = loaded_models
@@ -298,9 +319,34 @@ class ModelEvaluator:
             logger.info(f"Evaluating {model_name}...")
             
             try:
-                # Make predictions
+                # Make predictions based on model type
                 if hasattr(model, 'predict'):
-                    predictions = model.predict(fresh_data)
+                    # Handle different model interfaces
+                    if model_name.startswith('statistical_'):
+                        # Statistical models need forecasting horizon (fh) parameter
+                        # First check if model is fitted
+                        if not hasattr(model, 'is_fitted') or not model.is_fitted:
+                            logger.warning(f"[WARNING] {model_name} is not fitted, skipping prediction")
+                            continue
+                            
+                        predictions = model.predict(fh=forecast_horizon)
+                        # Convert to numpy array if it's a pandas Series
+                        if hasattr(predictions, 'values'):
+                            pred_values = predictions.values
+                        else:
+                            pred_values = np.array(predictions)
+                    else:
+                        # Other models (baseline, neural, deep learning) expect DataFrame
+                        predictions = model.predict(fresh_data)
+                        
+                        # Handle different return types
+                        if hasattr(predictions, '__len__') and len(predictions) > 0:
+                            pred_values = predictions[-forecast_horizon:] if len(predictions) >= forecast_horizon else predictions
+                        else:
+                            pred_values = [predictions] * forecast_horizon
+                    
+                    # Convert pred_values to numpy array for consistent handling
+                    pred_values = np.array(pred_values).flatten()
                     
                     # Compute actual future returns matching the model's target horizon
                     actual_returns = (
@@ -308,10 +354,7 @@ class ModelEvaluator:
                     )
                     # Drop NaNs introduced by pct_change/shift
                     actual_returns = actual_returns.dropna()
-
-                    # Align predictions with actuals (take the last `forecast_horizon` samples)
-                    pred_values = predictions[-forecast_horizon:] if hasattr(predictions, '__len__') else [predictions] * forecast_horizon
-                    actual = actual_returns.values[-forecast_horizon:]
+                    actual = actual_returns.values[-forecast_horizon:] if len(actual_returns) >= forecast_horizon else actual_returns.values
 
                     if len(pred_values) > 0 and len(actual) > 0:
                         # Align lengths safely
@@ -320,38 +363,46 @@ class ModelEvaluator:
                         pred_values = pred_values[:min_len]
 
                         # Calculate metrics on returns
-                        mse = np.mean((actual - pred_values) ** 2)
-                        mae = np.mean(np.abs(actual - pred_values))
-                        rmse = np.sqrt(mse)
-                        # Use small epsilon to avoid division by zero in MAPE
-                        mape = np.mean(np.abs((actual - pred_values) / (actual + 1e-8))) * 100
+                        if min_len > 0:
+                            mse = np.mean((actual - pred_values) ** 2)
+                            mae = np.mean(np.abs(actual - pred_values))
+                            rmse = np.sqrt(mse)
+                            # Use small epsilon to avoid division by zero in MAPE
+                            mape = np.mean(np.abs((actual - pred_values) / (np.abs(actual) + 1e-8))) * 100
 
-                        # Direction accuracy (sign of returns)
-                        actual_directions = actual > 0
-                        pred_directions = pred_values > 0
-                        direction_accuracy = np.mean(actual_directions == pred_directions) * 100 if len(actual_directions) > 0 else 0
+                            # Direction accuracy (sign of returns)
+                            actual_directions = actual > 0
+                            pred_directions = pred_values > 0
+                            direction_accuracy = np.mean(actual_directions == pred_directions) * 100 if len(actual_directions) > 0 else 0
 
-                        # Correlation
-                        correlation = np.corrcoef(actual, pred_values)[0, 1] if len(actual) > 1 else 0
+                            # Correlation
+                            correlation = np.corrcoef(actual, pred_values)[0, 1] if len(actual) > 1 and np.std(actual) > 0 and np.std(pred_values) > 0 else 0
+                            # Handle NaN correlation
+                            if np.isnan(correlation):
+                                correlation = 0.0
 
-                        evaluation_results[model_name] = {
-                            'mse': float(mse),
-                            'mae': float(mae),
-                            'rmse': float(rmse),
-                            'mape': float(mape),
-                            'direction_accuracy': float(direction_accuracy),
-                            'correlation': float(correlation),
-                            'predictions': pred_values[:10].tolist() if hasattr(pred_values, 'tolist') else list(pred_values[:10]),
-                            'actual': actual[:10].tolist() if hasattr(actual, 'tolist') else list(actual[:10])
-                        }
-                        
-                        logger.info(f"✅ {model_name}: MAPE={mape:.2f}%, Dir_Acc={direction_accuracy:.1f}%")
+                            evaluation_results[model_name] = {
+                                'mse': float(mse),
+                                'mae': float(mae),
+                                'rmse': float(rmse),
+                                'mape': float(mape),
+                                'direction_accuracy': float(direction_accuracy),
+                                'correlation': float(correlation),
+                                'predictions': pred_values[:10].tolist() if hasattr(pred_values, 'tolist') else list(pred_values[:10]),
+                                'actual': actual[:10].tolist() if hasattr(actual, 'tolist') else list(actual[:10])
+                            }
+                            
+                            logger.info(f"[SUCCESS] {model_name}: MAPE={mape:.2f}%, Dir_Acc={direction_accuracy:.1f}%")
+                        else:
+                            logger.warning(f"[WARNING] No valid predictions for {model_name}")
+                    else:
+                        logger.warning(f"[WARNING] Empty predictions or actuals for {model_name}")
                     
                 else:
-                    logger.warning(f"{model_name} doesn't have predict method")
+                    logger.warning(f"[WARNING] {model_name} doesn't have predict method")
                     
             except Exception as e:
-                logger.error(f"❌ Error evaluating {model_name}: {e}")
+                logger.error(f"[ERROR] Error evaluating {model_name}: {e}")
                 evaluation_results[model_name] = {'error': str(e)}
         
         self.evaluation_metrics[symbol] = evaluation_results
@@ -412,7 +463,9 @@ class ModelEvaluator:
         symbol : str
             Stock symbol
         """
-        if not self.generate_plots:
+        if not self.generate_plots or not HAS_PLOTLY:
+            if not HAS_PLOTLY:
+                logger.warning("Plotly not available, skipping plot generation")
             return
         
         logger.info(f"Generating performance plots for {symbol}...")
@@ -483,7 +536,7 @@ class ModelEvaluator:
     
     def _create_prediction_plot(self, symbol: str):
         """Create prediction vs actual comparison plot."""
-        if symbol not in self.evaluation_metrics:
+        if symbol not in self.evaluation_metrics or not HAS_PLOTLY:
             return
         
         fig = go.Figure()
@@ -626,7 +679,7 @@ class ModelEvaluator:
         </head>
         <body>
             <div class="header">
-                <h1>🚀 StockSage.AI Model Evaluation Report</h1>
+                <h1>StockSage.AI Model Evaluation Report</h1>
                 <p>Generated on: {timestamp}</p>
                 <p>Symbols analyzed: {symbols}</p>
             </div>
@@ -643,7 +696,7 @@ class ModelEvaluator:
                 if not comparison_df.empty:
                     html += f"""
                     <div class="section">
-                        <h2>📈 {symbol} Performance Summary</h2>
+                        <h2>{symbol} Performance Summary</h2>
                         <div class="metric">
                             <strong>Best Model:</strong> {comparison_df.iloc[0]['model']} 
                             (MAPE: {comparison_df.iloc[0]['mape']:.2f}%)
@@ -652,14 +705,14 @@ class ModelEvaluator:
                             <strong>Models Evaluated:</strong> {len(comparison_df)}
                         </div>
                         
-                        <h3>📊 Detailed Results</h3>
+                        <h3>Detailed Results</h3>
                         {comparison_df.to_html(index=False, classes='table')}
                     </div>
                     """
         
         html += """
             <div class="section">
-                <h2>📋 Methodology</h2>
+                <h2>Methodology</h2>
                 <p>This evaluation used the following metrics:</p>
                 <ul>
                     <li><strong>MAPE:</strong> Mean Absolute Percentage Error (lower is better)</li>
@@ -763,8 +816,8 @@ def parse_arguments():
 
 def main():
     """Main evaluation function."""
-    print("📊 StockSage.AI Model Evaluation Script")
-    print("======================================\n")
+    print("StockSage.AI Model Evaluation Script")
+    print("===================================\n")
     
     args = parse_arguments()
     
@@ -819,7 +872,7 @@ def main():
                 # Print summary
                 comparison_df = evaluator.compare_models(symbol)
                 if not comparison_df.empty:
-                    print(f"\n🏆 Top 3 Models for {symbol}:")
+                    print(f"\nTop 3 Models for {symbol}:")
                     for _, row in comparison_df.head(3).iterrows():
                         print(f"  {row['rank']}. {row['model']} - MAPE: {row['mape']:.2f}%")
         
@@ -829,10 +882,10 @@ def main():
         # Generate comprehensive report if requested
         if args.generate_report:
             report_file = evaluator.generate_comprehensive_report(symbols)
-            print(f"\n📋 Comprehensive report generated: {report_file}")
+            print(f"\nComprehensive report generated: {report_file}")
         
-        print(f"\n🎉 Evaluation completed successfully!")
-        print(f"📊 Check results in: {evaluator.output_dir}")
+        print(f"\nEvaluation completed successfully!")
+        print(f"Check results in: {evaluator.output_dir}")
         
         return 0
         
