@@ -48,9 +48,11 @@ class _PositionalEncoding(nn.Module):
         pe = pe.unsqueeze(0)  # (1, max_len, d_model)
         self.register_buffer("pe", pe)
 
-    def forward(self, x):  # x: (batch, seq_len, d_model)
+    def forward(self, x: torch.Tensor) -> torch.Tensor:  # x: (batch, seq_len, d_model)
         seq_len = x.size(1)
-        return x + self.pe[:, :seq_len]
+        # Add positional encoding using the stored 'pe' buffer
+        x = x + self.pe[:, :seq_len]
+        return x
 
 
 class _TransformerNet(nn.Module):
@@ -60,7 +62,7 @@ class _TransformerNet(nn.Module):
         d_model: int,
         nhead: int,
         num_layers: int,
-        horizon: int,
+        horizon: int, # Horizon is kept for API consistency
         dropout: float = 0.1,
     ):
         super().__init__()
@@ -68,9 +70,9 @@ class _TransformerNet(nn.Module):
         self.pos_enc = _PositionalEncoding(d_model)
         encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dropout=dropout, batch_first=True)
         self.encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
-        self.fc = nn.Linear(d_model, horizon)
+        self.fc = nn.Linear(d_model, 1) # Always output a single value
 
-    def forward(self, x):  # x: (batch, seq_len, input_dim)
+    def forward(self, x: torch.Tensor) -> torch.Tensor:  # x: (batch, seq_len, input_dim)
         x = self.input_proj(x)
         x = self.pos_enc(x)
         enc_out = self.encoder(x)
@@ -125,7 +127,7 @@ class TransformerModel:
         df = df.copy()
         df = add_all_technical_indicators(df)
         df = add_microstructure_features(df)
-        return _select_numeric(df).fillna(method="ffill").fillna(method="bfill")
+        return _select_numeric(df).ffill().bfill()
 
     def _make_sequences(self, features: np.ndarray, close: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         X, y = [], []
@@ -147,7 +149,7 @@ class TransformerModel:
         if len(X) == 0:
             raise ValueError("Not enough data for sequences")
         dataset = _SeqDataset(X, y)
-        loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True, drop_last=False)
+        loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True, drop_last=True)
 
         self.model = _TransformerNet(
             input_dim=X.shape[-1],
@@ -168,11 +170,6 @@ class TransformerModel:
                 yb = yb.to(self.device)
                 opt.zero_grad()
                 pred = self.model(xb)
-                # Ensure pred and yb have the same shape
-                if pred.shape != yb.shape:
-                    min_len = min(pred.shape[0], yb.shape[0])
-                    pred = pred[:min_len]
-                    yb = yb[:min_len]
                 loss = crit(pred, yb)
                 loss.backward()
                 opt.step()
@@ -183,17 +180,17 @@ class TransformerModel:
         return self
 
     def predict(self, df: pd.DataFrame) -> np.ndarray:
-        if not self.is_fitted:
-            raise ValueError("Model not trained")
+        if not self.is_fitted or self.model is None or self.scaler is None:
+            raise ValueError("Model not trained or components not available")
         feats_df = self._prepare_features(df)
         feats_scaled = self.scaler.transform(feats_df.values)
         if len(feats_scaled) < self.context_length:
             raise ValueError("Not enough data for prediction window")
         window = feats_scaled[-self.context_length :]
-        x = torch.from_numpy(window[None, :, :]).float().to(self.device)
+        x_tensor = torch.from_numpy(window[None, :, :]).float().to(self.device)
         self.model.eval()
         with torch.no_grad():
-            pred = self.model(x).cpu().numpy().flatten()
+            pred = self.model(x_tensor).cpu().numpy().flatten()
         return pred
 
     def evaluate(self, df: pd.DataFrame) -> Dict[str, float]:
@@ -222,10 +219,17 @@ class TransformerModel:
 
     def load_model(self, filepath: Union[str, Path]):
         state = joblib.load(filepath)
+        if not isinstance(state, dict) or "scaler" not in state or "config" not in state or "model_state" not in state:
+            raise ValueError("Invalid model state file")
         self.scaler = state["scaler"]
         cfg = state["config"]
         for k, v in cfg.items():
             setattr(self, k, v)
+        
+        # Ensure scaler is valid before accessing attributes
+        if self.scaler is None or not hasattr(self.scaler, 'mean_'):
+            raise ValueError("Scaler not loaded correctly or is invalid")
+
         self.model = _TransformerNet(
             input_dim=self.scaler.mean_.shape[0],
             d_model=self.d_model,

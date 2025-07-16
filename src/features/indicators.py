@@ -147,23 +147,24 @@ def calculate_rsi(
         df[f'RSI_{period}_normalized'] = (rsi - 50) / 50  # Normalize to [-1, 1]
         
         # RSI momentum
-        df[f'RSI_{period}_momentum'] = rsi.diff()
+        rsi_series = df[f'RSI_{period}']
+        df[f'RSI_{period}_momentum'] = rsi_series.diff()
         df[f'RSI_{period}_trend'] = np.where(
-            rsi.diff() > 0, 1,
-            np.where(rsi.diff() < 0, -1, 0)
-        )
+            rsi_series.diff() > 0, 1,
+            np.where(rsi_series.diff() < 0, -1, 0)
+        ).astype(int)
     
     # RSI divergence signals (simplified)
     if 14 in periods:
         df['RSI_bullish_divergence'] = (
             (df[price_col] < df[price_col].shift(5)) & 
             (df['RSI_14'] > df['RSI_14'].shift(5))
-        ).astype(int)
+        )
         
         df['RSI_bearish_divergence'] = (
             (df[price_col] > df[price_col].shift(5)) & 
             (df['RSI_14'] < df['RSI_14'].shift(5))
-        ).astype(int)
+        )
     
     logger.info(f"Added RSI features for periods: {periods}")
     return df
@@ -516,30 +517,18 @@ def add_all_technical_indicators(
     include_advanced: bool = True
 ) -> pd.DataFrame:
     """
-    Add all technical indicators to the DataFrame.
-    
-    Parameters:
-    -----------
-    df : pd.DataFrame
-        OHLCV data with datetime index
-    price_col : str, default='Close'
-        Price column name
-    volume_col : str, default='Volume'
-        Volume column name
-    high_col : str, default='High'
-        High price column name
-    low_col : str, default='Low'
-        Low price column name
-    include_advanced : bool, default=True
-        Whether to include advanced indicators (more computationally intensive)
-    
-    Returns:
-    --------
-    pd.DataFrame
-        DataFrame with all technical indicators
+    Adds a comprehensive set of technical indicators to the dataframe.
+    This is a wrapper around the other calculation functions.
     """
-    logger.info("Adding all technical indicators...")
-    
+    df = df.copy()
+    initial_cols = len(df.columns)
+
+    # Basic Checks
+    required_cols = {price_col, volume_col, high_col, low_col}
+    if not required_cols.issubset(df.columns):
+        logger.warning(f"Missing required columns for technical indicators. Required: {required_cols}. Available: {df.columns}")
+        return df
+
     # Core indicators
     df = calculate_moving_averages(df, price_col)
     df = calculate_rsi(df, price_col)
@@ -555,30 +544,17 @@ def add_all_technical_indicators(
     
     # Advanced indicators
     if include_advanced:
-        # Stochastic Oscillator
-        if high_col in df.columns and low_col in df.columns:
+        try:
             df = _calculate_stochastic(df, high_col, low_col, price_col)
-        
-        # Williams %R
-        if high_col in df.columns and low_col in df.columns:
             df = _calculate_williams_r(df, high_col, low_col, price_col)
-        
-        # Commodity Channel Index (CCI)
-        if high_col in df.columns and low_col in df.columns:
             df = _calculate_cci(df, high_col, low_col, price_col)
-    
-    # Clean up NaN values that might have been created
-    # Replace infinite values with NaN first
-    df = df.replace([np.inf, -np.inf], np.nan)
-    
-    # Fill NaN values with forward fill, then backward fill, then 0
-    df = df.fillna(method='ffill').fillna(method='bfill').fillna(0)
-    
-    # Summary statistics
-    technical_cols = [col for col in df.columns if any(indicator in col for indicator in 
-                     ['SMA', 'EMA', 'RSI', 'MACD', 'BB', 'Volume', 'OBV', 'ROC', 'Momentum'])]
-    
-    logger.info(f"Added {len(technical_cols)} technical indicator features")
+        except Exception as e:
+            logger.warning(f"Could not add advanced momentum indicators: {e}")
+
+    # Final cleanup to remove any NaNs introduced
+    df = df.replace([np.inf, -np.inf], np.nan).ffill().bfill().fillna(0)
+
+    logger.info(f"Added {len(df.columns) - initial_cols} technical indicator features")
     logger.info(f"DataFrame shape: {df.shape}")
     
     return df

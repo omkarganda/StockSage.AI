@@ -29,6 +29,7 @@ import warnings
 import time
 from typing import Dict, List, Optional, Any, Tuple
 import logging
+import inspect
 
 # Import our models
 from src.models.baseline import create_baseline_models
@@ -159,6 +160,8 @@ class ModelTrainer:
             data = data[['Open', 'High', 'Low', 'Close', 'Volume']]
             
             # First pass cleaning to remove duplicates / bad rows
+            if not isinstance(data, pd.DataFrame):
+                raise TypeError(f"Expected a pandas DataFrame, but got {type(data)}")
             data = clean_market_data(data, symbol=symbol, validate=True)
 
             # Add technical indicators (after base cleaning)
@@ -359,7 +362,7 @@ class ModelTrainer:
         symbol: str
     ) -> Dict[str, Any]:
         """
-        Evaluate a single model and return evaluation metrics.
+        Evaluate a single trained model.
         
         Parameters:
         -----------
@@ -368,83 +371,55 @@ class ModelTrainer:
         model : Any
             Trained model instance
         test_data : pd.DataFrame
-            Test data
+            Testing data
         symbol : str
             Stock symbol
             
         Returns:
         --------
         dict
-            Evaluation results and metrics
+            Evaluation metrics
         """
         logger.info(f"Evaluating {model_name} for {symbol}...")
         
-        start_time = time.time()
-        evaluation_result = {
-            'model_name': model_name,
-            'symbol': symbol,
-            'test_samples': len(test_data),
-            'start_time': start_time,
-            'status': 'failed',
-            'error': None,
-            'evaluation_metrics': {},
-            'evaluation_time': 0
-        }
-        
         try:
-            # Check if model was trained successfully
-            if not hasattr(model, 'is_fitted') or not model.is_fitted:
-                if not hasattr(model, 'model') or model.model is None:
-                    raise ValueError("Model is not fitted")
-            
-            # Make predictions
-            if hasattr(model, 'predict'):
-                predictions = model.predict(test_data)
-                evaluation_result['predictions'] = predictions[:10].tolist() if hasattr(predictions, 'tolist') else str(predictions)[:100]
-            
-            # Get evaluation metrics
-            if hasattr(model, 'evaluate'):
-                metrics = model.evaluate(test_data)
-                evaluation_result['evaluation_metrics'] = metrics
-            elif hasattr(model, 'predict'):
-                # Calculate basic metrics manually
-                try:
-                    actual = test_data['Close'].values[:self.forecast_horizon]
-                    predicted = predictions[:len(actual)] if hasattr(predictions, '__len__') else [predictions]
-                    
-                    if len(predicted) > 0 and len(actual) > 0:
-                        mse = np.mean((actual - predicted) ** 2)
-                        mae = np.mean(np.abs(actual - predicted))
-                        mape = np.mean(np.abs((actual - predicted) / actual)) * 100
-                        
-                        evaluation_result['evaluation_metrics'] = {
-                            'mse': float(mse),
-                            'rmse': float(np.sqrt(mse)),
-                            'mae': float(mae),
-                            'mape': float(mape)
-                        }
-                except Exception as metric_error:
-                    logger.warning(f"Could not calculate metrics for {model_name}: {metric_error}")
-            
-            # Log evaluation completion
-            evaluation_time = time.time() - start_time
-            evaluation_result['evaluation_time'] = evaluation_time
-            evaluation_result['status'] = 'success'
-            
-            logger.info(f"SUCCESS: {model_name} evaluation completed")
-            
-            return evaluation_result
-        
+            # Check if the model has an 'evaluate' method
+            if not hasattr(model, 'evaluate'):
+                logger.warning(f"Model {model_name} does not have an evaluate method, skipping.")
+                return {}
+
+            # Special handling for sktime models which require a forecast horizon (fh)
+            # instead of the full test dataframe for evaluation.
+            if 'statistical' in model_name or 'sktime' in str(type(model)).lower():
+                # fh is derived from the test_data inside the model's evaluate method
+                evaluation_metrics = model.evaluate(test_data)
+            elif 'neural' in model_name:
+                # NeuralForecast models expect the test df
+                evaluation_metrics = model.evaluate(test_data)
+            elif 'dl_' in model_name or 'lstm' in model_name or 'transformer' in model_name:
+                # Deep learning models also take the full df
+                evaluation_metrics = model.evaluate(test_data)
+            else:
+                # Default for baseline models
+                evaluation_metrics = model.evaluate(test_data)
+
+            # Clean metrics: remove NaNs and infinite values
+            if evaluation_metrics:
+                evaluation_metrics = {
+                    k: (float(v) if pd.notna(v) and np.isfinite(v) else None)
+                    for k, v in evaluation_metrics.items()
+                }
+                logger.info(f"SUCCESS: {model_name} evaluation completed.")
+                logger.debug(f"Metrics for {model_name} on {symbol}: {evaluation_metrics}")
+            else:
+                logger.warning(f"Evaluation for {model_name} returned empty or invalid metrics.")
+                evaluation_metrics = {}
+
+            return evaluation_metrics
+
         except Exception as e:
-            error_msg = str(e)
-            evaluation_result.update({
-                'status': 'failed',
-                'error': error_msg
-            })
-            
-            logger.error(f"FAILED: {model_name} evaluation failed: {error_msg}")
-        
-        return evaluation_result
+            logger.error(f"FAILED: {model_name} evaluation failed: {e}", exc_info=True)
+            return {'error': str(e)}
     
     def train_all_models(self) -> Dict[str, Dict[str, Any]]:
         """
@@ -528,7 +503,7 @@ class ModelTrainer:
                         evaluation_result = self.evaluate_model(model_name, model, test_data, symbol)
                         symbol_results['evaluation_results'][model_name] = evaluation_result
                         
-                        if evaluation_result['status'] == 'success':
+                        if evaluation_result: # Check if evaluation_result is not empty
                             successful_models += 1
                             
                             # Save model if requested
@@ -594,7 +569,7 @@ class ModelTrainer:
                 continue
                 
             for model_name, eval_result in symbol_results['evaluation_results'].items():
-                if eval_result['status'] == 'success' and eval_result['evaluation_metrics']:
+                if eval_result and eval_result.get('status') == 'success' and eval_result.get('evaluation_metrics'):
                     row = {
                         'symbol': symbol,
                         'model': model_name,
@@ -653,7 +628,7 @@ class ModelTrainer:
                     if model_type not in model_types:
                         model_types[model_type] = {'success': 0, 'total': 0}
                     model_types[model_type]['total'] += 1
-                    if eval_result['status'] == 'success':
+                    if eval_result and eval_result.get('status') == 'success':
                         model_types[model_type]['success'] += 1
         
         logger.info(f"\nModel Type Performance:")

@@ -65,7 +65,7 @@ class LSTMAttentionModel:
         epochs: int = 10,
         batch_size: int = 32,
         lr: float = 1e-3,
-        device: str = None,
+        device: Optional[str] = None,
     ):
         # Ensure hidden_size is divisible by attention_heads
         if hidden_size % attention_heads != 0:
@@ -101,17 +101,26 @@ class LSTMAttentionModel:
         # Add technical + microstructure indicators (robust to missing columns)
         df = add_all_technical_indicators(df)
         df = add_microstructure_features(df)
-        return _select_numeric(df).fillna(method="ffill").fillna(method="bfill")
+        return _select_numeric(df).ffill().bfill()
 
     def _make_sequences(self, features: np.ndarray, close: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         seq_len = self.context_length
         horizon = self.horizon
         X_seqs, y_vals = [], []
-        for i in range(seq_len, len(features) - horizon):
+        # Loop until there are `horizon` target values available
+        for i in range(seq_len, len(features) - horizon + 1):
             X_seqs.append(features[i - seq_len : i])
-            # Target = return over horizon
-            ret = (close[i + horizon] - close[i]) / close[i]
-            y_vals.append(ret)
+            # Target = sequence of returns over the horizon, relative to the last price of the input sequence
+            last_price = close[i - 1]
+            future_prices = close[i : i + horizon]
+
+            # Avoid division by zero
+            if last_price > 1e-9:
+                rets = (future_prices - last_price) / last_price
+            else:
+                rets = np.zeros_like(future_prices)
+
+            y_vals.append(rets)
         return np.asarray(X_seqs, dtype=np.float32), np.asarray(y_vals, dtype=np.float32)
 
     # ------------------------------------------------------------------
@@ -138,6 +147,7 @@ class LSTMAttentionModel:
         loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True, drop_last=False)
 
         self.input_dim = X.shape[-1]
+        assert self.input_dim is not None
         self.model = _LSTMAttentionNet(
             input_dim=self.input_dim,
             hidden_size=self.hidden_size,
@@ -177,28 +187,40 @@ class LSTMAttentionModel:
         return self
 
     def predict(self, df: pd.DataFrame) -> np.ndarray:
-        if not self.is_fitted or self.model is None:
-            raise ValueError("Model not trained")
+        if not self.is_fitted or self.model is None or self.scaler is None:
+            raise ValueError("Model not trained or scaler is missing")
 
         feats_df = self._prepare_features(df)
         feats_scaled = self.scaler.transform(feats_df.values)
         if len(feats_scaled) < self.context_length:
             raise ValueError("Insufficient length for prediction window")
         window = feats_scaled[-self.context_length :]
-        x_tensor = torch.from_numpy(window[None, :, :]).float().to(self.device)
+        x_tensor = torch.from_numpy(np.expand_dims(window, axis=0)).float().to(self.device)
         self.model.eval()
         with torch.no_grad():
             pred = self.model(x_tensor).cpu().numpy().flatten()
         return pred  # returns prediction of shape (horizon,)
 
     def evaluate(self, df: pd.DataFrame) -> Dict[str, float]:
-        if "Close" not in df.columns:
+        if "Close" not in df.columns or len(df) < self.context_length + self.horizon:
             return {}
-        preds = self.predict(df)
+
+        # The context for prediction is the dataframe excluding the values we want to predict
+        context_df = df.iloc[: -self.horizon]
+        preds = self.predict(context_df)
+
+        # The actual values are the returns over the horizon
         close = df["Close"].values.astype(np.float32)
-        actual = (close[-1] - close[-self.horizon - 1]) / close[-self.horizon - 1]
-        mse = float((preds[0] - actual) ** 2)
-        return {"mse": mse, "rmse": float(np.sqrt(mse))}
+        last_price_in_context = close[-self.horizon - 1]
+        actual_prices = close[-self.horizon :]
+
+        if last_price_in_context > 1e-9:
+            actual_returns = (actual_prices - last_price_in_context) / last_price_in_context
+        else:
+            actual_returns = np.zeros_like(actual_prices)
+
+        mse = np.mean((preds - actual_returns) ** 2)
+        return {"mse": float(mse), "rmse": float(np.sqrt(mse))}
 
     # ------------------------------------------------------------------
     # Serialization helpers (for consistency with pipeline)
@@ -224,15 +246,21 @@ class LSTMAttentionModel:
         cfg = state["config"]
         for k, v in cfg.items():
             setattr(self, k, v)
+
+        if not isinstance(self.scaler, StandardScaler) or not hasattr(self.scaler, "n_features_in_"):
+            raise ValueError("Scaler is missing, not a StandardScaler, or is not fitted.")
+
         # Rebuild net
         self.model = _LSTMAttentionNet(
-            input_dim=self.scaler.mean_.shape[0],
+            input_dim=self.scaler.n_features_in_,
             hidden_size=self.hidden_size,
             num_layers=self.num_layers,
             attention_heads=self.attention_heads,
             horizon=self.horizon,
         )
-        self.model.load_state_dict(state["model_state"])
+        model_state = state.get("model_state")
+        if model_state:
+            self.model.load_state_dict(model_state)
         self.model.to(self.device)
         self.is_fitted = True
         logger.info(f"Loaded LSTM-Attention model from {filepath}")

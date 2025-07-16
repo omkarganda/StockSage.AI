@@ -52,7 +52,7 @@ def retry_on_failure(max_retries: int = 3, delay: float = 1.0):
                         time.sleep(wait_time)
                     else:
                         logger.error(f"{func.__name__} failed after {max_retries} attempts: {str(e)}")
-            raise last_exception
+                        raise last_exception  # Re-raise the last exception
         return wrapper
     return decorator
 
@@ -154,25 +154,24 @@ class MarketDataDownloader:
         # Use cache if available and interval is daily
         if self.cache and interval == "1d":
             cached_data = self.cache.load(ticker, "ohlcv")
-            if cached_data is not None:
+            if cached_data is not None and isinstance(cached_data, pd.DataFrame):
                 # Normalize cached data index to timezone-naive for comparison
-                if hasattr(cached_data.index, 'tz') and cached_data.index.tz is not None:
-                    cached_data.index = cached_data.index.tz_convert('UTC').tz_localize(None)
+                if isinstance(cached_data.index, pd.DatetimeIndex) and cached_data.index.tz is not None:
+                    cached_data.index = cached_data.index.tz_convert(None)
                 
                 # Filter by date range if specified
                 if start_date:
-                    start_ts = pd.to_datetime(start_date)
-                    if hasattr(start_ts, 'tz') and start_ts.tz is not None:
-                        start_ts = start_ts.tz_convert('UTC').tz_localize(None)
+                    start_ts = pd.to_datetime(start_date).tz_localize(None)
                     cached_data = cached_data[cached_data.index >= start_ts]
                 if end_date:
-                    end_ts = pd.to_datetime(end_date)
-                    if hasattr(end_ts, 'tz') and end_ts.tz is not None:
-                        end_ts = end_ts.tz_convert('UTC').tz_localize(None)
+                    end_ts = pd.to_datetime(end_date).tz_localize(None)
                     cached_data = cached_data[cached_data.index <= end_ts]
-                
+            
                 if not cached_data.empty:
                     return cached_data
+            elif cached_data is not None:
+                # If cached data is not a DataFrame, return an empty one
+                return pd.DataFrame()
         
         # Set default dates if not provided
         if not start_date:
@@ -197,7 +196,8 @@ class MarketDataDownloader:
             )
             
             if df.empty:
-                raise ValueError(f"No data returned for {ticker}")
+                logger.warning(f"No data returned for {ticker}, returning empty DataFrame.")
+                return pd.DataFrame()
             
             # Clean column names
             df.columns = [col.replace(' ', '_') for col in df.columns]
@@ -214,13 +214,13 @@ class MarketDataDownloader:
             
         except Exception as e:
             logger.error(f"Failed to download data for {ticker}: {str(e)}")
-            raise
+            return pd.DataFrame()
     
     def download_multiple_stocks(
         self,
         tickers: List[str],
-        start_date: Union[str, datetime] = None,
-        end_date: Union[str, datetime] = None,
+        start_date: Optional[Union[str, datetime]] = None,
+        end_date: Optional[Union[str, datetime]] = None,
         interval: str = "1d",
         max_workers: int = 5
     ) -> Dict[str, pd.DataFrame]:
@@ -248,23 +248,21 @@ class MarketDataDownloader:
                 executor.submit(
                     self.download_stock_data,
                     ticker, start_date, end_date, interval
-                ): ticker
-                for ticker in tickers
+                ): ticker for ticker in tickers
             }
             
-            # Process completed tasks
+            # Collect results as they complete
             for future in as_completed(future_to_ticker):
                 ticker = future_to_ticker[future]
                 try:
-                    data = future.result()
-                    results[ticker] = data
+                    results[ticker] = future.result()
                 except Exception as e:
-                    logger.error(f"Failed to download {ticker}: {str(e)}")
                     failed_tickers.append(ticker)
-        
+                    logger.error(f"Failed to process {ticker}: {e}")
+
         if failed_tickers:
-            logger.warning(f"Failed to download data for: {', '.join(failed_tickers)}")
-        
+            logger.warning(f"Failed to download data for tickers: {failed_tickers}")
+            
         logger.info(f"Successfully downloaded data for {len(results)}/{len(tickers)} stocks")
         return results
     
@@ -412,35 +410,46 @@ def download_default_stocks(
     use_cache: bool = True
 ) -> pd.DataFrame:
     """
-    Download data for default list of stocks and combine into single DataFrame
+    Downloads and combines data for a default list of stocks.
     
-    Args:
-        start_date: Start date for data collection
-        end_date: End date for data collection
-        use_cache: Whether to use cached data
-        
     Returns:
-        Combined DataFrame with all stock data
+        A single DataFrame with data for all default stocks.
     """
     downloader = MarketDataDownloader(use_cache=use_cache)
     
-    # Download data for all default tickers
-    stock_data = downloader.download_multiple_stocks(
-        tickers=DataConfig.DEFAULT_TICKERS,
-        start_date=start_date,
-        end_date=end_date
+    # Use default stocks from config if not provided
+    tickers_to_download = DataConfig.DEFAULT_TICKERS
+    
+    start_date_str = start_date.strftime('%Y-%m-%d') if isinstance(start_date, datetime) else start_date
+    end_date_str = end_date.strftime('%Y-%m-%d') if isinstance(end_date, datetime) else end_date
+
+    results_dict = downloader.download_multiple_stocks(
+        tickers=tickers_to_download,
+        start_date=start_date_str,
+        end_date=end_date_str
     )
     
-    # Combine all data into single DataFrame
-    combined_df = pd.concat(stock_data.values(), axis=0)
-    combined_df = combined_df.sort_index()
+    if not results_dict:
+        return pd.DataFrame()
+        
+    # Combine into a single dataframe
+    full_df = pd.concat(results_dict.values()).reset_index()
     
-    # Save combined data
-    output_path = RAW_DATA_DIR / f"market_data_{datetime.now().strftime('%Y%m%d')}.csv"
-    combined_df.to_csv(output_path)
-    logger.info(f"Saved combined market data to {output_path}")
+    # Standardize column names for downstream use
+    full_df.columns = [col.lower().replace(' ', '_') for col in full_df.columns]
     
-    return combined_df
+    # Ensure critical columns exist and fill NaNs
+    final_cols = ['date', 'ticker', 'open', 'high', 'low', 'close', 'volume']
+    for col in final_cols:
+        if col not in full_df.columns:
+            full_df[col] = 0.0
+            
+    full_df = full_df[final_cols]
+    full_df = full_df.ffill().bfill()
+    
+    logger.info(f"Successfully downloaded and combined data for {len(tickers_to_download)} stocks.")
+    return full_df
+
 
 def get_market_summary() -> pd.DataFrame:
     """
@@ -480,22 +489,12 @@ def get_market_summary() -> pd.DataFrame:
 # ============================================================================
 
 if __name__ == "__main__":
-    # Example usage
-    downloader = MarketDataDownloader()
-    
-    # Download single stock
-    aapl_data = downloader.download_stock_data("AAPL", start_date="2023-01-01")
-    print(f"Downloaded {len(aapl_data)} days of AAPL data")
-    print(aapl_data.head())
-    
-    # Get stock info
-    aapl_info = downloader.get_stock_info("AAPL")
-    print(f"\nAAPL Info: {aapl_info}")
-    
-    # Get real-time price
-    aapl_price = downloader.get_realtime_price("AAPL")
-    print(f"\nAAPL Current Price: ${aapl_price['current_price']}")
-    
-    # Download default stocks
+    # Example usage:
+    # Get all S&P 500 stocks and download their data
     all_data = download_default_stocks(start_date="2023-01-01")
-    print(f"\nDownloaded data for {all_data['Ticker'].nunique()} stocks")
+    print(f"\nDownloaded data for {all_data['ticker'].nunique()} stocks")
+
+    # Get a market summary
+    summary = get_market_summary()
+    print("\nMarket Summary (Top 5):")
+    print(summary.head())
