@@ -43,7 +43,7 @@ class GPTClient:
     'Hi there! How can I help you today?'
     """
 
-    def __init__(self, model: str = "gpt-3.5-turbo", temperature: float = 0.2):
+    def __init__(self, model: str = "gpt-4o-mini", temperature: float = 0.2):
         if not APIConfig.OPENAI_API_KEY:
             raise LLMNotAvailableError(
                 "OPENAI_API_KEY is not set – cannot initialise GPTClient."
