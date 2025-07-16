@@ -92,7 +92,7 @@ class TransformerModel:
         nhead: int = 4,
         num_layers: int = 2,
         dropout: float = 0.1,
-        epochs: int = 10,
+        epochs: int = 50,
         batch_size: int = 32,
         lr: float = 1e-3,
         device: str = None,
@@ -163,6 +163,10 @@ class TransformerModel:
         crit = nn.MSELoss()
         opt = torch.optim.AdamW(self.model.parameters(), lr=self.lr)
         self.model.train()
+        best_loss = float('inf')
+        patience_counter = 0
+        patience = 10  # Early stopping patience
+        
         for epoch in range(1, self.epochs + 1):
             epoch_losses = []
             for xb, yb in loader:
@@ -174,7 +178,19 @@ class TransformerModel:
                 loss.backward()
                 opt.step()
                 epoch_losses.append(loss.item())
-            logger.debug(f"Epoch {epoch}/{self.epochs} – loss {np.mean(epoch_losses):.6f}")
+            
+            current_loss = np.mean(epoch_losses)
+            logger.debug(f"Epoch {epoch}/{self.epochs} – loss {current_loss:.6f}")
+            
+            # Early stopping check
+            if current_loss < best_loss:
+                best_loss = current_loss
+                patience_counter = 0
+            else:
+                patience_counter += 1
+                if patience_counter >= patience:
+                    logger.info(f"Early stopping at epoch {epoch} (best loss: {best_loss:.6f})")
+                    break
         self.training_metrics = {"train_mse": float(np.mean(epoch_losses))}
         self.is_fitted = True
         return self

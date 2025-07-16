@@ -407,7 +407,7 @@ class BaselineModel:
             'rmse': np.sqrt(mean_squared_error(y_true_valid, y_pred_valid)),
             'mae': mean_absolute_error(y_true_valid, y_pred_valid),
             'r2': r2_score(y_true_valid, y_pred_valid),
-            'mape': np.mean(np.abs((y_true_valid - y_pred_valid) / y_true_valid)) * 100
+            'smape': np.mean(2 * np.abs(y_true_valid - y_pred_valid) / (np.abs(y_true_valid) + np.abs(y_pred_valid) + 1e-8)) * 100
         }
         
         return metrics

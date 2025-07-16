@@ -460,14 +460,14 @@ class TestModelMetrics:
         assert 'rmse' in metrics
         assert 'mae' in metrics
         assert 'r2' in metrics
-        assert 'mape' in metrics
+        assert 'smape' in metrics
         
         # Check metric values make sense
         assert metrics['mse'] >= 0
         assert metrics['rmse'] >= 0
         assert metrics['mae'] >= 0
         assert metrics['r2'] <= 1
-        assert metrics['mape'] >= 0
+        assert metrics['smape'] >= 0
     
     def test_evaluate_model(self):
         """Test model evaluation on test set"""

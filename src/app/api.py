@@ -517,7 +517,7 @@ async def explain_prediction(symbol: str):
         recent_accuracy = None
         if symbol in model_configs:
             recent_accuracy = {
-                "mape": round(np.random.uniform(5, 15), 2),  # Mock accuracy
+                "smape": round(np.random.uniform(5, 15), 2),  # Mock accuracy
                 "directional_accuracy": round(np.random.uniform(0.6, 0.8), 2),
                 "sharpe_ratio": round(np.random.uniform(0.5, 2.0), 2)
             }
