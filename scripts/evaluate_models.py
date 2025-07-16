@@ -269,7 +269,7 @@ class ModelEvaluator:
             
             # Add technical indicators
             data = add_all_technical_indicators(data)
-            data = data.fillna(method='ffill').fillna(method='bfill')
+            data = data.ffill().bfill()
             
             logger.info(f"Downloaded {len(data)} rows for {symbol}")
             return data
@@ -695,7 +695,7 @@ class ModelEvaluator:
         
         html_content = self._create_html_report(symbols)
         
-        with open(report_file, 'w') as f:
+        with open(report_file, 'w', encoding='utf-8') as f:
             f.write(html_content)
         
         logger.info(f"Report saved: {report_file}")
@@ -703,29 +703,28 @@ class ModelEvaluator:
     
     def _create_html_report(self, symbols: List[str]) -> str:
         """Create HTML report content."""
-        html = """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>StockSage.AI Model Evaluation Report</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 40px; }
-                .header { background-color: #f0f0f0; padding: 20px; border-radius: 5px; }
-                .section { margin: 30px 0; }
-                table { border-collapse: collapse; width: 100%; }
-                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                th { background-color: #f2f2f2; }
-                .metric { display: inline-block; margin: 10px; padding: 10px; background-color: #e9f4ff; border-radius: 5px; }
-                .best { background-color: #d4edda; }
-                .worst { background-color: #f8d7da; }
-            </style>
-        </head>
-        <body>
-            <div class="header">
-                <h1>StockSage.AI Model Evaluation Report</h1>
-                <p>Generated on: {timestamp}</p>
-                <p>Symbols analyzed: {symbols}</p>
-            </div>
+        html = """<!DOCTYPE html>
+<html>
+<head>
+    <title>StockSage.AI Model Evaluation Report</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; margin: 40px; }}
+        .header {{ background-color: #f0f0f0; padding: 20px; border-radius: 5px; }}
+        .section {{ margin: 30px 0; }}
+        table {{ border-collapse: collapse; width: 100%; }}
+        th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
+        th {{ background-color: #f2f2f2; }}
+        .metric {{ display: inline-block; margin: 10px; padding: 10px; background-color: #e9f4ff; border-radius: 5px; }}
+        .best {{ background-color: #d4edda; }}
+        .worst {{ background-color: #f8d7da; }}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>StockSage.AI Model Evaluation Report</h1>
+        <p>Generated on: {timestamp}</p>
+        <p>Symbols analyzed: {symbols}</p>
+    </div>
         """.format(
             timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             symbols=", ".join(symbols)
@@ -737,40 +736,43 @@ class ModelEvaluator:
                 comparison_df = self.compare_models(symbol)
                 
                 if not comparison_df.empty:
+                    # Generate HTML table separately to avoid formatting conflicts
+                    table_html = comparison_df.to_html(index=False, classes='table', table_id=None)
+                    
                     html += f"""
-                    <div class="section">
-                        <h2>{symbol} Performance Summary</h2>
-                        <div class="metric">
-                            <strong>Best Model:</strong> {comparison_df.iloc[0]['model']} 
-                            (SMAPE: {comparison_df.iloc[0]['smape']:.2f}%)
-                        </div>
-                        <div class="metric">
-                            <strong>Models Evaluated:</strong> {len(comparison_df)}
-                        </div>
-                        
-                        <h3>Detailed Results</h3>
-                        {comparison_df.to_html(index=False, classes='table')}
-                    </div>
+    <div class="section">
+        <h2>{symbol} Performance Summary</h2>
+        <div class="metric">
+            <strong>Best Model:</strong> {comparison_df.iloc[0]['model']} 
+            (SMAPE: {comparison_df.iloc[0]['smape']:.2f}%)
+        </div>
+        <div class="metric">
+            <strong>Models Evaluated:</strong> {len(comparison_df)}
+        </div>
+        
+        <h3>Detailed Results</h3>
+        {table_html}
+    </div>
                     """
         
         html += """
-            <div class="section">
-                <h2>Methodology</h2>
-                <p>This evaluation used the following metrics:</p>
-                <ul>
-                    <li><strong>SMAPE:</strong> Symmetric Mean Absolute Percentage Error (lower is better)</li>
-                    <li><strong>RMSE:</strong> Root Mean Square Error (lower is better)</li>
-                    <li><strong>MAE:</strong> Mean Absolute Error (lower is better)</li>
-                    <li><strong>Direction Accuracy:</strong> Percentage of correct direction predictions (higher is better)</li>
-                    <li><strong>Correlation:</strong> Correlation between predicted and actual values (higher is better)</li>
-                </ul>
-            </div>
-            
-            <div class="section">
-                <p><em>Generated by StockSage.AI Model Evaluation System</em></p>
-            </div>
-        </body>
-        </html>
+    <div class="section">
+        <h2>Methodology</h2>
+        <p>This evaluation used the following metrics:</p>
+        <ul>
+            <li><strong>SMAPE:</strong> Symmetric Mean Absolute Percentage Error (lower is better)</li>
+            <li><strong>RMSE:</strong> Root Mean Square Error (lower is better)</li>
+            <li><strong>MAE:</strong> Mean Absolute Error (lower is better)</li>
+            <li><strong>Direction Accuracy:</strong> Percentage of correct direction predictions (higher is better)</li>
+            <li><strong>Correlation:</strong> Correlation between predicted and actual values (higher is better)</li>
+        </ul>
+    </div>
+    
+    <div class="section">
+        <p><em>Generated by StockSage.AI Model Evaluation System</em></p>
+    </div>
+</body>
+</html>
         """
         
         return html

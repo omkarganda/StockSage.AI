@@ -303,7 +303,7 @@ class BaselineModel:
         
         # Handle missing values more robustly
         # First, fill with forward fill, then backward fill, then median
-        X = X.fillna(method='ffill').fillna(method='bfill').fillna(X.median())
+        X = X.ffill().bfill().fillna(X.median())
         # Drop any remaining rows with NaN values
         nan_rows = X.isnull().any(axis=1)
         if nan_rows.any():
@@ -376,7 +376,7 @@ class BaselineModel:
         
         # Handle missing values more robustly
         # First, fill with forward fill, then backward fill, then median
-        X = X.fillna(method='ffill').fillna(method='bfill').fillna(X.median() if len(X) > 0 else 0)
+        X = X.ffill().bfill().fillna(X.median() if len(X) > 0 else 0)
         # Drop any remaining rows with NaN values
         nan_rows = X.isnull().any(axis=1)
         if nan_rows.any():
@@ -586,7 +586,7 @@ class LinearRegressionBaseline(BaselineModel):
         
         # Handle missing values more robustly
         # First, fill with forward fill, then backward fill, then median
-        X = X.fillna(method='ffill').fillna(method='bfill').fillna(X.median() if len(X) > 0 else 0)
+        X = X.ffill().bfill().fillna(X.median() if len(X) > 0 else 0)
         # Drop any remaining rows with NaN values
         nan_rows = X.isnull().any(axis=1)
         if nan_rows.any():
