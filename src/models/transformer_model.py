@@ -5,443 +5,304 @@ This module implements a Transformer model for stock price prediction using
 multi-head attention mechanisms.
 """
 
+import math
+from pathlib import Path
+from typing import Any, Dict, Optional, Tuple, Union
+
+import joblib
 import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset
-import math
-from typing import Dict, List, Optional, Tuple, Union, Any
-import logging
-from datetime import datetime
-import joblib
+from sklearn.preprocessing import StandardScaler
+from torch.utils.data import DataLoader, Dataset
 
+from ..features.indicators import add_all_technical_indicators
+from ..features.microstructure import add_microstructure_features
 from ..utils.logging import get_logger
 
 logger = get_logger(__name__)
 
+# ---------------------------------------------------------------------
+# Helper dataset + positional encoding utils
+# ---------------------------------------------------------------------
 
-class PositionalEncoding(nn.Module):
-    """Positional encoding for transformer"""
-    
+def _select_numeric(df: pd.DataFrame) -> pd.DataFrame:
+    return df.select_dtypes(include=[np.number])
+
+
+class _SeqDataset(Dataset):
+    def __init__(self, X: np.ndarray, y: np.ndarray):
+        self.X = torch.from_numpy(X).float()
+        self.y = torch.from_numpy(y).float()
+
+    def __len__(self):
+        return len(self.X)
+
+    def __getitem__(self, idx):
+        return self.X[idx], self.y[idx]
+
+
+class _PositionalEncoding(nn.Module):
+    """Standard sine-cosine positional encoding."""
     def __init__(self, d_model: int, max_len: int = 5000):
-        super(PositionalEncoding, self).__init__()
-        
+        super().__init__()
         pe = torch.zeros(max_len, d_model)
         position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
         div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))
-        
         pe[:, 0::2] = torch.sin(position * div_term)
         pe[:, 1::2] = torch.cos(position * div_term)
-        pe = pe.unsqueeze(0).transpose(0, 1)
-        
-        self.register_buffer('pe', pe)
-    
-    def forward(self, x):
-        pe = self.pe[:x.size(0), :]
-        return x + pe
+        pe = pe.unsqueeze(0)  # (1, max_len, d_model)
+        self.register_buffer("pe", pe)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:  # x: (batch, seq_len, d_model)
+        seq_len = x.size(1)
+        # Add positional encoding using the stored 'pe' buffer
+        x = x + self.pe[:, :seq_len]
+        return x
 
 
-class TransformerNetwork(nn.Module):
-    """Transformer Network for time series prediction"""
-    
+class _TransformerNet(nn.Module):
     def __init__(
         self,
         input_dim: int,
-        d_model: int = 128,
-        nhead: int = 8,
-        num_layers: int = 3,
-        dim_feedforward: int = 512,
+        d_model: int,
+        nhead: int,
+        num_layers: int,
+        horizon: int, # Horizon is kept for API consistency
         dropout: float = 0.1,
-        output_dim: int = 1
     ):
-        super(TransformerNetwork, self).__init__()
-        
-        self.d_model = d_model
-        self.input_projection = nn.Linear(input_dim, d_model)
-        self.pos_encoder = PositionalEncoding(d_model)
-        
-        encoder_layers = nn.TransformerEncoderLayer(
-            d_model=d_model,
-            nhead=nhead,
-            dim_feedforward=dim_feedforward,
-            dropout=dropout,
-            batch_first=True
-        )
-        
-        self.transformer_encoder = nn.TransformerEncoder(
-            encoder_layers,
-            num_layers=num_layers
-        )
-        
-        self.output_projection = nn.Linear(d_model, output_dim)
-        self.dropout = nn.Dropout(dropout)
-        
-    def forward(self, x):
-        # x: (batch_size, seq_len, input_dim)
-        x = self.input_projection(x) * math.sqrt(self.d_model)
-        x = x.permute(1, 0, 2)  # (seq_len, batch_size, d_model)
-        x = self.pos_encoder(x)
-        x = x.permute(1, 0, 2)  # (batch_size, seq_len, d_model)
-        
-        # Apply transformer
-        transformer_output = self.transformer_encoder(x)
-        
-        # Use the last time step for prediction
-        output = transformer_output[:, -1, :]  # (batch_size, d_model)
-        output = self.dropout(output)
-        output = self.output_projection(output)  # (batch_size, output_dim)
-        
-        return output
+        super().__init__()
+        self.input_proj = nn.Linear(input_dim, d_model)
+        self.pos_enc = _PositionalEncoding(d_model)
+        encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dropout=dropout, batch_first=True)
+        self.encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
+        self.fc = nn.Linear(d_model, 1) # Always output a single value
 
-
-class EarlyStopping:
-    """Early stopping utility class"""
-    
-    def __init__(self, patience: int = 10, min_delta: float = 0.0):
-        self.patience = patience
-        self.min_delta = min_delta
-        self.counter = 0
-        self.best_loss = float('inf')
-        self.early_stop = False
-        
-    def __call__(self, val_loss: float) -> bool:
-        if val_loss < self.best_loss - self.min_delta:
-            self.best_loss = val_loss
-            self.counter = 0
-        else:
-            self.counter += 1
-            
-        if self.counter >= self.patience:
-            self.early_stop = True
-            
-        return self.early_stop
+    def forward(self, x: torch.Tensor) -> torch.Tensor:  # x: (batch, seq_len, input_dim)
+        x = self.input_proj(x)
+        x = self.pos_enc(x)
+        enc_out = self.encoder(x)
+        last = enc_out[:, -1, :]  # Use representation of last time step
+        out = self.fc(last)
+        return out.squeeze(-1)
 
 
 class TransformerModel:
-    """
-    Transformer model for stock price prediction.
-    
-    This model uses transformer architecture with multi-head attention
-    to capture complex temporal dependencies in financial time series.
-    """
-    
+    """Pure Transformer encoder model for financial time-series returns forecasting."""
+
     def __init__(
         self,
-        sequence_length: int = 60,
-        d_model: int = 128,
-        nhead: int = 8,
-        num_layers: int = 3,
-        dim_feedforward: int = 512,
+        context_length: int = 60,
+        horizon: int = 1,
+        d_model: int = 64,
+        nhead: int = 4,
+        num_layers: int = 2,
         dropout: float = 0.1,
-        learning_rate: float = 0.001,
+        epochs: int = 100,  # Increased from 50 to 100 for better training
         batch_size: int = 32,
-        epochs: int = 100,
-        early_stopping_patience: int = 10,
-        device: str = 'auto'
+        lr: float = 1e-3,
+        patience: int = 15,  # Increased patience for early stopping
+        min_delta: float = 1e-6,  # Minimum change to qualify as an improvement
+        device: Optional[str] = None,
     ):
-        """
-        Initialize Transformer Model.
+        # Ensure d_model is divisible by nhead
+        if d_model % nhead != 0:
+            # Adjust d_model to be divisible by nhead
+            d_model = ((d_model // nhead) + 1) * nhead
+            logger.info(f"Adjusted d_model to {d_model} to be divisible by {nhead} attention heads")
         
-        Parameters:
-        -----------
-        sequence_length : int, default=60
-            Length of input sequences
-        d_model : int, default=128
-            Dimension of the model
-        nhead : int, default=8
-            Number of attention heads
-        num_layers : int, default=3
-            Number of transformer layers
-        dim_feedforward : int, default=512
-            Dimension of feedforward network
-        dropout : float, default=0.1
-            Dropout probability
-        learning_rate : float, default=0.001
-            Learning rate for optimization
-        batch_size : int, default=32
-            Batch size for training
-        epochs : int, default=100
-            Maximum number of training epochs
-        early_stopping_patience : int, default=10
-            Patience for early stopping
-        device : str, default='auto'
-            Device to use for computation ('cpu', 'cuda', or 'auto')
-        """
-        self.sequence_length = sequence_length
+        self.context_length = context_length
+        self.horizon = horizon
         self.d_model = d_model
         self.nhead = nhead
         self.num_layers = num_layers
-        self.dim_feedforward = dim_feedforward
         self.dropout = dropout
-        self.learning_rate = learning_rate
-        self.batch_size = batch_size
         self.epochs = epochs
-        self.early_stopping_patience = early_stopping_patience
-        
-        # Set device
-        if device == 'auto':
-            self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.batch_size = batch_size
+        self.lr = lr
+        self.patience = patience
+        self.min_delta = min_delta
+        if device is None or device == "auto":
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
         else:
-            self.device = torch.device(device)
-            
-        # Model components
-        self.model = None
-        self.scaler = None
-        self.feature_names = None
-        self.is_fitted = False
-        self.training_metrics = {}
-        
-        logger.info(f"Initialized TransformerModel with device: {self.device}")
-    
-    def _prepare_sequences(self, data: np.ndarray, target: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
-        """Prepare sequences for transformer training."""
+            self.device = device
+
+        self.model: Optional[nn.Module] = None
+        self.scaler: Optional[StandardScaler] = None
+        self.is_fitted: bool = False
+        self.training_metrics: Dict[str, Any] = {}
+
+    # ------------------------- feature engineering -------------------
+    def _prepare_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        df = df.copy()
+        df = add_all_technical_indicators(df)
+        df = add_microstructure_features(df)
+        return _select_numeric(df).ffill().bfill()
+
+    def _make_sequences(self, features: np.ndarray, close: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         X, y = [], []
-        
-        for i in range(len(data) - self.sequence_length):
-            X.append(data[i:(i + self.sequence_length)])
-            y.append(target[i + self.sequence_length])
-            
-        return np.array(X), np.array(y)
-    
-    def fit(self, df: pd.DataFrame, target_column: str = 'close') -> 'TransformerModel':
-        """
-        Train the Transformer model.
-        
-        Parameters:
-        -----------
-        df : pd.DataFrame
-            Training data with features and target
-        target_column : str, default='close'
-            Name of the target column
-            
-        Returns:
-        --------
-        self : TransformerModel
-            Fitted model
-        """
-        logger.info("Starting Transformer model training")
-        
-        try:
-            # Prepare data
-            feature_columns = [col for col in df.columns if col != target_column]
-            X = df[feature_columns].values
-            y = np.array(df[target_column].values)
-            
-            # Store feature names
-            self.feature_names = feature_columns
-            
-            # Normalize features
-            from sklearn.preprocessing import StandardScaler
-            self.scaler = StandardScaler()
-            X_scaled = self.scaler.fit_transform(X)
-            
-            # Prepare sequences
-            X_seq, y_seq = self._prepare_sequences(X_scaled, y)
-            
-            # Split into train/validation
-            split_idx = int(0.8 * len(X_seq))
-            X_train, X_val = X_seq[:split_idx], X_seq[split_idx:]
-            y_train, y_val = y_seq[:split_idx], y_seq[split_idx:]
-            
-            # Convert to tensors
-            X_train_tensor = torch.FloatTensor(X_train).to(self.device)
-            y_train_tensor = torch.FloatTensor(y_train).to(self.device)
-            X_val_tensor = torch.FloatTensor(X_val).to(self.device)
-            y_val_tensor = torch.FloatTensor(y_val).to(self.device)
-            
-            # Create data loaders
-            train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
-            train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True)
-            
-            val_dataset = TensorDataset(X_val_tensor, y_val_tensor)
-            val_loader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False)
-            
-            # Initialize model
-            input_dim = X_train.shape[2]
-            self.model = TransformerNetwork(
-                input_dim=input_dim,
-                d_model=self.d_model,
-                nhead=self.nhead,
-                num_layers=self.num_layers,
-                dim_feedforward=self.dim_feedforward,
-                dropout=self.dropout
-            ).to(self.device)
-            
-            # Loss and optimizer
-            criterion = nn.MSELoss()
-            optimizer = optim.Adam(self.model.parameters(), lr=self.learning_rate)
-            
-            # Early stopping
-            early_stopping = EarlyStopping(patience=self.early_stopping_patience)
-            
-            # Training loop
-            train_losses = []
-            val_losses = []
-            best_loss = float('inf')
-            best_train_loss = float('inf')  # Track best training loss for metrics
-            
-            for epoch in range(self.epochs):
-                # Training phase
-                self.model.train()
-                train_loss = 0.0
-                
-                for batch_X, batch_y in train_loader:
-                    optimizer.zero_grad()
-                    outputs = self.model(batch_X)
-                    loss = criterion(outputs.squeeze(), batch_y)
-                    loss.backward()
-                    optimizer.step()
-                    train_loss += loss.item()
-                
-                train_loss /= len(train_loader)
-                train_losses.append(train_loss)
-                
-                # Validation phase
-                self.model.eval()
-                val_loss = 0.0
-                
-                with torch.no_grad():
-                    for batch_X, batch_y in val_loader:
-                        outputs = self.model(batch_X)
-                        loss = criterion(outputs.squeeze(), batch_y)
-                        val_loss += loss.item()
-                
-                val_loss /= len(val_loader)
-                val_losses.append(val_loss)
-                
-                # Track best losses
-                if val_loss < best_loss:
-                    best_loss = val_loss
-                    best_train_loss = train_loss  # Save corresponding training loss
-                
-                # Early stopping check
-                if early_stopping(val_loss):
-                    logger.info(f"Early stopping triggered at epoch {epoch + 1}")
-                    break
-                
-                if (epoch + 1) % 10 == 0:
-                    logger.info(f"Epoch {epoch + 1}/{self.epochs}, Train Loss: {train_loss:.6f}, Val Loss: {val_loss:.6f}")
-            
-            # FIXED: Use best training loss instead of final epoch loss
-            self.training_metrics = {
-                'train_mse': best_train_loss,  # Use best loss, not final epoch loss
-                'val_mse': best_loss,
-                'epochs_trained': epoch + 1,
-                'early_stopped': early_stopping.early_stop
-            }
-            
-            self.is_fitted = True
-            logger.info(f"Training completed. Best train MSE: {best_train_loss:.6f}, Best val MSE: {best_loss:.6f}")
-            
-        except Exception as e:
-            logger.error(f"Error during Transformer model training: {e}")
-            raise
-            
-        return self
-    
-    def predict(self, df: pd.DataFrame) -> np.ndarray:
-        """
-        Make predictions using the trained model.
-        
-        Parameters:
-        -----------
-        df : pd.DataFrame
-            Input data for prediction
-            
-        Returns:
-        --------
-        np.ndarray
-            Predictions
-        """
-        if not self.is_fitted:
-            raise ValueError("Model must be fitted before making predictions")
-        
-        try:
-            # Prepare features
-            X = df[self.feature_names].values
-            if self.scaler is None:
-                raise ValueError("Scaler is not fitted")
-            X_scaled = self.scaler.transform(X)
-            
-            # Prepare sequences
-            X_seq = []
-            for i in range(len(X_scaled) - self.sequence_length + 1):
-                X_seq.append(X_scaled[i:(i + self.sequence_length)])
-            
-            if len(X_seq) == 0:
-                raise ValueError(f"Input data length {len(df)} is too short for sequence length {self.sequence_length}")
-            
-            X_seq = np.array(X_seq)
-            X_tensor = torch.FloatTensor(X_seq).to(self.device)
-            
-            # Make predictions
-            if self.model is None:
-                raise ValueError("Model is not fitted")
-            self.model.eval()
-            with torch.no_grad():
-                predictions = self.model(X_tensor)
-                predictions = predictions.squeeze().cpu().numpy()
-            
-            # Handle single prediction
-            if predictions.ndim == 0:
-                predictions = np.array([predictions])
-                
-            return predictions
-            
-        except Exception as e:
-            logger.error(f"Error during prediction: {e}")
-            raise
-    
-    def save(self, filepath: str) -> None:
-        """Save the trained model."""
-        if not self.is_fitted:
-            raise ValueError("Cannot save unfitted model")
-        if self.model is None:
-            raise ValueError("Model is not fitted")
-        
-        model_data = {
-            'model_state_dict': self.model.state_dict(),
-            'scaler': self.scaler,
-            'feature_names': self.feature_names,
-            'sequence_length': self.sequence_length,
-            'd_model': self.d_model,
-            'nhead': self.nhead,
-            'num_layers': self.num_layers,
-            'dim_feedforward': self.dim_feedforward,
-            'training_metrics': self.training_metrics
-        }
-        
-        torch.save(model_data, filepath)
-        logger.info(f"Model saved to {filepath}")
-    
-    def load(self, filepath: str) -> 'TransformerModel':
-        """Load a trained model."""
-        model_data = torch.load(filepath, map_location=self.device)
-        
-        self.scaler = model_data['scaler']
-        self.feature_names = model_data['feature_names']
-        self.sequence_length = model_data['sequence_length']
-        self.d_model = model_data['d_model']
-        self.nhead = model_data['nhead']
-        self.num_layers = model_data['num_layers']
-        self.dim_feedforward = model_data['dim_feedforward']
-        self.training_metrics = model_data['training_metrics']
-        
-        # Recreate model
-        input_dim = len(self.feature_names)
-        self.model = TransformerNetwork(
-            input_dim=input_dim,
+        seq_len, h = self.context_length, self.horizon
+        for i in range(seq_len, len(features) - h):
+            X.append(features[i - seq_len : i])
+            y.append((close[i + h] - close[i]) / close[i])  # horizon return
+        return np.asarray(X, dtype=np.float32), np.asarray(y, dtype=np.float32)
+
+    # ------------------------------ API ------------------------------
+    def fit(self, df: pd.DataFrame) -> "TransformerModel":
+        logger.info(f"[Transformer] Training with {len(df)} rows")
+        if "Close" not in df.columns:
+            raise ValueError("Close column required")
+        feats_df = self._prepare_features(df)
+        self.scaler = StandardScaler()
+        feats_scaled = self.scaler.fit_transform(feats_df.values)
+        close_arr = df["Close"].values.astype(np.float32)
+        X, y = self._make_sequences(feats_scaled, close_arr)
+        if len(X) == 0:
+            raise ValueError("Not enough data for sequences")
+        dataset = _SeqDataset(X, y)
+        loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True, drop_last=True)
+
+        self.model = _TransformerNet(
+            input_dim=X.shape[-1],
             d_model=self.d_model,
             nhead=self.nhead,
             num_layers=self.num_layers,
-            dim_feedforward=self.dim_feedforward,
-            dropout=self.dropout
+            horizon=self.horizon,
+            dropout=self.dropout,
         ).to(self.device)
+
+        crit = nn.MSELoss()
+        opt = torch.optim.AdamW(self.model.parameters(), lr=self.lr, weight_decay=1e-5)
         
-        self.model.load_state_dict(model_data['model_state_dict'])
+        # Add learning rate scheduler
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            opt, mode='min', factor=0.5, patience=5, min_lr=1e-6
+        )
+        
+        self.model.train()
+        best_loss = float('inf')
+        patience_counter = 0
+        train_losses = []
+        
+        logger.info(f"Starting training for {self.epochs} epochs with patience {self.patience}")
+        
+        for epoch in range(1, self.epochs + 1):
+            epoch_losses = []
+            for xb, yb in loader:
+                xb = xb.to(self.device)
+                yb = yb.to(self.device)
+                opt.zero_grad()
+                pred = self.model(xb)
+                loss = crit(pred, yb)
+                loss.backward()
+                # Add gradient clipping to prevent exploding gradients
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+                opt.step()
+                epoch_losses.append(loss.item())
+            
+            current_loss = np.mean(epoch_losses)
+            train_losses.append(current_loss)
+            
+            # Update learning rate scheduler
+            scheduler.step(current_loss)
+            
+            # Log progress every 10 epochs
+            if epoch % 10 == 0 or epoch <= 5:
+                current_lr = opt.param_groups[0]['lr']
+                logger.info(f"Epoch {epoch}/{self.epochs} – loss: {current_loss:.6f}, lr: {current_lr:.2e}")
+            
+            # Early stopping check with minimum delta
+            if current_loss < best_loss - self.min_delta:
+                best_loss = current_loss
+                patience_counter = 0
+                # Save best model state
+                best_model_state = self.model.state_dict().copy()
+            else:
+                patience_counter += 1
+                if patience_counter >= self.patience:
+                    logger.info(f"Early stopping at epoch {epoch} (best loss: {best_loss:.6f})")
+                    # Restore best model state
+                    self.model.load_state_dict(best_model_state)
+                    break
+                    
+        self.training_metrics = {
+            "train_mse": float(best_loss),
+            "final_epoch": epoch,
+            "train_losses": train_losses[-10:],  # Store last 10 losses
+            "early_stopped": patience_counter >= self.patience
+        }
         self.is_fitted = True
-        
-        logger.info(f"Model loaded from {filepath}")
+        logger.info(f"[Transformer] Training completed after {epoch} epochs (best loss: {best_loss:.6f})")
         return self
+
+    def predict(self, df: pd.DataFrame) -> np.ndarray:
+        if not self.is_fitted or self.model is None or self.scaler is None:
+            raise ValueError("Model not trained or components not available")
+        feats_df = self._prepare_features(df)
+        feats_scaled = self.scaler.transform(feats_df.values)
+        if len(feats_scaled) < self.context_length:
+            raise ValueError("Not enough data for prediction window")
+        window = feats_scaled[-self.context_length :]
+        window_expanded = np.expand_dims(window, axis=0)
+        x_tensor = torch.from_numpy(window_expanded).float().to(self.device)
+        self.model.eval()
+        with torch.no_grad():
+            pred = self.model(x_tensor).cpu().numpy().flatten()
+        return pred
+
+    def evaluate(self, df: pd.DataFrame) -> Dict[str, float]:
+        preds = self.predict(df)
+        close = df["Close"].values.astype(np.float32)
+        actual = (close[-1] - close[-self.horizon - 1]) / close[-self.horizon - 1]
+        mse = float((preds[0] - actual) ** 2)
+        return {"mse": mse, "rmse": float(np.sqrt(mse))}
+
+    # -------------------------- serialization ------------------------
+    def save_model(self, filepath: Union[str, Path]):
+        state = {
+            "model_state": self.model.state_dict() if self.model else None,
+            "scaler": self.scaler,
+            "config": {
+                "context_length": self.context_length,
+                "horizon": self.horizon,
+                "d_model": self.d_model,
+                "nhead": self.nhead,
+                "num_layers": self.num_layers,
+                "dropout": self.dropout,
+            },
+        }
+        joblib.dump(state, filepath)
+        logger.info(f"Saved Transformer model to {filepath}")
+
+    def load_model(self, filepath: Union[str, Path]):
+        state = joblib.load(filepath)
+        if not isinstance(state, dict) or "scaler" not in state or "config" not in state or "model_state" not in state:
+            raise ValueError("Invalid model state file")
+        self.scaler = state["scaler"]
+        cfg = state["config"]
+        for k, v in cfg.items():
+            setattr(self, k, v)
+        
+        # Ensure scaler is valid before accessing attributes
+        if self.scaler is None or not hasattr(self.scaler, 'mean_'):
+            raise ValueError("Scaler not loaded correctly or is invalid")
+
+        self.model = _TransformerNet(
+            input_dim=len(self.scaler.mean_),
+            d_model=self.d_model,
+            nhead=self.nhead,
+            num_layers=self.num_layers,
+            horizon=self.horizon,
+            dropout=self.dropout,
+        )
+        self.model.load_state_dict(state["model_state"])
+        self.model.to(self.device)
+        self.is_fitted = True
+        logger.info(f"Loaded Transformer model from {filepath}")
+
+
+def create_transformer_models(context_length: int = 60, horizon: int = 1, **kwargs) -> Dict[str, Any]:
+    return {
+        "transformer": TransformerModel(context_length=context_length, horizon=horizon, **kwargs)
+    }
