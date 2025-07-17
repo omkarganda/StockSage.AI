@@ -1,43 +1,109 @@
-# .gitignore
-# compiled files
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# large/raw data
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project specific: Data files
 data/raw/
-temp_backup/
-*.html
+data/external/
+data/processed/
+*.pkl
+*.pickle
+
+# Project specific: Generated reports and results
+reports/
+results/
+logs/
+*.log
+
+# Project specific: Model files
+*.joblib
+*.joblib.*
+*.h5
+*.hdf5
+*.ckpt
+*.pth
+*.pt
+
+# Project specific: Generated documentation and temporary files
+*_SUMMARY.md
+*_COMPLETION.md
+*_FIX*.md
+*_IMPROVEMENT*.md
+*_ANALYSIS.md
+improvement_report_*.md
+evaluation_report_*.md
+model_evaluation_report_*.html
+model_comparison_*.csv
+evaluation_results_*.json
+training_results_*.json
+model_summary_*.csv
+
+# Project specific: Temporary and cache files
 *.csv
 *.json
+*.html
 *.jsonl
-*.jsonl.gz
-*.jsonl.gz.part
-*.jsonl.gz.part.1
-*.jsonl.gz.part.2
-*.joblib
-*.joblib.gz
-*.joblib.gz.part
-*.joblib.gz.part.1
-*.joblib.gz.part.2
-*.joblib.gz.part.3
-*.joblib.gz.part.4
+*.jsonl.*
+temp_backup/
+.pytest_cache/
+.coverage
+htmlcov/
 
-# logs & caches
-logs/
-*.pkl
+# Project specific: Large data files
+unified_dataset_*.csv
+*_predictions_vs_actual.html
+*_performance_comparison.html
 
-# Python build artifacts
-__pycache__/
-*.pyc
-# Data & cache files
-data/raw/
-*.pkl
-logs/
-
-
-# Python cache files
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.env
+# Keep important files (override above patterns)
+!requirements.txt
+!requirements-core.txt
+!config/*.json
+!.github/
+!src/
+!tests/
+!scripts/
+!notebooks/*.ipynb

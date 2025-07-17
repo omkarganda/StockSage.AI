@@ -467,32 +467,56 @@ def create_sentiment_chart(sentiment_data: List[Dict]) -> go.Figure:
     
     fig = go.Figure()
     
-    # LLM Sentiment bars
-    fig.add_trace(go.Bar(
-        x=df['date'],
-        y=df['llm_sentiment_mean'],
-        name='LLM Sentiment',
-        marker_color='lightblue',
-        opacity=0.7
-    ))
+    # Check which sentiment columns are available
+    has_llm_sentiment = 'llm_sentiment_mean' in df.columns
+    has_compound_sentiment = 'sentiment_compound' in df.columns
     
-    # Traditional sentiment line
-    fig.add_trace(go.Scatter(
-        x=df['date'],
-        y=df['sentiment_compound'],
-        name='FinBERT Sentiment',
-        line=dict(color='royalblue', width=2)
-    ))
-    
-    # 7-day rolling average
-    if len(df) >= 7:
-        rolling_avg = df['llm_sentiment_mean'].rolling(7, center=True).mean()
-        fig.add_trace(go.Scatter(
-            x=df['date'],
-            y=rolling_avg,
-            name='7-Day Average',
-            line=dict(color='orange', width=2, dash='dash')
-        ))
+    # If no expected columns exist, create a fallback chart
+    if not has_llm_sentiment and not has_compound_sentiment:
+        # Look for any sentiment-like columns
+        sentiment_cols = [col for col in df.columns if 'sentiment' in col.lower()]
+        if sentiment_cols:
+            # Use the first available sentiment column
+            fig.add_trace(go.Scatter(
+                x=df['date'],
+                y=df[sentiment_cols[0]],
+                name=f'Sentiment ({sentiment_cols[0]})',
+                line=dict(color='royalblue', width=2)
+            ))
+        else:
+            # No sentiment data at all
+            fig.add_annotation(text="No sentiment columns found in data", 
+                              xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False)
+            return fig
+    else:
+        # Add LLM Sentiment bars if available
+        if has_llm_sentiment:
+            fig.add_trace(go.Bar(
+                x=df['date'],
+                y=df['llm_sentiment_mean'],
+                name='LLM Sentiment',
+                marker_color='lightblue',
+                opacity=0.7
+            ))
+        
+        # Add Traditional sentiment line if available
+        if has_compound_sentiment:
+            fig.add_trace(go.Scatter(
+                x=df['date'],
+                y=df['sentiment_compound'],
+                name='FinBERT Sentiment',
+                line=dict(color='royalblue', width=2)
+            ))
+        
+        # Add 7-day rolling average if LLM sentiment is available
+        if has_llm_sentiment and len(df) >= 7:
+            rolling_avg = df['llm_sentiment_mean'].rolling(7, center=True).mean()
+            fig.add_trace(go.Scatter(
+                x=df['date'],
+                y=rolling_avg,
+                name='7-Day Average',
+                line=dict(color='orange', width=2, dash='dash')
+            ))
     
     # Add zero line
     fig.add_hline(y=0, line_dash="dot", line_color="gray", opacity=0.5)
@@ -522,9 +546,27 @@ def create_sentiment_distribution_chart(sentiment_data: List[Dict]) -> go.Figure
     # Create histogram of sentiment scores
     fig = go.Figure()
     
+    # Check if expected sentiment columns exist
+    if 'llm_sentiment_mean' in df.columns:
+        sentiment_col = 'llm_sentiment_mean'
+        col_name = 'LLM Sentiment Distribution'
+    elif 'sentiment_compound' in df.columns:
+        sentiment_col = 'sentiment_compound'
+        col_name = 'Sentiment Distribution'
+    else:
+        # Look for any sentiment column
+        sentiment_cols = [col for col in df.columns if 'sentiment' in col.lower()]
+        if sentiment_cols:
+            sentiment_col = sentiment_cols[0]
+            col_name = f'Sentiment Distribution ({sentiment_col})'
+        else:
+            fig.add_annotation(text="No sentiment columns found in data", 
+                              xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False)
+            return fig
+    
     fig.add_trace(go.Histogram(
-        x=df['llm_sentiment_mean'],
-        name='LLM Sentiment Distribution',
+        x=df[sentiment_col],
+        name=col_name,
         nbinsx=20,
         marker_color='lightblue',
         opacity=0.7
@@ -554,16 +596,31 @@ def create_article_volume_chart(sentiment_data: List[Dict]) -> go.Figure:
     
     fig = go.Figure()
     
+    # Check if article_count column exists
+    if 'article_count' in df.columns:
+        article_col = 'article_count'
+        title = "News Article Volume"
+    else:
+        # Look for alternative column names
+        count_cols = [col for col in df.columns if 'count' in col.lower() or 'volume' in col.lower()]
+        if count_cols:
+            article_col = count_cols[0]
+            title = f"Article Volume ({article_col})"
+        else:
+            fig.add_annotation(text="No article count data available", 
+                              xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False)
+            return fig
+    
     fig.add_trace(go.Bar(
         x=df['date'],
-        y=df['article_count'],
+        y=df[article_col],
         name='Daily Article Count',
         marker_color='green',
         opacity=0.6
     ))
     
     fig.update_layout(
-        title="News Article Volume",
+        title=title,
         yaxis_title="Article Count",
         xaxis_title="Date",
         template="plotly_white",
@@ -713,13 +770,42 @@ def main():
                 st.subheader("Recent Sentiment Highlights")
                 recent_data = sentiment_response['data'][-7:]  # Last 7 days
                 for item in recent_data:
-                    date = item['date']
-                    sentiment = item['llm_sentiment_mean']
-                    articles = item['article_count']
+                    date = item.get('date', 'Unknown Date')
                     
-                    sentiment_color = "green" if sentiment > 0.1 else ("red" if sentiment < -0.1 else "gray")
-                    st.markdown(f"**{date}**: {sentiment:+.3f} sentiment ({articles} articles)", 
-                               unsafe_allow_html=False)
+                    # Check for sentiment data with fallbacks
+                    sentiment = None
+                    if 'llm_sentiment_mean' in item:
+                        sentiment = item['llm_sentiment_mean']
+                        sentiment_type = "LLM"
+                    elif 'sentiment_compound' in item:
+                        sentiment = item['sentiment_compound']
+                        sentiment_type = "FinBERT"
+                    else:
+                        # Look for any sentiment column
+                        sentiment_cols = [k for k in item.keys() if 'sentiment' in k.lower()]
+                        if sentiment_cols:
+                            sentiment = item[sentiment_cols[0]]
+                            sentiment_type = sentiment_cols[0]
+                    
+                    # Check for article count with fallbacks
+                    articles = None
+                    if 'article_count' in item:
+                        articles = item['article_count']
+                    else:
+                        # Look for any count column
+                        count_cols = [k for k in item.keys() if 'count' in k.lower() or 'volume' in k.lower()]
+                        if count_cols:
+                            articles = item[count_cols[0]]
+                    
+                    # Display the data if available
+                    if sentiment is not None:
+                        sentiment_color = "green" if sentiment > 0.1 else ("red" if sentiment < -0.1 else "gray")
+                        if articles is not None:
+                            st.markdown(f"**{date}**: {sentiment:+.3f} {sentiment_type} sentiment ({articles} articles)")
+                        else:
+                            st.markdown(f"**{date}**: {sentiment:+.3f} {sentiment_type} sentiment")
+                    else:
+                        st.markdown(f"**{date}**: No sentiment data available")
             else:
                 st.info("No sentiment data available for this symbol.")
 
