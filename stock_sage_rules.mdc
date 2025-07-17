@@ -1,0 +1,100 @@
+# StockStage.AI – Project Rules
+These rules give the Cursor AI agent persistent context about our codebase **StockStage.AI**.  They ensure generated code, edits, and chat responses stay aligned with the project’s architecture, workflows, and engineering standards.
+
+> **Scope :** Applies to all Python, notebook, script, and markdown files in the repo.
+
+---
+## 1 · Domain Overview
+- StockStage.AI predicts stock prices by combining **market data**, **economic indicators**, and **NLP‑based sentiment**.
+- Core stack: `pandas`, `yfinance`, `Prophet`, `Darts`, `PyTorch Lightning`, `LangChain`, `Hugging Face`, `Plotly`, `Streamlit`, `llamaIndex`, `OpenAI`.
+- Repository layout is documented in `@project_structure.md`. Respect that directory breakdown when adding files.
+
+## 2 · Coding Guidelines
+1. **Language & Style**  
+   - All production code is in **Python 3.11+** with full **PEP 8** compliance.  
+   - Formatters: **black** (line length = 88) + **isort** + **ruff** for linting.  
+   - Use **type hints** everywhere; prefer `typing.Annotated` for shapes / units where helpful.
+2. **Docstrings**  
+   - Use **Google‑style** docstrings with a "Returns:" section.  
+   - Every public function, class, and module requires a docstring.
+3. **Imports**  
+   - Absolute imports inside the `src/` package (`from stock_sage_ai.models import …`).  
+   - Third‑party libs → standard lib → local imports, in that order.
+4. **Logging & Errors**  
+   - Use the `logging` module (no `print`). Logger instantiated via helper in `@src/config.py`.  
+   - Raise custom exceptions from `src/exceptions.py` when domain‑specific errors occur.
+
+## 3 · Data Handling Rules
+- Treat **timestamps as UTC** (`tz_aware=True`).  
+- Never commit raw data; raw downloads live in `data/raw/` (git‑ignored).  
+- Column naming conventions: lowercase, snake_case, no spaces (`close_adjusted`, `sentiment_score`).
+
+## 4 · Feature Engineering & Sentiment
+- Use utility functions in `@src/features/indicators.py` for TA indicators; do not duplicate logic.  
+- Sentiment pipeline relies on `@src/features/sentiment.py`; call `get_daily_sentiment(symbol, dt)` instead of rolling your own.  
+- **Feature validation**: Ensure no look-ahead bias in feature construction.  
+- **Missing data handling**: Document strategy for handling gaps in market data.
+
+## 5 · Modeling Standards
+- **Baselines:** Prophet + Darts models in `@src/models`. Keep these intact for regression tests.  
+- **Deep Learning:** Implement new architectures as subclasses of `LightningModule` in `@src/models/lightning_model.py`.  
+- Training loops go through the CLI `scripts/train.py`; do not call `.fit()` ad‑hoc in notebooks.  
+- Hyper‑parameters live in YAML under `config/model_params.yaml`.  
+- Store checkpoints in `models/` (git‑ignored). Use `trainer.save_checkpoint()`.
+
+## 6 · Evaluation & Backtesting
+- Always backtest with **walk‑forward validation** via `@src/evaluation/backtester.py`.  
+- Key metrics: `RMSE`, `MAPE`, **Sharpe ratio**; log to stdout + `results/metrics.csv`.  
+- **Performance benchmarks**: Compare against buy-and-hold baseline.  
+- **Statistical significance**: Use bootstrap confidence intervals for metric comparisons.  
+- Document model assumptions and limitations in evaluation reports.
+
+## 7 · Visualization
+- Use **Plotly** for all plots; helper functions in `@src/visualization/plots.py`.  
+- Prefer interactive dashboards; static images only for README or docs.
+
+## 8 · Dashboard & API
+- Streamlit dashboard code in `@src/app/dashboard.py`.  
+- REST endpoints (FastAPI) in `@src/app/api.py` expose `/predict`, `/health`, `/explain`.
+
+## 9 · Environment & Secrets
+- Read all secrets/keys from **environment variables** loaded via `python‑dotenv`. Never hard‑code API keys.  
+- `.env.template` lists required vars (`OPENAI_API_KEY`, `ALPHAVANTAGE_API_KEY`, etc.).
+
+## 10 · Testing & CI
+- **pytest** is mandatory. Each new module requires tests in `tests/`. Target ≥ 80 % coverage.  
+- Use GitHub Actions workflow `ci.yml` to run lint + tests on push.
+
+## 11 · Commit & PR Etiquette
+- Prefix commit messages with the affected area `(data|model|feature|docs|chore)`: e.g. `model: add N‑BEATS ensemble`.  
+- Open PRs against `dev`; squash merge after approvals + green CI.
+
+## 12 · Assistant Behavior (Cursor‑specific)
+- **When asked to generate code**, reference existing helpers rather than rewriting from scratch.  
+- Prefer *functional examples* over pseudocode.  
+- If the user's request touches multiple layers (data → model → dashboard), outline the pipeline first.  
+- **Always suggest tests** when introducing new modules.  
+- **Performance considerations**: Warn about expensive operations (large data processing, model training).  
+- **Validate file references**: Check if referenced files exist before suggesting modifications.  
+- **Code review focus**: Highlight type safety, error handling, and documentation gaps.
+
+## 13 · Performance & Optimization
+- **Data processing**: Use vectorized operations (pandas/numpy) over loops.  
+- **Memory management**: Use `pd.read_csv(chunksize=...)` for large files.  
+- **Model training**: Implement early stopping and checkpointing.  
+- **API responses**: Cache frequently requested predictions.  
+- **Profiling**: Use `cProfile` for performance bottlenecks in critical paths.
+
+## 14 · Production & Deployment
+- **Health checks**: Implement `/health` endpoint with dependency checks.  
+- **Monitoring**: Log prediction accuracy, response times, and error rates.  
+- **Graceful degradation**: Fallback to simpler models if primary model fails.  
+- **Resource limits**: Set memory/CPU limits for model inference.  
+- **Version management**: Tag releases and maintain model version tracking.
+
+---
+**Remember:** keep suggestions concise but complete; cite file paths with `@` for quick linking.  Large files should be summarized if they exceed context limits.
+
+
+**Remember:** keep suggestions concise but complete; cite file paths with `@` for quick linking.  Large files should be summarized if they exceed context limits.
+

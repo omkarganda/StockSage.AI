@@ -1,4 +1,4 @@
-# StockSage.AI Requirements
+# StockStage.AI Requirements
 # NOTE: If neuralforecast causes issues, comment it out and use: pip install neuralforecast==1.6.0 --no-deps
 # Then manually install: ray>=2.2.0
 # Core Data Handling
@@ -76,4 +76,4 @@ scipy==1.13.0
 tensorflow==2.16.1
 pmdarima==2.0.4
 torchaudio==2.2.1
-torchvision==0.17.1 
+torchvision==0.17.1
