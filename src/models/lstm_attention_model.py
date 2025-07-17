@@ -4,416 +4,329 @@ LSTM Attention Model for StockSage.AI
 This module implements an LSTM model with attention mechanism for stock price prediction.
 """
 
+import logging
+from pathlib import Path
+from typing import Any, Dict, Optional, Tuple, Union
+
+import joblib
 import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset
-from typing import Dict, List, Optional, Tuple, Union, Any
-import logging
-from datetime import datetime
-import joblib
+from sklearn.preprocessing import StandardScaler
+from torch.utils.data import DataLoader, Dataset
 
+from ..features.indicators import add_all_technical_indicators
+from ..features.microstructure import add_microstructure_features
 from ..utils.logging import get_logger
 
 logger = get_logger(__name__)
 
 
-class AttentionMechanism(nn.Module):
-    """Attention mechanism for LSTM"""
-    
-    def __init__(self, hidden_dim: int):
-        super(AttentionMechanism, self).__init__()
-        self.hidden_dim = hidden_dim
-        self.attention = nn.Linear(hidden_dim, 1)
-        
-    def forward(self, lstm_outputs):
-        # lstm_outputs: (batch_size, seq_len, hidden_dim)
-        attention_weights = torch.softmax(self.attention(lstm_outputs), dim=1)
-        # attention_weights: (batch_size, seq_len, 1)
-        
-        # Apply attention weights
-        attended_output = torch.sum(attention_weights * lstm_outputs, dim=1)
-        # attended_output: (batch_size, hidden_dim)
-        
-        return attended_output, attention_weights
+def _select_numeric(df: pd.DataFrame) -> pd.DataFrame:
+    """Return only numeric columns (no object/bool)."""
+    return df.select_dtypes(include=[np.number])
 
 
-class LSTMAttentionNetwork(nn.Module):
-    """LSTM with Attention Network"""
-    
-    def __init__(
-        self,
-        input_dim: int,
-        hidden_dim: int = 128,
-        num_layers: int = 2,
-        output_dim: int = 1,
-        dropout: float = 0.2
-    ):
-        super(LSTMAttentionNetwork, self).__init__()
-        
-        self.hidden_dim = hidden_dim
-        self.num_layers = num_layers
-        
-        self.lstm = nn.LSTM(
-            input_dim, 
-            hidden_dim, 
-            num_layers, 
-            batch_first=True, 
-            dropout=dropout if num_layers > 1 else 0
-        )
-        
-        self.attention = AttentionMechanism(hidden_dim)
-        self.dropout = nn.Dropout(dropout)
-        self.fc = nn.Linear(hidden_dim, output_dim)
-        
+class _SeqDataset(Dataset):
+    """Simple torch dataset for sequence -> target mapping."""
+
+    def __init__(self, X: np.ndarray, y: np.ndarray):
+        self.X = torch.from_numpy(X).float()
+        self.y = torch.from_numpy(y).float()
+
+    def __len__(self):
+        return len(self.X)
+
+    def __getitem__(self, idx):
+        return self.X[idx], self.y[idx]
+
+
+class _LSTMAttentionNet(nn.Module):
+    def __init__(self, input_dim: int, hidden_size: int, num_layers: int, attention_heads: int, horizon: int):
+        super().__init__()
+        self.lstm = nn.LSTM(input_dim, hidden_size, num_layers, batch_first=True, bidirectional=False)
+        self.attn = nn.MultiheadAttention(embed_dim=hidden_size, num_heads=attention_heads, batch_first=True)
+        self.fc = nn.Linear(hidden_size, horizon)
+
     def forward(self, x):
-        # x: (batch_size, seq_len, input_dim)
-        lstm_out, _ = self.lstm(x)
-        # lstm_out: (batch_size, seq_len, hidden_dim)
-        
-        # Apply attention
-        attended_out, attention_weights = self.attention(lstm_out)
-        # attended_out: (batch_size, hidden_dim)
-        
-        # Apply dropout and final linear layer
-        out = self.dropout(attended_out)
-        out = self.fc(out)
-        
-        return out, attention_weights
-
-
-class EarlyStopping:
-    """Early stopping utility class"""
-    
-    def __init__(self, patience: int = 10, min_delta: float = 0.0):
-        self.patience = patience
-        self.min_delta = min_delta
-        self.counter = 0
-        self.best_loss = float('inf')
-        self.early_stop = False
-        
-    def __call__(self, val_loss: float) -> bool:
-        if val_loss < self.best_loss - self.min_delta:
-            self.best_loss = val_loss
-            self.counter = 0
-        else:
-            self.counter += 1
-            
-        if self.counter >= self.patience:
-            self.early_stop = True
-            
-        return self.early_stop
+        # x: (batch, seq_len, input_dim)
+        lstm_out, _ = self.lstm(x)  # (batch, seq, hidden)
+        attn_out, _ = self.attn(lstm_out, lstm_out, lstm_out)  # Self-attention
+        # Use last timestep representation
+        last = attn_out[:, -1, :]
+        out = self.fc(last)
+        return out.squeeze(-1)
 
 
 class LSTMAttentionModel:
-    """
-    LSTM with Attention mechanism for stock price prediction.
-    
-    This model uses LSTM layers with attention mechanism to focus on the most
-    relevant time steps for prediction.
-    """
-    
+    """LSTM + Self-Attention hybrid for financial forecasting (returns prediction)."""
+
     def __init__(
         self,
-        sequence_length: int = 60,
-        hidden_dim: int = 128,
+        context_length: int = 60,
+        horizon: int = 1,
+        hidden_size: int = 64,
         num_layers: int = 2,
-        dropout: float = 0.2,
-        learning_rate: float = 0.001,
+        attention_heads: int = 4,
+        epochs: int = 100,  # Increased from 50 to 100 for better training
         batch_size: int = 32,
-        epochs: int = 100,
-        early_stopping_patience: int = 10,
-        device: str = 'auto'
+        lr: float = 1e-3,
+        patience: int = 15,  # Increased patience for early stopping
+        min_delta: float = 1e-6,  # Minimum change to qualify as an improvement
+        device: Optional[str] = None,
     ):
-        """
-        Initialize LSTM Attention Model.
+        # Ensure hidden_size is divisible by attention_heads
+        if hidden_size % attention_heads != 0:
+            # Adjust hidden_size to be divisible by attention_heads
+            hidden_size = ((hidden_size // attention_heads) + 1) * attention_heads
+            logger.info(f"Adjusted hidden_size to {hidden_size} to be divisible by {attention_heads} attention heads")
         
-        Parameters:
-        -----------
-        sequence_length : int, default=60
-            Length of input sequences
-        hidden_dim : int, default=128
-            Number of hidden units in LSTM layers
-        num_layers : int, default=2
-            Number of LSTM layers
-        dropout : float, default=0.2
-            Dropout probability
-        learning_rate : float, default=0.001
-            Learning rate for optimization
-        batch_size : int, default=32
-            Batch size for training
-        epochs : int, default=100
-            Maximum number of training epochs
-        early_stopping_patience : int, default=10
-            Patience for early stopping
-        device : str, default='auto'
-            Device to use for computation ('cpu', 'cuda', or 'auto')
-        """
-        self.sequence_length = sequence_length
-        self.hidden_dim = hidden_dim
+        self.context_length = context_length
+        self.horizon = horizon
+        self.hidden_size = hidden_size
         self.num_layers = num_layers
-        self.dropout = dropout
-        self.learning_rate = learning_rate
-        self.batch_size = batch_size
+        self.attention_heads = attention_heads
         self.epochs = epochs
-        self.early_stopping_patience = early_stopping_patience
-        
-        # Set device
-        if device == 'auto':
-            self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.batch_size = batch_size
+        self.lr = lr
+        self.patience = patience
+        self.min_delta = min_delta
+        if device is None or device == "auto":
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
         else:
-            self.device = torch.device(device)
-            
-        # Model components
-        self.model = None
-        self.scaler = None
-        self.feature_names = None
-        self.is_fitted = False
-        self.training_metrics = {}
-        
-        logger.info(f"Initialized LSTMAttentionModel with device: {self.device}")
-    
-    def _prepare_sequences(self, data: np.ndarray, target: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
-        """Prepare sequences for LSTM training."""
-        X, y = [], []
-        
-        for i in range(len(data) - self.sequence_length):
-            X.append(data[i:(i + self.sequence_length)])
-            y.append(target[i + self.sequence_length])
-            
-        return np.array(X), np.array(y)
-    
-    def fit(self, df: pd.DataFrame, target_column: str = 'close') -> 'LSTMAttentionModel':
-        """
-        Train the LSTM Attention model.
-        
-        Parameters:
-        -----------
-        df : pd.DataFrame
-            Training data with features and target
-        target_column : str, default='close'
-            Name of the target column
-            
-        Returns:
-        --------
-        self : LSTMAttentionModel
-            Fitted model
-        """
-        logger.info("Starting LSTM Attention model training")
-        
-        try:
-            # Prepare data
-            feature_columns = [col for col in df.columns if col != target_column]
-            X = df[feature_columns].values
-            y = np.array(df[target_column].values)
-            
-            # Store feature names
-            self.feature_names = feature_columns
-            
-            # Normalize features
-            from sklearn.preprocessing import StandardScaler
-            self.scaler = StandardScaler()
-            X_scaled = self.scaler.fit_transform(X)
-            
-            # Prepare sequences
-            X_seq, y_seq = self._prepare_sequences(X_scaled, y)
-            
-            # Split into train/validation
-            split_idx = int(0.8 * len(X_seq))
-            X_train, X_val = X_seq[:split_idx], X_seq[split_idx:]
-            y_train, y_val = y_seq[:split_idx], y_seq[split_idx:]
-            
-            # Convert to tensors
-            X_train_tensor = torch.FloatTensor(X_train).to(self.device)
-            y_train_tensor = torch.FloatTensor(y_train).to(self.device)
-            X_val_tensor = torch.FloatTensor(X_val).to(self.device)
-            y_val_tensor = torch.FloatTensor(y_val).to(self.device)
-            
-            # Create data loaders
-            train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
-            train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True)
-            
-            val_dataset = TensorDataset(X_val_tensor, y_val_tensor)
-            val_loader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False)
-            
-            # Initialize model
-            input_dim = X_train.shape[2]
-            self.model = LSTMAttentionNetwork(
-                input_dim=input_dim,
-                hidden_dim=self.hidden_dim,
-                num_layers=self.num_layers,
-                dropout=self.dropout
-            ).to(self.device)
-            
-            # Loss and optimizer
-            criterion = nn.MSELoss()
-            optimizer = optim.Adam(self.model.parameters(), lr=self.learning_rate)
-            
-            # Early stopping
-            early_stopping = EarlyStopping(patience=self.early_stopping_patience)
-            
-            # Training loop
-            train_losses = []
-            val_losses = []
-            best_loss = float('inf')
-            best_train_loss = float('inf')  # Track best training loss for metrics
-            
-            for epoch in range(self.epochs):
-                # Training phase
-                self.model.train()
-                train_loss = 0.0
-                
-                for batch_X, batch_y in train_loader:
-                    optimizer.zero_grad()
-                    outputs, _ = self.model(batch_X)
-                    loss = criterion(outputs.squeeze(), batch_y)
-                    loss.backward()
-                    optimizer.step()
-                    train_loss += loss.item()
-                
-                train_loss /= len(train_loader)
-                train_losses.append(train_loss)
-                
-                # Validation phase
-                self.model.eval()
-                val_loss = 0.0
-                
-                with torch.no_grad():
-                    for batch_X, batch_y in val_loader:
-                        outputs, _ = self.model(batch_X)
-                        loss = criterion(outputs.squeeze(), batch_y)
-                        val_loss += loss.item()
-                
-                val_loss /= len(val_loader)
-                val_losses.append(val_loss)
-                
-                # Track best losses
-                if val_loss < best_loss:
-                    best_loss = val_loss
-                    best_train_loss = train_loss  # Save corresponding training loss
-                
-                # Early stopping check
-                if early_stopping(val_loss):
-                    logger.info(f"Early stopping triggered at epoch {epoch + 1}")
-                    break
-                
-                if (epoch + 1) % 10 == 0:
-                    logger.info(f"Epoch {epoch + 1}/{self.epochs}, Train Loss: {train_loss:.6f}, Val Loss: {val_loss:.6f}")
-            
-            # FIXED: Use best training loss instead of final epoch loss
-            self.training_metrics = {
-                'train_mse': best_train_loss,  # Use best loss, not final epoch loss
-                'val_mse': best_loss,
-                'epochs_trained': epoch + 1,
-                'early_stopped': early_stopping.early_stop
-            }
-            
-            self.is_fitted = True
-            logger.info(f"Training completed. Best train MSE: {best_train_loss:.6f}, Best val MSE: {best_loss:.6f}")
-            
-        except Exception as e:
-            logger.error(f"Error during LSTM Attention model training: {e}")
-            raise
-            
-        return self
-    
-    def predict(self, df: pd.DataFrame) -> np.ndarray:
-        """
-        Make predictions using the trained model.
-        
-        Parameters:
-        -----------
-        df : pd.DataFrame
-            Input data for prediction
-            
-        Returns:
-        --------
-        np.ndarray
-            Predictions
-        """
-        if not self.is_fitted:
-            raise ValueError("Model must be fitted before making predictions")
-        
-        try:
-            # Prepare features
-            X = df[self.feature_names].values
-            if self.scaler is None:
-                raise ValueError("Scaler is not fitted")
-            X_scaled = self.scaler.transform(X)
-            
-            # Prepare sequences
-            X_seq = []
-            for i in range(len(X_scaled) - self.sequence_length + 1):
-                X_seq.append(X_scaled[i:(i + self.sequence_length)])
-            
-            if len(X_seq) == 0:
-                raise ValueError(f"Input data length {len(df)} is too short for sequence length {self.sequence_length}")
-            
-            X_seq = np.array(X_seq)
-            X_tensor = torch.FloatTensor(X_seq).to(self.device)
-            
-            # Make predictions
-            if self.model is None:
-                raise ValueError("Model is not fitted")
-            self.model.eval()
-            with torch.no_grad():
-                predictions, _ = self.model(X_tensor)
-                predictions = predictions.squeeze().cpu().numpy()
-            
-            # Handle single prediction
-            if predictions.ndim == 0:
-                predictions = np.array([predictions])
-                
-            return predictions
-            
-        except Exception as e:
-            logger.error(f"Error during prediction: {e}")
-            raise
-    
-    def save(self, filepath: str) -> None:
-        """Save the trained model."""
-        if not self.is_fitted:
-            raise ValueError("Cannot save unfitted model")
-        if self.model is None:
-            raise ValueError("Model is not fitted")
-        
-        model_data = {
-            'model_state_dict': self.model.state_dict(),
-            'scaler': self.scaler,
-            'feature_names': self.feature_names,
-            'sequence_length': self.sequence_length,
-            'hidden_dim': self.hidden_dim,
-            'num_layers': self.num_layers,
-            'training_metrics': self.training_metrics
-        }
-        
-        torch.save(model_data, filepath)
-        logger.info(f"Model saved to {filepath}")
-    
-    def load(self, filepath: str) -> 'LSTMAttentionModel':
-        """Load a trained model."""
-        model_data = torch.load(filepath, map_location=self.device)
-        
-        self.scaler = model_data['scaler']
-        self.feature_names = model_data['feature_names']
-        self.sequence_length = model_data['sequence_length']
-        self.hidden_dim = model_data['hidden_dim']
-        self.num_layers = model_data['num_layers']
-        self.training_metrics = model_data['training_metrics']
-        
-        # Recreate model
-        input_dim = len(self.feature_names)
-        self.model = LSTMAttentionNetwork(
-            input_dim=input_dim,
-            hidden_dim=self.hidden_dim,
+            self.device = device
+
+        # Initialized later
+        self.model: Optional[nn.Module] = None
+        self.scaler: Optional[StandardScaler] = None
+        self.input_dim: Optional[int] = None
+        self.is_fitted: bool = False
+        self.training_metrics: Dict[str, Any] = {}
+
+    # ------------------------------------------------------------------
+    # Core helpers
+    # ------------------------------------------------------------------
+    def _prepare_features(self, df: pd.DataFrame) -> pd.DataFrame:
+        df = df.copy()
+        # Add technical + microstructure indicators (robust to missing columns)
+        df = add_all_technical_indicators(df)
+        df = add_microstructure_features(df)
+        return _select_numeric(df).ffill().bfill()
+
+    def _make_sequences(self, features: np.ndarray, close: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        seq_len = self.context_length
+        horizon = self.horizon
+        X_seqs, y_vals = [], []
+        # Loop until there are `horizon` target values available
+        for i in range(seq_len, len(features) - horizon + 1):
+            X_seqs.append(features[i - seq_len : i])
+            # Target = sequence of returns over the horizon, relative to the last price of the input sequence
+            last_price = close[i - 1]
+            future_prices = close[i : i + horizon]
+
+            # Avoid division by zero
+            if last_price > 1e-9:
+                rets = (future_prices - last_price) / last_price
+            else:
+                rets = np.zeros_like(future_prices)
+
+            y_vals.append(rets)
+        return np.asarray(X_seqs, dtype=np.float32), np.asarray(y_vals, dtype=np.float32)
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+    def fit(self, df: pd.DataFrame) -> "LSTMAttentionModel":
+        logger.info(f"[LSTM-Attention] Training with {len(df)} rows")
+        if "Close" not in df.columns:
+            raise ValueError("Close column required for training")
+
+        # Feature engineering
+        feats_df = self._prepare_features(df)
+
+        # Scale features
+        self.scaler = StandardScaler()
+        feats_scaled = self.scaler.fit_transform(feats_df.values)
+
+        close_arr = df["Close"].values.astype(np.float32)
+        X, y = self._make_sequences(feats_scaled, close_arr)
+        if len(X) == 0:
+            raise ValueError("Not enough data to build training sequences")
+
+        dataset = _SeqDataset(X, y)
+        loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True, drop_last=False)
+
+        self.input_dim = X.shape[-1]
+        assert self.input_dim is not None
+
+        self.model = _LSTMAttentionNet(
+            input_dim=self.input_dim,
+            hidden_size=self.hidden_size,
             num_layers=self.num_layers,
-            dropout=self.dropout
+            attention_heads=self.attention_heads,
+            horizon=self.horizon,
         ).to(self.device)
+
+        criterion = nn.MSELoss()
+        optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.lr, weight_decay=1e-5)
         
-        self.model.load_state_dict(model_data['model_state_dict'])
+        # Add learning rate scheduler
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer, mode='min', factor=0.5, patience=5, min_lr=1e-6
+        )
+
+        self.model.train()
+        best_loss = float('inf')
+        patience_counter = 0
+        train_losses = []
+        
+        logger.info(f"Starting training for {self.epochs} epochs with patience {self.patience}")
+        
+        for epoch in range(1, self.epochs + 1):
+            epoch_losses = []
+            for xb, yb in loader:
+                xb = xb.to(self.device)
+                yb = yb.to(self.device)
+                optimizer.zero_grad()
+                pred = self.model(xb)
+                # Ensure pred and yb have compatible shapes for loss calculation
+                if pred.dim() != yb.dim():
+                    if pred.dim() == 1 and yb.dim() == 1:
+                        pass  # Both are 1D, shapes should match
+                    elif pred.dim() == 2 and pred.shape[1] == 1:
+                        pred = pred.squeeze(-1)  # Remove last dimension if it's 1
+                    elif yb.dim() == 2 and yb.shape[1] == 1:
+                        yb = yb.squeeze(-1)  # Remove last dimension if it's 1
+                loss = criterion(pred, yb)
+                loss.backward()
+                # Add gradient clipping to prevent exploding gradients
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+                optimizer.step()
+                epoch_losses.append(loss.item())
+            
+            current_loss = np.mean(epoch_losses)
+            train_losses.append(current_loss)
+            
+            # Update learning rate scheduler
+            scheduler.step(current_loss)
+            
+            # Log progress every 10 epochs
+            if epoch % 10 == 0 or epoch <= 5:
+                current_lr = optimizer.param_groups[0]['lr']
+                logger.info(f"Epoch {epoch}/{self.epochs} – loss: {current_loss:.6f}, lr: {current_lr:.2e}")
+            
+            # Early stopping check with minimum delta
+            if current_loss < best_loss - self.min_delta:
+                best_loss = current_loss
+                patience_counter = 0
+                # Save best model state
+                best_model_state = self.model.state_dict().copy()
+            else:
+                patience_counter += 1
+                if patience_counter >= self.patience:
+                    logger.info(f"Early stopping at epoch {epoch} (best loss: {best_loss:.6f})")
+                    # Restore best model state
+                    self.model.load_state_dict(best_model_state)
+                    break
+
         self.is_fitted = True
-        
-        logger.info(f"Model loaded from {filepath}")
+        self.training_metrics = {
+            "train_mse": float(best_loss),
+            "final_epoch": epoch,
+            "train_losses": train_losses[-10:],  # Store last 10 losses
+            "early_stopped": patience_counter >= self.patience
+        }
+        logger.info(f"[LSTM-Attention] Training completed after {epoch} epochs (best loss: {best_loss:.6f})")
         return self
+
+    def predict(self, df: pd.DataFrame) -> np.ndarray:
+        if not self.is_fitted or self.model is None or self.scaler is None:
+            raise ValueError("Model not trained or scaler is missing")
+
+        feats_df = self._prepare_features(df)
+        feats_scaled = self.scaler.transform(feats_df.values)
+        if len(feats_scaled) < self.context_length:
+            raise ValueError("Insufficient length for prediction window")
+        window = feats_scaled[-self.context_length :]
+        x_tensor = torch.from_numpy(np.expand_dims(window, axis=0)).float().to(self.device)
+        self.model.eval()
+        with torch.no_grad():
+            pred = self.model(x_tensor).cpu().numpy().flatten()
+        return pred  # returns prediction of shape (horizon,)
+
+    def evaluate(self, df: pd.DataFrame) -> Dict[str, float]:
+        if "Close" not in df.columns or len(df) < self.context_length + self.horizon:
+            return {}
+
+        # The context for prediction is the dataframe excluding the values we want to predict
+        context_df = df.iloc[: -self.horizon]
+        preds = self.predict(context_df)
+
+        # The actual values are the returns over the horizon
+        close = df["Close"].values.astype(np.float32)
+        last_price_in_context = close[-self.horizon - 1]
+        actual_prices = close[-self.horizon :]
+
+        if last_price_in_context > 1e-9:
+            actual_returns = (actual_prices - last_price_in_context) / last_price_in_context
+        else:
+            actual_returns = np.zeros_like(actual_prices)
+
+        mse = np.mean((preds - actual_returns) ** 2)
+        return {"mse": float(mse), "rmse": float(np.sqrt(mse))}
+
+    # ------------------------------------------------------------------
+    # Serialization helpers (for consistency with pipeline)
+    # ------------------------------------------------------------------
+    def save_model(self, filepath: Union[str, Path]):
+        state = {
+            "model_state": self.model.state_dict() if self.model else None,
+            "scaler": self.scaler,
+            "config": {
+                "context_length": self.context_length,
+                "horizon": self.horizon,
+                "hidden_size": self.hidden_size,
+                "num_layers": self.num_layers,
+                "attention_heads": self.attention_heads,
+            },
+        }
+        joblib.dump(state, filepath)
+        logger.info(f"Saved LSTM-Attention model to {filepath}")
+
+    def load_model(self, filepath: Union[str, Path]):
+        state = joblib.load(filepath)
+        self.scaler = state["scaler"]
+        cfg = state["config"]
+        for k, v in cfg.items():
+            setattr(self, k, v)
+
+        if not isinstance(self.scaler, StandardScaler) or not hasattr(self.scaler, "mean_") or self.scaler.mean_ is None:
+            raise ValueError("Scaler is missing, not a StandardScaler, or is not fitted.")
+
+        # Rebuild net
+        self.model = _LSTMAttentionNet(
+            input_dim=len(self.scaler.mean_),
+            hidden_size=self.hidden_size,
+            num_layers=self.num_layers,
+            attention_heads=self.attention_heads,
+            horizon=self.horizon,
+        )
+        model_state = state.get("model_state")
+        if model_state:
+            self.model.load_state_dict(model_state)
+        self.model.to(self.device)
+        self.is_fitted = True
+        logger.info(f"Loaded LSTM-Attention model from {filepath}")
+
+
+def create_deep_learning_models(
+    context_length: int = 60,
+    horizon: int = 1,
+    **kwargs,
+) -> Dict[str, Any]:
+    """Factory returning advanced DL models used in production trading."""
+    models = {
+        "lstm_attention": LSTMAttentionModel(context_length=context_length, horizon=horizon, **kwargs)
+    }
+    return models
