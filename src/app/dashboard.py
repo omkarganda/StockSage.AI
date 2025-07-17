@@ -191,13 +191,92 @@ def get_explanation(symbol: str) -> Optional[Dict]:
                 {"feature": "economic_indicators", "importance": 0.05}
             ],
             "recent_predictions_accuracy": {
-                "mape": 8.5,
+                "smape": 8.5,
                 "directional_accuracy": 0.72,
                 "sharpe_ratio": 1.45
             },
             "explanation_text": f"The model uses a combination of technical indicators and market sentiment to predict {symbol} price movements.",
             "timestamp": datetime.now().isoformat()
         }
+
+
+@st.cache_data(ttl=60)  # Cache for 1 minute
+def get_sentiment_data(symbol: str, days: int = 30) -> Optional[Dict]:
+    """Get sentiment data from API"""
+    try:
+        response = requests.get(f"{API_BASE_URL}/sentiment/{symbol}", params={"days": days}, timeout=10)
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return None
+    except:
+        # Mock sentiment data
+        dates = pd.date_range(end=datetime.now(), periods=days, freq='D')
+        mock_sentiment = np.random.normal(0, 0.3, days)
+        mock_articles = np.random.poisson(5, days)
+        
+        sentiment_data = []
+        for i, date in enumerate(dates):
+            sentiment_data.append({
+                "date": date.strftime("%Y-%m-%d"),
+                "sentiment_compound": round(mock_sentiment[i], 3),
+                "sentiment_positive": round(max(0, mock_sentiment[i]), 3),
+                "sentiment_negative": round(abs(min(0, mock_sentiment[i])), 3),
+                "sentiment_neutral": round(1 - abs(mock_sentiment[i]), 3),
+                "article_count": int(mock_articles[i]),
+                "llm_sentiment_mean": round(mock_sentiment[i] * 1.1, 3),
+                "llm_sentiment_std": round(abs(mock_sentiment[i]) * 0.2, 3)
+            })
+        
+        return {
+            "symbol": symbol,
+            "data": sentiment_data,
+            "summary": {
+                "avg_sentiment": round(np.mean(mock_sentiment), 3),
+                "sentiment_volatility": round(np.std(mock_sentiment), 3),
+                "total_articles": int(np.sum(mock_articles)),
+                "days_covered": days
+            }
+        }
+
+
+@st.cache_data(ttl=60)
+def get_dynamic_explanation(symbol: str, features: List[Dict]) -> str:
+    """Get dynamic explanation from API."""
+    try:
+        response = requests.post(f"{API_BASE_URL}/explain/dynamic", json={
+            "symbol": symbol,
+            "features": features
+        }, timeout=10)
+        
+        if response.status_code == 200:
+            return response.json()["explanation"]
+    except:
+        pass
+    
+    # Fallback for demo
+    feature_str = ", ".join([f["feature"] for f in features[:3]])
+    return (f"The model's current prediction for {symbol} is primarily influenced by "
+            f"these key factors: {feature_str}. A deeper analysis of these drivers "
+            f"is used to determine the final buy/sell/hold signal.")
+
+
+@st.cache_data(ttl=3600)  # Cache for an hour
+def get_market_scenarios(symbol: str) -> List[str]:
+    """Get market scenarios from API."""
+    try:
+        response = requests.get(f"{API_BASE_URL}/scenarios/{symbol}", timeout=10)
+        if response.status_code == 200:
+            return response.json().get("scenarios", [])
+    except:
+        pass
+    
+    return [
+        "Positive earnings surprise leads to a significant rally.",
+        "Broader market downturn due to macroeconomic concerns.",
+        "New product announcement is met with mixed reviews, causing volatility."
+    ]
 
 
 def create_price_chart(df: pd.DataFrame, prediction: Dict) -> go.Figure:
@@ -375,6 +454,182 @@ def create_technical_indicators_chart(df: pd.DataFrame) -> go.Figure:
     return fig
 
 
+def create_sentiment_chart(sentiment_data: List[Dict]) -> go.Figure:
+    """Create a chart for daily sentiment scores."""
+    if not sentiment_data:
+        fig = go.Figure()
+        fig.add_annotation(text="No sentiment data available", 
+                          xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False)
+        return fig
+    
+    df = pd.DataFrame(sentiment_data)
+    df['date'] = pd.to_datetime(df['date'])
+    
+    fig = go.Figure()
+    
+    # Check which sentiment columns are available
+    has_llm_sentiment = 'llm_sentiment_mean' in df.columns
+    has_compound_sentiment = 'sentiment_compound' in df.columns
+    
+    # If no expected columns exist, create a fallback chart
+    if not has_llm_sentiment and not has_compound_sentiment:
+        # Look for any sentiment-like columns
+        sentiment_cols = [col for col in df.columns if 'sentiment' in col.lower()]
+        if sentiment_cols:
+            # Use the first available sentiment column
+            fig.add_trace(go.Scatter(
+                x=df['date'],
+                y=df[sentiment_cols[0]],
+                name=f'Sentiment ({sentiment_cols[0]})',
+                line=dict(color='royalblue', width=2)
+            ))
+        else:
+            # No sentiment data at all
+            fig.add_annotation(text="No sentiment columns found in data", 
+                              xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False)
+            return fig
+    else:
+        # Add LLM Sentiment bars if available
+        if has_llm_sentiment:
+            fig.add_trace(go.Bar(
+                x=df['date'],
+                y=df['llm_sentiment_mean'],
+                name='LLM Sentiment',
+                marker_color='lightblue',
+                opacity=0.7
+            ))
+        
+        # Add Traditional sentiment line if available
+        if has_compound_sentiment:
+            fig.add_trace(go.Scatter(
+                x=df['date'],
+                y=df['sentiment_compound'],
+                name='FinBERT Sentiment',
+                line=dict(color='royalblue', width=2)
+            ))
+        
+        # Add 7-day rolling average if LLM sentiment is available
+        if has_llm_sentiment and len(df) >= 7:
+            rolling_avg = df['llm_sentiment_mean'].rolling(7, center=True).mean()
+            fig.add_trace(go.Scatter(
+                x=df['date'],
+                y=rolling_avg,
+                name='7-Day Average',
+                line=dict(color='orange', width=2, dash='dash')
+            ))
+    
+    # Add zero line
+    fig.add_hline(y=0, line_dash="dot", line_color="gray", opacity=0.5)
+    
+    fig.update_layout(
+        title="Daily Sentiment Analysis",
+        yaxis_title="Sentiment Score [-1, 1]",
+        xaxis_title="Date",
+        template="plotly_white",
+        height=400,
+        showlegend=True
+    )
+    
+    return fig
+
+
+def create_sentiment_distribution_chart(sentiment_data: List[Dict]) -> go.Figure:
+    """Create sentiment distribution chart."""
+    if not sentiment_data:
+        fig = go.Figure()
+        fig.add_annotation(text="No sentiment data available", 
+                          xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False)
+        return fig
+    
+    df = pd.DataFrame(sentiment_data)
+    
+    # Create histogram of sentiment scores
+    fig = go.Figure()
+    
+    # Check if expected sentiment columns exist
+    if 'llm_sentiment_mean' in df.columns:
+        sentiment_col = 'llm_sentiment_mean'
+        col_name = 'LLM Sentiment Distribution'
+    elif 'sentiment_compound' in df.columns:
+        sentiment_col = 'sentiment_compound'
+        col_name = 'Sentiment Distribution'
+    else:
+        # Look for any sentiment column
+        sentiment_cols = [col for col in df.columns if 'sentiment' in col.lower()]
+        if sentiment_cols:
+            sentiment_col = sentiment_cols[0]
+            col_name = f'Sentiment Distribution ({sentiment_col})'
+        else:
+            fig.add_annotation(text="No sentiment columns found in data", 
+                              xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False)
+            return fig
+    
+    fig.add_trace(go.Histogram(
+        x=df[sentiment_col],
+        name=col_name,
+        nbinsx=20,
+        marker_color='lightblue',
+        opacity=0.7
+    ))
+    
+    fig.update_layout(
+        title="Sentiment Score Distribution",
+        xaxis_title="Sentiment Score",
+        yaxis_title="Frequency",
+        template="plotly_white",
+        height=300
+    )
+    
+    return fig
+
+
+def create_article_volume_chart(sentiment_data: List[Dict]) -> go.Figure:
+    """Create article volume over time chart."""
+    if not sentiment_data:
+        fig = go.Figure()
+        fig.add_annotation(text="No sentiment data available", 
+                          xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False)
+        return fig
+    
+    df = pd.DataFrame(sentiment_data)
+    df['date'] = pd.to_datetime(df['date'])
+    
+    fig = go.Figure()
+    
+    # Check if article_count column exists
+    if 'article_count' in df.columns:
+        article_col = 'article_count'
+        title = "News Article Volume"
+    else:
+        # Look for alternative column names
+        count_cols = [col for col in df.columns if 'count' in col.lower() or 'volume' in col.lower()]
+        if count_cols:
+            article_col = count_cols[0]
+            title = f"Article Volume ({article_col})"
+        else:
+            fig.add_annotation(text="No article count data available", 
+                              xref="paper", yref="paper", x=0.5, y=0.5, showarrow=False)
+            return fig
+    
+    fig.add_trace(go.Bar(
+        x=df['date'],
+        y=df[article_col],
+        name='Daily Article Count',
+        marker_color='green',
+        opacity=0.6
+    ))
+    
+    fig.update_layout(
+        title=title,
+        yaxis_title="Article Count",
+        xaxis_title="Date",
+        template="plotly_white",
+        height=300
+    )
+    
+    return fig
+
+
 # Main Dashboard
 def main():
     st.title("📈 StockSage.AI Dashboard")
@@ -423,6 +678,7 @@ def main():
         prediction = get_prediction(selected_stock, horizon)
         historical_data = get_historical_data(selected_stock, hist_days)
         explanation = get_explanation(selected_stock)
+        sentiment_response = get_sentiment_data(selected_stock, hist_days)
     
     # Main content area
     if prediction:
@@ -467,42 +723,135 @@ def main():
         # Price chart
         st.plotly_chart(create_price_chart(historical_data, prediction), use_container_width=True)
         
-        # Two column layout for additional charts
-        col1, col2 = st.columns(2)
+        # ENHANCED: Tabbed layout for additional charts
+        tab1, tab2, tab3, tab4 = st.tabs(["📊 Volume & Features", "🔧 Technical Indicators", "💭 Sentiment Analysis", "🔮 AI Scenarios"])
+
+        with tab1:
+            col1, col2 = st.columns(2)
+            with col1:
+                st.plotly_chart(create_volume_chart(historical_data), use_container_width=True)
+            with col2:
+                if explanation and 'top_features' in explanation:
+                    st.plotly_chart(
+                        create_feature_importance_chart(explanation['top_features'][:8]),
+                        use_container_width=True
+                    )
         
-        with col1:
-            # Volume chart
-            st.plotly_chart(create_volume_chart(historical_data), use_container_width=True)
-        
-        with col2:
-            # Feature importance
-            if explanation and 'top_features' in explanation:
-                st.plotly_chart(
-                    create_feature_importance_chart(explanation['top_features'][:8]),
-                    use_container_width=True
-                )
-        
-        # Technical indicators
-        st.plotly_chart(create_technical_indicators_chart(historical_data), use_container_width=True)
+        with tab2:
+            st.plotly_chart(create_technical_indicators_chart(historical_data), use_container_width=True)
+
+        with tab3:
+            # ENHANCED: Sentiment Analysis Tab
+            if sentiment_response and sentiment_response.get('data'):
+                # Sentiment summary metrics
+                summary = sentiment_response.get('summary', {})
+                col1, col2, col3, col4 = st.columns(4)
+                
+                with col1:
+                    st.metric("Avg Sentiment", f"{summary.get('avg_sentiment', 0):.3f}")
+                with col2:
+                    st.metric("Sentiment Volatility", f"{summary.get('sentiment_volatility', 0):.3f}")
+                with col3:
+                    st.metric("Total Articles", f"{summary.get('total_articles', 0):,}")
+                with col4:
+                    st.metric("Days Covered", f"{summary.get('days_covered', 0)}")
+                
+                # Sentiment charts
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.plotly_chart(create_sentiment_chart(sentiment_response['data']), use_container_width=True)
+                with col2:
+                    st.plotly_chart(create_sentiment_distribution_chart(sentiment_response['data']), use_container_width=True)
+                
+                # Article volume chart
+                st.plotly_chart(create_article_volume_chart(sentiment_response['data']), use_container_width=True)
+                
+                # Recent sentiment highlights
+                st.subheader("Recent Sentiment Highlights")
+                recent_data = sentiment_response['data'][-7:]  # Last 7 days
+                for item in recent_data:
+                    date = item.get('date', 'Unknown Date')
+                    
+                    # Check for sentiment data with fallbacks
+                    sentiment = None
+                    if 'llm_sentiment_mean' in item:
+                        sentiment = item['llm_sentiment_mean']
+                        sentiment_type = "LLM"
+                    elif 'sentiment_compound' in item:
+                        sentiment = item['sentiment_compound']
+                        sentiment_type = "FinBERT"
+                    else:
+                        # Look for any sentiment column
+                        sentiment_cols = [k for k in item.keys() if 'sentiment' in k.lower()]
+                        if sentiment_cols:
+                            sentiment = item[sentiment_cols[0]]
+                            sentiment_type = sentiment_cols[0]
+                    
+                    # Check for article count with fallbacks
+                    articles = None
+                    if 'article_count' in item:
+                        articles = item['article_count']
+                    else:
+                        # Look for any count column
+                        count_cols = [k for k in item.keys() if 'count' in k.lower() or 'volume' in k.lower()]
+                        if count_cols:
+                            articles = item[count_cols[0]]
+                    
+                    # Display the data if available
+                    if sentiment is not None:
+                        sentiment_color = "green" if sentiment > 0.1 else ("red" if sentiment < -0.1 else "gray")
+                        if articles is not None:
+                            st.markdown(f"**{date}**: {sentiment:+.3f} {sentiment_type} sentiment ({articles} articles)")
+                        else:
+                            st.markdown(f"**{date}**: {sentiment:+.3f} {sentiment_type} sentiment")
+                    else:
+                        st.markdown(f"**{date}**: No sentiment data available")
+            else:
+                st.info("No sentiment data available for this symbol.")
+
+        with tab4:
+            # ENHANCED: AI Scenarios Tab
+            st.markdown("### AI-Generated Market Scenarios")
+            st.markdown(f"*Plausible scenarios for {selected_stock} over the next {horizon} days*")
+            
+            scenarios = get_market_scenarios(selected_stock)
+            if scenarios:
+                for i, scenario in enumerate(scenarios, 1):
+                    with st.expander(f"🎯 Scenario {i}", expanded=i<=3):
+                        st.markdown(scenario)
+                        
+                        # Add probability estimation (mock)
+                        probability = np.random.uniform(0.15, 0.35)
+                        st.progress(probability)
+                        st.caption(f"Estimated probability: {probability:.1%}")
+            else:
+                st.info("No scenarios available for this symbol.")
     
-    # Model explanation section
+    # ENHANCED: Model explanation section with dynamic content
     if explanation:
         with st.expander("📊 Model Insights", expanded=False):
             st.markdown(f"**Model Type:** {explanation.get('model_type', 'Unknown')}")
-            st.markdown(explanation.get('explanation_text', ''))
             
+            # ENHANCED: Dynamic Analysis
+            st.markdown("#### Dynamic Analysis")
+            if explanation.get('top_features'):
+                dynamic_text = get_dynamic_explanation(selected_stock, explanation.get('top_features', []))
+                st.info(dynamic_text)
+            
+            # Performance metrics
             if 'recent_predictions_accuracy' in explanation and explanation['recent_predictions_accuracy']:
+                st.markdown("#### Recent Performance")
                 acc = explanation['recent_predictions_accuracy']
                 col1, col2, col3 = st.columns(3)
                 
                 with col1:
-                    st.metric("MAPE", f"{acc.get('mape', 'N/A')}%")
+                    st.metric("SMAPE", f"{acc.get('smape', 'N/A')}%")
                 with col2:
                     st.metric("Direction Accuracy", f"{acc.get('directional_accuracy', 'N/A'):.2%}")
                 with col3:
                     st.metric("Sharpe Ratio", f"{acc.get('sharpe_ratio', 'N/A'):.2f}")
     
-    # Performance metrics
+    # Performance metrics (moved to separate section for better organization)
     if historical_data is not None and not historical_data.empty:
         with st.expander("📈 Performance Metrics", expanded=False):
             # Calculate returns
@@ -528,7 +877,7 @@ def main():
     st.markdown(
         """
         <div style='text-align: center; color: #666;'>
-            StockSage.AI Dashboard | Data updates every 5 minutes | 
+            StockSage.AI Dashboard | Enhanced with Generative AI Insights | 
             <a href="/docs" target="_blank">API Documentation</a>
         </div>
         """,

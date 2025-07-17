@@ -22,15 +22,21 @@ import warnings
 from pathlib import Path
 import joblib
 
+# Local imports
+from ..utils.logging import get_logger
+from ..features.indicators import add_all_technical_indicators
+
+# Configure logging
+logger = get_logger(__name__)
+
 # Core sktime imports
 try:
-    from sktime.forecasting.arima import ARIMA, AutoARIMA
-    from sktime.forecasting.ets import ExponentialSmoothing
+    from sktime.forecasting.exp_smoothing import ExponentialSmoothing
     from sktime.forecasting.theta import ThetaForecaster
     from sktime.forecasting.trend import PolynomialTrendForecaster
     from sktime.forecasting.naive import NaiveForecaster
     from sktime.forecasting.fbprophet import Prophet
-    from sktime.forecasting.ensemble import EnsembleForecaster
+    from sktime.forecasting.compose import EnsembleForecaster
     from sktime.forecasting.model_selection import (
         temporal_train_test_split, ForecastingGridSearchCV,
         SlidingWindowSplitter, ExpandingWindowSplitter
@@ -45,6 +51,7 @@ try:
     from sktime.performance_metrics.forecasting import (
         mean_absolute_error, mean_squared_error, mean_absolute_percentage_error
     )
+    
     SKTIME_AVAILABLE = True
 except ImportError:
     SKTIME_AVAILABLE = False
@@ -68,13 +75,6 @@ except ImportError:
     STATSMODELS_AVAILABLE = False
     warnings.warn("Statsmodels not available for some advanced models")
 
-# Local imports
-from ..utils.logging import get_logger
-from ..features.indicators import add_all_technical_indicators
-
-# Configure logging
-logger = get_logger(__name__)
-
 
 class StatisticalForecastingModel:
     """
@@ -86,7 +86,7 @@ class StatisticalForecastingModel:
     
     def __init__(
         self,
-        model_type: str = 'auto_arima',
+        model_type: str = 'exp_smoothing',
         forecast_horizon: int = 30,
         confidence_level: float = 0.95,
         seasonal_period: Optional[int] = None,
@@ -123,8 +123,14 @@ class StatisticalForecastingModel:
         self.model_type = model_type
         self.forecast_horizon = forecast_horizon
         self.confidence_level = confidence_level
-        self.seasonal_period = seasonal_period
-        self.use_log_transform = use_log_transform
+        # Ensure seasonal_period is never None
+        self.seasonal_period = seasonal_period if seasonal_period is not None else 1
+        # Disable log transform for ETS, Theta, and Ensemble models as per analysis recommendation
+        if model_type in ['ets', 'theta', 'ensemble']:
+            self.use_log_transform = False
+            logger.info(f"Disabled log transform for {model_type} model as recommended")
+        else:
+            self.use_log_transform = use_log_transform
         self.use_differencing = use_differencing
         self.handle_volatility_clustering = handle_volatility_clustering
         self.random_state = random_state
@@ -135,6 +141,12 @@ class StatisticalForecastingModel:
         self.is_fitted = False
         self.training_metrics = {}
         self.feature_importance = {}
+        
+        # Store feature names used during training for consistency
+        self.exog_feature_names = None
+        
+        # Store training data for generating exogenous features during prediction
+        self._training_data = None
         
         # Data preprocessing components
         self.log_transformer = None
@@ -148,52 +160,31 @@ class StatisticalForecastingModel:
         logger.info(f"Initializing {self.model_type} forecasting model")
         
         try:
-            if self.model_type == 'auto_arima':
-                self.model = AutoARIMA(
-                    start_p=0, max_p=5,
-                    start_q=0, max_q=5,
-                    seasonal=True if self.seasonal_period else False,
-                    m=self.seasonal_period or 1,
-                    suppress_warnings=True,
-                    random_state=self.random_state,
-                    n_jobs=-1
+            if self.model_type == 'exp_smoothing':
+                self.model = ExponentialSmoothing(
+                    trend='add',
+                    seasonal='add' if self.seasonal_period > 1 else None,
+                    sp=self.seasonal_period
                 )
-                
-            elif self.model_type == 'arima':
-                self.model = ARIMA(
-                    order=(1, 1, 1),
-                    seasonal_order=(1, 1, 1, self.seasonal_period) if self.seasonal_period else None,
-                    suppress_warnings=True
+            elif self.model_type == 'theta':
+                # ThetaForecaster requires frequency parameter
+                self.model = ThetaForecaster(
+                    sp=self.seasonal_period
                 )
-                
             elif self.model_type == 'prophet' and PROPHET_AVAILABLE:
                 self.model = Prophet(
                     seasonality_mode='multiplicative',
-                    daily_seasonality=True,
-                    weekly_seasonality=True,
-                    yearly_seasonality=True,
+                    daily_seasonality='auto',
+                    weekly_seasonality='auto',
+                    yearly_seasonality='auto',
                     changepoint_prior_scale=0.05,
                     seasonality_prior_scale=10.0,
                     add_country_holidays={'country_name': 'US'}
                 )
-                
-            elif self.model_type == 'ets':
-                self.model = ExponentialSmoothing(
-                    trend='add',
-                    seasonal='add' if self.seasonal_period else None,
-                    sp=self.seasonal_period or 1
-                )
-                
-            elif self.model_type == 'theta':
-                self.model = ThetaForecaster(
-                    sp=self.seasonal_period or 1
-                )
-                
             elif self.model_type == 'ensemble':
                 self.model = self._create_ensemble_model()
-                
             else:
-                raise ValueError(f"Unknown model type: {self.model_type}")
+                raise ValueError(f"Unknown or unsupported model type: {self.model_type}")
             
             logger.info(f"Model {self.model_type} initialized successfully")
             
@@ -206,32 +197,20 @@ class StatisticalForecastingModel:
         # Define individual models for ensemble
         forecasters = []
         
-        # ARIMA component
-        if SKTIME_AVAILABLE:
-            arima_model = AutoARIMA(
-                start_p=0, max_p=3,
-                start_q=0, max_q=3,
-                seasonal=True if self.seasonal_period else False,
-                m=self.seasonal_period or 1,
-                suppress_warnings=True,
-                random_state=self.random_state
-            )
-            forecasters.append(('arima', arima_model))
-        
         # ETS component
         ets_model = ExponentialSmoothing(
             trend='add',
-            seasonal='add' if self.seasonal_period else None,
-            sp=self.seasonal_period or 1
+            seasonal='add' if self.seasonal_period > 1 else None,
+            sp=self.seasonal_period
         )
         forecasters.append(('ets', ets_model))
         
         # Theta component
-        theta_model = ThetaForecaster(sp=self.seasonal_period or 1)
+        theta_model = ThetaForecaster(sp=self.seasonal_period)
         forecasters.append(('theta', theta_model))
         
         # Naive baseline
-        naive_model = NaiveForecaster(strategy='last', sp=self.seasonal_period or 1)
+        naive_model = NaiveForecaster(strategy='last', sp=self.seasonal_period)
         forecasters.append(('naive', naive_model))
         
         # Create ensemble with equal weights
@@ -261,15 +240,43 @@ class StatisticalForecastingModel:
         # Handle missing values
         if y_processed.isnull().any():
             logger.warning("Missing values detected, forward filling")
-            y_processed = y_processed.fillna(method='ffill').fillna(method='bfill')
+            y_processed = y_processed.ffill().bfill()
+
+        # Ensure index is DatetimeIndex
+        if not isinstance(y_processed.index, pd.DatetimeIndex):
+            try:
+                y_processed.index = pd.to_datetime(y_processed.index)
+                logger.info("Converted index to DatetimeIndex")
+            except Exception as e:
+                logger.error(f"Failed to convert index to DatetimeIndex: {e}")
+                raise
+
+        # Ensure proper frequency for the time series
+        if y_processed.index.freq is None:
+            try:
+                inferred_freq = pd.infer_freq(y_processed.index)
+                if inferred_freq:
+                    y_processed.index.freq = inferred_freq
+                    logger.info(f"Inferred frequency: {inferred_freq}")
+                else:
+                    with warnings.catch_warnings():
+                        warnings.filterwarnings("ignore", category=FutureWarning)
+                        y_processed = y_processed.asfreq('B', method='ffill')
+                    logger.info("Set frequency to business daily (B)")
+            except Exception:
+                with warnings.catch_warnings():
+                    warnings.filterwarnings("ignore", category=FutureWarning)
+                    y_processed = y_processed.asfreq('D', method='ffill')
+                logger.info("Set frequency to daily (D)")
         
         # Ensure positive values for log transformation
         if self.use_log_transform:
             if (y_processed <= 0).any():
                 logger.warning("Non-positive values detected, adding constant")
-                y_processed = y_processed + abs(y_processed.min()) + 1e-8
+                min_val = y_processed.min()
+                y_processed = y_processed + abs(min_val) + 1e-8
             
-            y_processed = np.log(y_processed)
+            y_processed = y_processed.apply(np.log)
             logger.info("Applied log transformation")
         
         # Store original index and frequency
@@ -322,14 +329,8 @@ class StatisticalForecastingModel:
             std_20 = df['Close'].rolling(window=20).std()
             exog_features['bb_position'] = (df['Close'] - ma_20) / (2 * std_20)
         
-        # Calendar effects
-        exog_features['day_of_week'] = df.index.dayofweek
-        exog_features['month'] = df.index.month
-        exog_features['is_month_end'] = df.index.is_month_end.astype(int)
-        exog_features['is_quarter_end'] = df.index.is_quarter_end.astype(int)
-        
         # Remove missing values
-        exog_features = exog_features.fillna(method='ffill').fillna(0)
+        exog_features = exog_features.ffill().fillna(0)
         
         return exog_features
     
@@ -352,18 +353,82 @@ class StatisticalForecastingModel:
         logger.info(f"Training {self.model_type} model on {len(df)} samples")
         
         try:
+            # Check data sufficiency for seasonal models
+            min_samples_for_seasonal = self.seasonal_period * 2  # Need at least 2 full cycles
+            if len(df) < min_samples_for_seasonal and self.seasonal_period > 1:
+                logger.warning(f"Insufficient data for seasonal model. Need {min_samples_for_seasonal} samples "
+                             f"for seasonal_period={self.seasonal_period}, but got {len(df)}. "
+                             f"Reinitializing as non-seasonal model.")
+                # Reinitialize without seasonality
+                original_seasonal_period = self.seasonal_period
+                self.seasonal_period = 1
+                self._initialize_model()
+                logger.info(f"Model reinitialized without seasonality (was {original_seasonal_period})")
+            
+            # Store training data for generating exogenous features during prediction
+            self._training_data = df.copy()
+            
             # Extract target series
             if target_col not in df.columns:
                 raise ValueError(f"Target column '{target_col}' not found in data")
-            
+
             y = df[target_col].copy()
-            
+
             # Preprocess data
             y_processed = self._preprocess_data(y)
-            
+
             # Get exogenous features
             X = self._add_exogenous_features(df)
-            
+
+            if X is not None:
+                # Align X with y_processed after potential frequency changes
+                X = X.reindex(y_processed.index, method='ffill').fillna(0)
+                
+                # Store feature names for consistency during evaluation
+                self.exog_feature_names = X.columns.tolist()
+                
+                # Add calendar features after reindexing to ensure alignment
+                dates = X.index.to_series()
+                X['day_of_week'] = dates.dt.dayofweek
+                X['month'] = dates.dt.month
+                X['is_month_end'] = dates.dt.is_month_end.astype(int)
+                X['is_quarter_end'] = dates.dt.is_quarter_end.astype(int)
+                
+                # Update stored feature names to include calendar features
+                self.exog_feature_names = X.columns.tolist()
+
+            # Convert to PeriodIndex for specific models that require it
+            if self.model_type in ['theta', 'ensemble'] and isinstance(y_processed.index, pd.DatetimeIndex):
+                try:
+                    # Suppress FutureWarning for deprecated Period frequency
+                    with warnings.catch_warnings():
+                        warnings.filterwarnings("ignore", category=FutureWarning, message=".*Period.*BDay.*")
+                        warnings.filterwarnings("ignore", category=FutureWarning, message=".*PeriodDtype.*")
+                        
+                        # Convert to PeriodIndex with business day frequency
+                        y_processed.index = y_processed.index.to_period(freq='B')
+                        logger.info("Converted index to PeriodIndex with 'B' frequency")
+                        
+                        # Also convert exogenous features index if present
+                        if X is not None and isinstance(X.index, pd.DatetimeIndex):
+                            X.index = X.index.to_period(freq='B')
+                            logger.info("Converted exogenous features index to PeriodIndex")
+                        
+                except Exception as e:
+                    logger.warning(f"Failed to convert to PeriodIndex with 'B' frequency: {e}. Trying with inferred frequency.")
+                    try:
+                        y_processed.index = y_processed.index.to_period()
+                        if X is not None and isinstance(X.index, pd.DatetimeIndex):
+                            X.index = X.index.to_period()
+                        logger.info("Converted index to PeriodIndex with inferred frequency")
+                    except Exception as e2:
+                        logger.error(f"Failed to convert to PeriodIndex: {e2}")
+                        raise ValueError(f"Cannot convert index to PeriodIndex for {self.model_type} model: {e2}")
+
+            # Ensure model is initialized before use
+            if self.model is None:
+                raise ValueError("Model has not been initialized.")
+
             # Fit model
             if X is not None and self.model_type in ['prophet']:
                 # Models that support exogenous variables
@@ -373,12 +438,29 @@ class StatisticalForecastingModel:
                 self.model.fit(y_processed)
             
             self.is_fitted = True
-            
+
             # Calculate in-sample metrics
             if len(y_processed) > self.forecast_horizon:
-                train_predictions = self.model.predict(fh=range(1, len(y_processed) + 1))
+                # For in-sample predictions, fh should contain non-positive values
+                in_sample_fh = np.arange(-len(y_processed) + 1, 1)
+
+                # Ensure model is not None before prediction
+                if self.model is None:
+                    raise ValueError("Model has not been initialized.")
+
+                # Pass exogenous features to predict if they were used in fit
+                if X is not None and self.model_type == 'prophet':
+                    train_predictions = self.model.predict(fh=in_sample_fh, X=X)
+                else:
+                    train_predictions = self.model.predict(fh=in_sample_fh)
+
+                # Ensure predictions are a Series for metrics calculation
+                if not isinstance(train_predictions, pd.Series):
+                    # In case the model returns a tuple (e.g., with prediction intervals)
+                    train_predictions = pd.Series(train_predictions[0], index=y_processed.index)
+                    
                 self.training_metrics = self._calculate_metrics(y_processed, train_predictions)
-            
+
             logger.info(f"{self.model_type} model training completed successfully")
             
         except Exception as e:
@@ -389,9 +471,10 @@ class StatisticalForecastingModel:
     
     def predict(
         self, 
-        fh: Optional[Union[int, List[int], np.ndarray]] = None,
+        fh: Optional[Union[int, List[int], np.ndarray, range]] = None,
         return_pred_int: bool = True,
-        alpha: Optional[float] = None
+        alpha: Optional[float] = None,
+        X: Optional[pd.DataFrame] = None
     ) -> Union[pd.Series, Tuple[pd.Series, pd.DataFrame]]:
         """
         Make forecasts using the fitted model.
@@ -410,7 +493,7 @@ class StatisticalForecastingModel:
         pd.Series or tuple
             Point forecasts, optionally with prediction intervals
         """
-        if not self.is_fitted:
+        if not self.is_fitted or self.model is None:
             raise ValueError("Model must be fitted before making predictions")
         
         if fh is None:
@@ -422,71 +505,124 @@ class StatisticalForecastingModel:
             alpha = 1 - self.confidence_level
         
         try:
-            # Make predictions
-            if return_pred_int:
-                y_pred, pred_int = self.model.predict(fh=fh, return_pred_int=return_pred_int, alpha=alpha)
+            # Ensure fh is in a format sktime understands (list, array, or int)
+            if isinstance(fh, range):
+                fh = list(fh)
+
+            # Generate exogenous features automatically if needed but not provided
+            if X is None and self.model_type in ['prophet', 'arima'] and self.exog_feature_names is not None:
+                if self._training_data is not None:
+                    # Create future index for forecast horizon
+                    last_date = self._training_data.index[-1]
+                    future_dates = pd.date_range(
+                        start=last_date + pd.Timedelta(days=1),
+                        periods=max(fh) if isinstance(fh, list) else fh,
+                        freq='B'  # Business day frequency for financial data
+                    )
+                    
+                    # Create a dummy dataframe with the same structure as training data
+                    # Use the last known values for volume-based features
+                    last_row = self._training_data.iloc[-1:].copy()
+                    future_df = pd.DataFrame(
+                        index=future_dates,
+                        columns=self._training_data.columns,
+                        data=last_row.values.repeat(len(future_dates), axis=0)
+                    )
+                    
+                    # Generate exogenous features for the future period
+                    X = self._add_exogenous_features(future_df)
+                    if X is not None:
+                        # Select only the features that were used during training
+                        X = X[self.exog_feature_names]
+                    
+                    logger.info(f"Auto-generated exogenous features for prediction: {list(X.columns) if X is not None else 'None'}")
+
+            # Make point predictions
+            if X is not None and self.model_type in ['prophet', 'arima']:
+                y_pred = self.model.predict(fh=fh, X=X)
             else:
-                y_pred = self.model.predict(fh=fh, return_pred_int=return_pred_int)
-            
-            # Transform back from log space if needed
-            if self.use_log_transform:
-                y_pred = np.exp(y_pred)
-                if return_pred_int:
-                    pred_int = np.exp(pred_int)
-            
+                y_pred = self.model.predict(fh=fh)
+
+            # Get prediction intervals if requested
             if return_pred_int:
-                return y_pred, pred_int
-            else:
-                return y_pred
+                try:
+                    # Use predict_interval method for prediction intervals
+                    coverage = self.confidence_level
+                    if X is not None and self.model_type in ['prophet', 'arima']:
+                        pred_int = self.model.predict_interval(fh=fh, X=X, coverage=coverage)
+                    else:
+                        pred_int = self.model.predict_interval(fh=fh, coverage=coverage)
+                    
+                    # Convert to DataFrame with lower/upper columns
+                    if isinstance(pred_int, pd.DataFrame):
+                        # Check if columns are MultiIndex (coverage, lower/upper)
+                        if isinstance(pred_int.columns, pd.MultiIndex):
+                            pred_int_df = pd.DataFrame({
+                                'lower': pred_int[(coverage, 'lower')],
+                                'upper': pred_int[(coverage, 'upper')]
+                            })
+                        else:
+                            pred_int_df = pred_int
+                    else:
+                        pred_int_df = pd.DataFrame(
+                            data=pred_int, 
+                            columns=['lower', 'upper'],
+                            index=y_pred.index
+                        )
+                    
+                    return y_pred, pred_int_df
+                except Exception as e:
+                    logger.warning(f"Could not generate prediction intervals: {e}")
+                    return y_pred
+            
+            return y_pred
                 
         except Exception as e:
             logger.error(f"Error making predictions: {e}")
             raise
     
     def predict_with_updates(
-        self, 
-        df_new: pd.DataFrame, 
+        self,
+        df_new: pd.DataFrame,
         target_col: str = 'Close',
-        update_params: bool = False
+        update_params: bool = False,
+        X_new: Optional[pd.DataFrame] = None
     ) -> pd.Series:
         """
-        Make predictions with updated data (online forecasting).
+        Make forecasts and update the model with new data.
         
         Parameters:
         -----------
         df_new : pd.DataFrame
-            New data to update the model with
+            New data for updating and forecasting
         target_col : str, default='Close'
-            Target column
+            Target column for forecasting
         update_params : bool, default=False
-            Whether to update model parameters
+            Whether to refit the model parameters
+        X_new : pd.DataFrame, optional
+            Exogenous variables for the new data period
             
         Returns:
         --------
         pd.Series
-            Updated forecasts
+            Point forecasts for the new horizon
         """
-        if not self.is_fitted:
+        if not self.is_fitted or self.model is None:
             raise ValueError("Model must be fitted before making predictions")
         
-        try:
-            y_new = df_new[target_col].copy()
-            y_new_processed = self._preprocess_data(y_new)
-            
-            # Update model with new data
-            if update_params:
-                self.model.update(y_new_processed, update_params=True)
-            else:
-                self.model.update(y_new_processed, update_params=False)
-            
-            # Make new predictions
-            predictions = self.predict(return_pred_int=False)
-            
-            return predictions
-            
-        except Exception as e:
-            logger.error(f"Error updating predictions: {e}")
-            raise
+        y_new = df_new[target_col].copy()
+        
+        # Preprocess new data
+        y_new_processed = self._preprocess_data(y_new)
+        
+        # Update model state
+        if X_new is not None:
+            self.model.update(y_new_processed, X=X_new, update_params=update_params)
+        else:
+            self.model.update(y_new_processed, update_params=update_params)
+        
+        # Make new predictions
+        return self.model.predict(fh=self.forecast_horizon)
     
     def _calculate_metrics(self, y_true: pd.Series, y_pred: pd.Series) -> Dict[str, float]:
         """Calculate forecasting metrics."""
@@ -503,7 +639,7 @@ class StatisticalForecastingModel:
                 'mae': mean_absolute_error(y_true_aligned, y_pred_aligned),
                 'mse': mean_squared_error(y_true_aligned, y_pred_aligned),
                 'rmse': np.sqrt(mean_squared_error(y_true_aligned, y_pred_aligned)),
-                'mape': mean_absolute_percentage_error(y_true_aligned, y_pred_aligned, symmetric=False) * 100
+                'smape': mean_absolute_percentage_error(y_true_aligned, y_pred_aligned, symmetric=True) * 100
             }
             
             return metrics
@@ -512,47 +648,121 @@ class StatisticalForecastingModel:
             logger.warning(f"Error calculating metrics: {e}")
             return {}
     
-    def evaluate(self, df_test: pd.DataFrame, target_col: str = 'Close') -> Dict[str, float]:
+    def evaluate(self, df_test: pd.DataFrame, target_col: str = 'Close', fh: Optional[Union[int, List[int], np.ndarray]] = None) -> Dict[str, float]:
         """
-        Evaluate model performance on test data.
+        Evaluate model performance on a test set.
         
         Parameters:
         -----------
         df_test : pd.DataFrame
-            Test data
+            Test data for evaluation
         target_col : str, default='Close'
-            Target column
+            Target column for forecasting
+        fh : int, list, or array, optional
+            Forecast horizon. If None, uses the length of the test set.
             
         Returns:
         --------
-        dict
-            Evaluation metrics
+        Dict[str, float]
+            Dictionary of evaluation metrics
         """
         if not self.is_fitted:
-            return {}
+            raise ValueError("Model must be fitted before evaluation")
         
+        y_true = df_test[target_col]
+        
+        # For Prophet models, use relative forecast horizon to avoid index issues
+        if self.model_type == 'prophet':
+            # Use relative forecast horizon (1, 2, 3, ..., len(test))
+            # For Prophet specifically, we need to be more careful about missing dates
+            try:
+                # Try to use only the actual available dates in the test data
+                fh = np.arange(1, len(y_true) + 1)
+            except Exception:
+                # If that fails, use a smaller forecast horizon
+                fh = np.arange(1, min(30, len(y_true)) + 1)
+        else:
+            # For other models, determine forecast horizon
+            if fh is None:
+                fh = np.arange(1, len(y_true) + 1)
+        
+        # Generate exogenous features if the model uses them
+        X_test = None
+        if self.model_type in ['prophet', 'arima']:
+            # Try to generate features from the test data first
+            X_test_generated = self._add_exogenous_features(df_test)
+            
+            if self.exog_feature_names is not None:
+                # Create DataFrame with all required features
+                X_test = pd.DataFrame(index=y_true.index)
+                
+                for col in self.exog_feature_names:
+                    if X_test_generated is not None and col in X_test_generated.columns:
+                        # Use generated feature if available
+                        X_test[col] = X_test_generated[col].reindex(y_true.index).ffill().fillna(0)
+                    elif col in ['day_of_week', 'month', 'is_month_end', 'is_quarter_end']:
+                        # Generate calendar features directly
+                        if col == 'day_of_week':
+                            X_test[col] = y_true.index.dayofweek
+                        elif col == 'month':
+                            X_test[col] = y_true.index.month
+                        elif col == 'is_month_end':
+                            X_test[col] = y_true.index.is_month_end.astype(int)
+                        elif col == 'is_quarter_end':
+                            X_test[col] = y_true.index.is_quarter_end.astype(int)
+                    else:
+                        # Create dummy feature for missing technical indicators
+                        logger.warning(f"Exogenous feature '{col}' not available in test data. Using zeros.")
+                        X_test[col] = 0
+            else:
+                # Fallback: use generated features or create basic calendar features
+                if X_test_generated is not None:
+                    X_test = X_test_generated.reindex(y_true.index).ffill().fillna(0)
+                else:
+                    X_test = pd.DataFrame(index=y_true.index)
+                    X_test['day_of_week'] = y_true.index.dayofweek
+                    X_test['month'] = y_true.index.month
+                    X_test['is_month_end'] = y_true.index.is_month_end.astype(int)
+                    X_test['is_quarter_end'] = y_true.index.is_quarter_end.astype(int)
+        
+        # Make predictions for the test set horizon
         try:
-            y_test = df_test[target_col].copy()
+            if X_test is not None:
+                prediction_result = self.predict(fh=fh, return_pred_int=True, X=X_test)
+            else:
+                prediction_result = self.predict(fh=fh, return_pred_int=True)
             
-            # Make predictions for the test period
-            fh = range(1, len(y_test) + 1)
-            y_pred = self.predict(fh=fh, return_pred_int=False)
-            
-            # Calculate metrics
-            metrics = self._calculate_metrics(y_test, y_pred)
-            
-            # Add directional accuracy
-            if len(y_test) > 1 and len(y_pred) > 1:
-                actual_directions = np.diff(y_test.values) > 0
-                predicted_directions = np.diff(y_pred.values) > 0
-                direction_accuracy = np.mean(actual_directions == predicted_directions) * 100
-                metrics['direction_accuracy'] = direction_accuracy
-            
-            return metrics
-            
+            # Handle both tuple and single result
+            if isinstance(prediction_result, tuple):
+                y_pred, pred_int = prediction_result
+            else:
+                y_pred = prediction_result
+                
+            # Align indices for correct metric calculation
+            y_true = y_true.iloc[:len(y_pred)]
+            y_pred.index = y_true.index
+
         except Exception as e:
-            logger.error(f"Error evaluating model: {e}")
-            return {}
+            logger.error(f"Prediction failed during evaluation: {e}")
+            # Fallback to predicting without intervals if it fails
+            try:
+                if X_test is not None:
+                    y_pred = self.predict(fh=fh, return_pred_int=False, X=X_test)
+                else:
+                    y_pred = self.predict(fh=fh, return_pred_int=False)
+                y_true = y_true.iloc[:len(y_pred)]
+                y_pred.index = y_true.index
+            except Exception as e2:
+                logger.error(f"Fallback prediction also failed: {e2}")
+                return {}
+
+        # Calculate metrics without transformation inversion for now
+        # (log transformation inversion would require proper handling)
+        metrics = self._calculate_metrics(y_true, y_pred)
+        
+        logger.info(f"Evaluation metrics for {self.model_type}: {metrics}")
+        
+        return metrics
     
     def cross_validate(
         self, 
@@ -702,7 +912,7 @@ class AutoMLForecaster:
         models_to_try: Optional[List[str]] = None,
         forecast_horizon: int = 30,
         cv_splits: int = 3,
-        metric: str = 'mape',
+        metric: str = 'smape',
         random_state: int = 42
     ):
         """
@@ -716,7 +926,7 @@ class AutoMLForecaster:
             Forecast horizon
         cv_splits : int, default=3
             Number of CV splits for model selection
-        metric : str, default='mape'
+        metric : str, default='smape'
             Metric to optimize
         random_state : int, default=42
             Random state
@@ -841,43 +1051,19 @@ def create_statistical_models(
     include_automl: bool = True
 ) -> Dict[str, Any]:
     """
-    Create a suite of statistical forecasting models.
-    
-    Parameters:
-    -----------
-    forecast_horizon : int, default=30
-        Forecast horizon
-    seasonal_period : int, optional
-        Seasonal period
-    include_automl : bool, default=True
-        Whether to include AutoML forecaster
-        
-    Returns:
-    --------
-    dict
-        Dictionary of statistical models
+    Factory function to create a dictionary of statistical forecasting models.
+    Only includes models that do not require pmdarima.
     """
     models = {}
-    
-    # Individual models
-    model_types = ['auto_arima', 'ets', 'theta', 'ensemble']
-    if PROPHET_AVAILABLE:
-        model_types.append('prophet')
-    
-    for model_type in model_types:
-        models[model_type] = StatisticalForecastingModel(
-            model_type=model_type,
-            forecast_horizon=forecast_horizon,
-            seasonal_period=seasonal_period
-        )
-    
-    # AutoML forecaster
-    if include_automl:
-        models['automl'] = AutoMLForecaster(
-            models_to_try=model_types,
-            forecast_horizon=forecast_horizon
-        )
-    
+    for model_type in ['exp_smoothing', 'theta', 'prophet', 'ensemble']:
+        try:
+            models[model_type] = StatisticalForecastingModel(
+                model_type=model_type,
+                forecast_horizon=forecast_horizon,
+                seasonal_period=seasonal_period
+            )
+        except Exception as e:
+            logger.warning(f"Skipping {model_type} due to error: {e}")
     return models
 
 

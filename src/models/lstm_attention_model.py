@@ -207,7 +207,7 @@ class LSTMAttentionModel:
             # Prepare data
             feature_columns = [col for col in df.columns if col != target_column]
             X = df[feature_columns].values
-            y = df[target_column].values
+            y = np.array(df[target_column].values)
             
             # Store feature names
             self.feature_names = feature_columns
@@ -339,6 +339,8 @@ class LSTMAttentionModel:
         try:
             # Prepare features
             X = df[self.feature_names].values
+            if self.scaler is None:
+                raise ValueError("Scaler is not fitted")
             X_scaled = self.scaler.transform(X)
             
             # Prepare sequences
@@ -353,6 +355,8 @@ class LSTMAttentionModel:
             X_tensor = torch.FloatTensor(X_seq).to(self.device)
             
             # Make predictions
+            if self.model is None:
+                raise ValueError("Model is not fitted")
             self.model.eval()
             with torch.no_grad():
                 predictions, _ = self.model(X_tensor)
@@ -372,6 +376,8 @@ class LSTMAttentionModel:
         """Save the trained model."""
         if not self.is_fitted:
             raise ValueError("Cannot save unfitted model")
+        if self.model is None:
+            raise ValueError("Model is not fitted")
         
         model_data = {
             'model_state_dict': self.model.state_dict(),

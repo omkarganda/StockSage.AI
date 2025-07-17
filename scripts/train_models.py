@@ -29,15 +29,24 @@ import warnings
 import time
 from typing import Dict, List, Optional, Any, Tuple
 import logging
+import inspect
 
 # Import our models
 from src.models.baseline import create_baseline_models
 from src.models.neuralforecast_model import create_neural_forecasting_models
+# Advanced hybrid DL models (LSTM + Transformer attention)
+from src.models.lstm_attention_model import create_deep_learning_models
 from src.models.sktime_model import create_statistical_models
+from src.models.transformer_model import create_transformer_models
 
 # Import data processing
 from src.data.merge import create_unified_dataset
 from src.features.indicators import add_all_technical_indicators
+# NEW: data cleaning & validation utilities
+from src.data.cleaning import clean_market_data
+
+# Optuna tuning utils
+from src.tuning.optuna_tuner import tune_lstm_attention, tune_transformer
 
 # Setup logging
 logging.basicConfig(
@@ -71,7 +80,8 @@ class ModelTrainer:
         forecast_horizon: int = 30,
         quick_test: bool = False,
         save_models: bool = True,
-        results_dir: str = "results/model_training"
+        results_dir: str = "results/model_training",
+        tune: bool = False,
     ):
         """
         Initialize the model trainer.
@@ -103,6 +113,9 @@ class ModelTrainer:
         self.quick_test = quick_test
         self.save_models = save_models
         self.results_dir = Path(results_dir)
+        self.tune = tune
+        # cache tuned params per model type
+        self._tuned_params: Dict[str, Any] = {}
         
         # Create results directory
         self.results_dir.mkdir(parents=True, exist_ok=True)
@@ -128,39 +141,111 @@ class ModelTrainer:
         Returns:
         --------
         pd.DataFrame
-            Preprocessed stock data with technical indicators
+            Preprocessed stock data with technical indicators and sentiment features
         """
-        logger.info(f"Downloading data for {symbol}...")
+        logger.info(f"Downloading and processing unified data for {symbol}...")
         
         try:
-            # Download data from Yahoo Finance
-            ticker = yf.Ticker(symbol)
-            data = ticker.history(start=self.start_date, end=self.end_date)
+            # Use the unified dataset creation instead of just market data
+            logger.info(f"Creating unified dataset for {symbol}...")
+            unified_data, validation_reports = create_unified_dataset(
+                symbol=symbol,
+                start_date=self.start_date,
+                end_date=self.end_date,
+                market_data=None,  # Let it download automatically
+                economic_data=None,  # Let it download automatically
+                sentiment_data=None,  # Let it download automatically
+                include_technical_indicators=True,
+                include_market_regime=True,
+                include_sentiment=True,
+                include_llm_sentiment=True,
+                handle_missing='interpolate',
+                validate_inputs=True,
+                validate_output=True
+            )
             
-            if data.empty:
-                raise ValueError(f"No data found for {symbol}")
+            if unified_data.empty:
+                raise ValueError(f"No unified data created for {symbol}")
             
-            # Rename columns to match our expected format
-            data.columns = ['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits']
+            # Log validation results
+            for report in validation_reports:
+                if report.has_critical_issues():
+                    logger.warning(f"Critical issues in {report.dataset_name}: {report.issues}")
+                else:
+                    logger.info(f"Validation passed for {report.dataset_name} (score: {report.quality_score:.1f})")
             
-            # Remove dividends and stock splits for now
-            data = data[['Open', 'High', 'Low', 'Close', 'Volume']]
+            # Ensure we have essential columns for modeling
+            essential_columns = ['Close']
+            missing_columns = [col for col in essential_columns if col not in unified_data.columns]
+            if missing_columns:
+                logger.warning(f"Missing essential columns: {missing_columns}")
+                
+                # If we don't have market data, fall back to direct download
+                logger.info("Falling back to direct market data download...")
+                ticker = yf.Ticker(symbol)
+                market_data = ticker.history(start=self.start_date, end=self.end_date)
+                
+                if market_data.empty:
+                    raise ValueError(f"No market data found for {symbol}")
+                
+                # Rename columns to match our expected format
+                market_data.columns = ['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits']
+                market_data = market_data[['Open', 'High', 'Low', 'Close', 'Volume']]
+                
+                # Clean the market data
+                market_data = clean_market_data(market_data, symbol=symbol, validate=True)
+                
+                # Add technical indicators
+                market_data = add_all_technical_indicators(market_data)
+                
+                # Fill any remaining NaNs
+                unified_data = market_data.fillna(method='ffill').fillna(method='bfill')
             
-            # Add technical indicators
-            logger.info(f"Adding technical indicators for {symbol}...")
-            data = add_all_technical_indicators(data)
+            logger.info(f"Downloaded unified dataset with {len(unified_data)} rows and {len(unified_data.columns)} features for {symbol}")
+            logger.info(f"Date range: {unified_data.index.min()} to {unified_data.index.max()}")
             
-            # Handle missing values
-            data = data.fillna(method='ffill').fillna(method='bfill')
+            # Log feature breakdown
+            feature_types = {
+                'market': len([c for c in unified_data.columns if any(x in c.lower() for x in ['open', 'high', 'low', 'close', 'volume'])]),
+                'technical': len([c for c in unified_data.columns if any(x in c.lower() for x in ['sma', 'ema', 'rsi', 'macd', 'bb_'])]),
+                'sentiment': len([c for c in unified_data.columns if 'sentiment' in c.lower()]),
+                'llm': len([c for c in unified_data.columns if 'llm_' in c.lower()]),
+                'other': len([c for c in unified_data.columns if not any(
+                    x in c.lower() for x in ['open', 'high', 'low', 'close', 'volume', 'sma', 'ema', 'rsi', 'macd', 'bb_', 'sentiment', 'llm_']
+                )])
+            }
             
-            logger.info(f"Downloaded {len(data)} rows for {symbol}")
-            logger.info(f"Date range: {data.index.min()} to {data.index.max()}")
+            logger.info(f"Feature breakdown for {symbol}: {feature_types}")
             
-            return data
+            return unified_data
             
         except Exception as e:
-            logger.error(f"Error downloading data for {symbol}: {e}")
-            raise
+            logger.error(f"Error downloading unified data for {symbol}: {e}")
+            logger.info(f"Falling back to basic market data for {symbol}")
+            
+            # Fallback to basic market data download
+            try:
+                ticker = yf.Ticker(symbol)
+                data = ticker.history(start=self.start_date, end=self.end_date)
+                
+                if data.empty:
+                    raise ValueError(f"No data found for {symbol}")
+                
+                # Rename columns to match our expected format
+                data.columns = ['Open', 'High', 'Low', 'Close', 'Volume', 'Dividends', 'Stock Splits']
+                data = data[['Open', 'High', 'Low', 'Close', 'Volume']]
+                
+                # Clean and add technical indicators
+                data = clean_market_data(data, symbol=symbol, validate=True)
+                data = add_all_technical_indicators(data)
+                data = data.fillna(method='ffill').fillna(method='bfill')
+                
+                logger.info(f"Downloaded basic market data for {symbol} with {len(data)} rows")
+                return data
+                
+            except Exception as fallback_error:
+                logger.error(f"Fallback also failed for {symbol}: {fallback_error}")
+                raise
     
     def split_data(self, data: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
@@ -233,6 +318,38 @@ class ModelTrainer:
         except Exception as e:
             logger.error(f"Error creating statistical models: {e}")
         
+        # Deep learning hybrid models (if not quick test)
+        if not self.quick_test:
+            try:
+                tuned_kwargs = {}
+                if self.tune:
+                    tuned_kwargs = self._tuned_params.get("lstm_attention", {})
+                dl_models = create_deep_learning_models(
+                    context_length=60,
+                    horizon=self.forecast_horizon,
+                    **tuned_kwargs,
+                )
+                models.update({f"dl_{k}": v for k, v in dl_models.items()})
+                logger.info(f"Created {len(dl_models)} deep learning models")
+            except Exception as e:
+                logger.warning(f"Error creating deep learning models: {e}")
+
+        # Transformer models
+        if not self.quick_test:
+            try:
+                trans_kwargs = {}
+                if self.tune:
+                    trans_kwargs = self._tuned_params.get("transformer", {})
+                trans_models = create_transformer_models(
+                    context_length=60,
+                    horizon=self.forecast_horizon,
+                    **trans_kwargs,
+                )
+                models.update({f"dl_{k}" : v for k, v in trans_models.items()})
+                logger.info(f"Created {len(trans_models)} transformer models")
+            except Exception as e:
+                logger.warning(f"Error creating transformer models: {e}")
+
         logger.info(f"Total models created: {len(models)}")
         return models
     
@@ -280,21 +397,16 @@ class ModelTrainer:
             # Train the model
             model.fit(train_data)
             
+            # Log training completion
             training_time = time.time() - start_time
-            training_result.update({
-                'status': 'success',
-                'training_time': training_time
-            })
+            training_result['training_time'] = training_time
+            training_result['status'] = 'success'
+            training_result['training_metrics'] = {
+                'training_time': training_time,
+                'train_samples': len(train_data)
+            }
             
-            # Get training metrics if available
-            if hasattr(model, 'training_metrics'):
-                training_result['training_metrics'] = model.training_metrics
-            elif hasattr(model, 'get_model_summary'):
-                summary = model.get_model_summary()
-                if 'training_metrics' in summary:
-                    training_result['training_metrics'] = summary['training_metrics']
-            
-            logger.info(f"✅ {model_name} training completed in {training_time:.2f}s")
+            logger.info(f"SUCCESS: {model_name} training completed in {training_time:.2f}s")
             
         except Exception as e:
             training_time = time.time() - start_time
@@ -305,7 +417,7 @@ class ModelTrainer:
                 'training_time': training_time
             })
             
-            logger.error(f"❌ {model_name} training failed: {error_msg}")
+            logger.error(f"FAILED: {model_name} training failed: {error_msg}")
         
         return training_result
     
@@ -317,7 +429,7 @@ class ModelTrainer:
         symbol: str
     ) -> Dict[str, Any]:
         """
-        Evaluate a trained model on test data.
+        Evaluate a single trained model.
         
         Parameters:
         -----------
@@ -326,75 +438,55 @@ class ModelTrainer:
         model : Any
             Trained model instance
         test_data : pd.DataFrame
-            Test data
+            Testing data
         symbol : str
             Stock symbol
             
         Returns:
         --------
         dict
-            Evaluation results and metrics
+            Evaluation metrics
         """
         logger.info(f"Evaluating {model_name} for {symbol}...")
         
-        evaluation_result = {
-            'model_name': model_name,
-            'symbol': symbol,
-            'test_samples': len(test_data),
-            'status': 'failed',
-            'error': None,
-            'evaluation_metrics': {},
-            'predictions': None
-        }
-        
         try:
-            # Check if model was trained successfully
-            if not hasattr(model, 'is_fitted') or not model.is_fitted:
-                if not hasattr(model, 'model') or model.model is None:
-                    raise ValueError("Model is not fitted")
-            
-            # Make predictions
-            if hasattr(model, 'predict'):
-                predictions = model.predict(test_data)
-                evaluation_result['predictions'] = predictions[:10].tolist() if hasattr(predictions, 'tolist') else str(predictions)[:100]
-            
-            # Get evaluation metrics
-            if hasattr(model, 'evaluate'):
-                metrics = model.evaluate(test_data)
-                evaluation_result['evaluation_metrics'] = metrics
-            elif hasattr(model, 'predict'):
-                # Calculate basic metrics manually
-                try:
-                    actual = test_data['Close'].values[:self.forecast_horizon]
-                    predicted = predictions[:len(actual)] if hasattr(predictions, '__len__') else [predictions]
-                    
-                    if len(predicted) > 0 and len(actual) > 0:
-                        mse = np.mean((actual - predicted) ** 2)
-                        mae = np.mean(np.abs(actual - predicted))
-                        mape = np.mean(np.abs((actual - predicted) / actual)) * 100
-                        
-                        evaluation_result['evaluation_metrics'] = {
-                            'mse': float(mse),
-                            'rmse': float(np.sqrt(mse)),
-                            'mae': float(mae),
-                            'mape': float(mape)
-                        }
-                except Exception as metric_error:
-                    logger.warning(f"Could not calculate metrics for {model_name}: {metric_error}")
-            
-            evaluation_result['status'] = 'success'
-            logger.info(f"✅ {model_name} evaluation completed")
-            
+            # Check if the model has an 'evaluate' method
+            if not hasattr(model, 'evaluate'):
+                logger.warning(f"Model {model_name} does not have an evaluate method, skipping.")
+                return {}
+
+            # Special handling for sktime models which require a forecast horizon (fh)
+            # instead of the full test dataframe for evaluation.
+            if 'statistical' in model_name or 'sktime' in str(type(model)).lower():
+                # fh is derived from the test_data inside the model's evaluate method
+                evaluation_metrics = model.evaluate(test_data)
+            elif 'neural' in model_name:
+                # NeuralForecast models expect the test df
+                evaluation_metrics = model.evaluate(test_data)
+            elif 'dl_' in model_name or 'lstm' in model_name or 'transformer' in model_name:
+                # Deep learning models also take the full df
+                evaluation_metrics = model.evaluate(test_data)
+            else:
+                # Default for baseline models
+                evaluation_metrics = model.evaluate(test_data)
+
+            # Clean metrics: remove NaNs and infinite values
+            if evaluation_metrics:
+                evaluation_metrics = {
+                    k: (float(v) if pd.notna(v) and np.isfinite(v) else None)
+                    for k, v in evaluation_metrics.items()
+                }
+                logger.info(f"SUCCESS: {model_name} evaluation completed.")
+                logger.debug(f"Metrics for {model_name} on {symbol}: {evaluation_metrics}")
+            else:
+                logger.warning(f"Evaluation for {model_name} returned empty or invalid metrics.")
+                evaluation_metrics = {}
+
+            return evaluation_metrics
+
         except Exception as e:
-            error_msg = str(e)
-            evaluation_result.update({
-                'status': 'failed',
-                'error': error_msg
-            })
-            
-            logger.error(f"❌ {model_name} evaluation failed: {error_msg}")
-        
-        return evaluation_result
+            logger.error(f"FAILED: {model_name} evaluation failed: {e}", exc_info=True)
+            return {'error': str(e)}
     
     def train_all_models(self) -> Dict[str, Dict[str, Any]]:
         """
@@ -435,7 +527,27 @@ class ModelTrainer:
                     'date_range': f"{data.index.min()} to {data.index.max()}"
                 }
                 
-                # Create models
+                # If tuning requested and deep learning models exist, run tuning once per type
+                if self.tune and not self.quick_test:
+                    logger.info("Running hyperparameter tuning for deep learning models")
+                    # Run LSTM tuning if not tuned
+                    lstm_params = tune_lstm_attention(
+                        train_data,
+                        context_length=60,
+                        horizon=self.forecast_horizon,
+                        n_trials=20 if self.quick_test else 40,
+                    )
+                    self._tuned_params["lstm_attention"] = lstm_params
+
+                    trans_params = tune_transformer(
+                        train_data,
+                        context_length=60,
+                        horizon=self.forecast_horizon,
+                        n_trials=20 if self.quick_test else 40,
+                    )
+                    self._tuned_params["transformer"] = trans_params
+
+                # Create models (after tuning params ready)
                 models = self.create_models()
                 
                 if not models:
@@ -458,7 +570,7 @@ class ModelTrainer:
                         evaluation_result = self.evaluate_model(model_name, model, test_data, symbol)
                         symbol_results['evaluation_results'][model_name] = evaluation_result
                         
-                        if evaluation_result['status'] == 'success':
+                        if evaluation_result: # Check if evaluation_result is not empty
                             successful_models += 1
                             
                             # Save model if requested
@@ -481,7 +593,7 @@ class ModelTrainer:
                     'success_rate': successful_models / len(models) * 100 if models else 0
                 }
                 
-                logger.info(f"\n📊 {symbol} Summary:")
+                logger.info(f"\n{symbol} Summary:")
                 logger.info(f"Total models: {len(models)}")
                 logger.info(f"Successful: {successful_models}")
                 logger.info(f"Failed: {failed_models}")
@@ -524,7 +636,7 @@ class ModelTrainer:
                 continue
                 
             for model_name, eval_result in symbol_results['evaluation_results'].items():
-                if eval_result['status'] == 'success' and eval_result['evaluation_metrics']:
+                if eval_result and eval_result.get('status') == 'success' and eval_result.get('evaluation_metrics'):
                     row = {
                         'symbol': symbol,
                         'model': model_name,
@@ -545,16 +657,16 @@ class ModelTrainer:
             logger.info(f"Summary CSV saved to {summary_file}")
             
             # Print top performers
-            if 'mape' in summary_df.columns:
-                logger.info("\n🏆 Top 5 Models by MAPE:")
-                top_models = summary_df.nsmallest(5, 'mape')[['symbol', 'model', 'mape', 'rmse']]
+            if 'smape' in summary_df.columns:
+                logger.info("\nTop 5 Models by SMAPE:")
+                top_models = summary_df.nsmallest(5, 'smape')[['symbol', 'model', 'smape', 'rmse']]
                 for _, row in top_models.iterrows():
-                    logger.info(f"  {row['symbol']:6} | {row['model']:20} | MAPE: {row['mape']:6.2f}% | RMSE: {row['rmse']:8.2f}")
+                    logger.info(f"  {row['symbol']:6} | {row['model']:20} | SMAPE: {row['smape']:6.2f}% | RMSE: {row['rmse']:8.2f}")
     
     def print_final_summary(self, results: Dict[str, Any]):
         """Print a comprehensive summary of all results."""
         logger.info(f"\n{'='*60}")
-        logger.info("🎯 FINAL TRAINING SUMMARY")
+        logger.info("FINAL TRAINING SUMMARY")
         logger.info(f"{'='*60}")
         
         total_symbols = len(results)
@@ -566,13 +678,13 @@ class ModelTrainer:
                 total_models_attempted += symbol_results['summary']['total_models']
                 total_models_successful += symbol_results['summary']['successful_models']
         
-        logger.info(f"📈 Symbols processed: {total_symbols}")
-        logger.info(f"🤖 Models attempted: {total_models_attempted}")
-        logger.info(f"✅ Models successful: {total_models_successful}")
-        logger.info(f"📊 Overall success rate: {total_models_successful/total_models_attempted*100:.1f}%" if total_models_attempted > 0 else "📊 Overall success rate: 0%")
+        logger.info(f"Symbols processed: {total_symbols}")
+        logger.info(f"Models attempted: {total_models_attempted}")
+        logger.info(f"Models successful: {total_models_successful}")
+        logger.info(f"Overall success rate: {total_models_successful/total_models_attempted*100:.1f}%" if total_models_attempted > 0 else "Overall success rate: 0%")
         
-        logger.info(f"\n💾 Results saved in: {self.results_dir}")
-        logger.info(f"📁 Model files saved: {self.save_models}")
+        logger.info(f"\nResults saved in: {self.results_dir}")
+        logger.info(f"Model files saved: {self.save_models}")
         
         # Model type breakdown
         model_types = {}
@@ -583,10 +695,10 @@ class ModelTrainer:
                     if model_type not in model_types:
                         model_types[model_type] = {'success': 0, 'total': 0}
                     model_types[model_type]['total'] += 1
-                    if eval_result['status'] == 'success':
+                    if eval_result and eval_result.get('status') == 'success':
                         model_types[model_type]['success'] += 1
         
-        logger.info(f"\n📋 Model Type Performance:")
+        logger.info(f"\nModel Type Performance:")
         for model_type, stats in model_types.items():
             success_rate = stats['success'] / stats['total'] * 100 if stats['total'] > 0 else 0
             logger.info(f"  {model_type.capitalize():12} | {stats['success']:2}/{stats['total']:2} | {success_rate:5.1f}%")
@@ -656,6 +768,12 @@ def parse_arguments():
         help='Path to YAML configuration file'
     )
     
+    parser.add_argument(
+        '--tune', 
+        action='store_true',
+        help='Run hyperparameter tuning for deep learning models'
+    )
+    
     return parser.parse_args()
 
 
@@ -667,7 +785,7 @@ def load_config(config_path: str) -> Dict[str, Any]:
 
 def main():
     """Main training function."""
-    print("🚀 StockSage.AI Model Training Script")
+    print("StockSage.AI Model Training Script")
     print("=====================================\n")
     
     # Parse arguments
@@ -691,7 +809,8 @@ def main():
         forecast_horizon=config.get('forecast_horizon', args.forecast_horizon),
         quick_test=config.get('quick_test', args.quick_test),
         save_models=not args.no_save,
-        results_dir=config.get('results_dir', args.results_dir)
+        results_dir=config.get('results_dir', args.results_dir),
+        tune=args.tune,
     )
     
     # Create logs directory
@@ -701,8 +820,8 @@ def main():
     try:
         results = trainer.train_all_models()
         
-        print("\n🎉 Training completed successfully!")
-        print(f"📊 Check results in: {trainer.results_dir}")
+        print("\nTraining completed successfully!")
+        print(f"Check results in: {trainer.results_dir}")
         
         return 0
         

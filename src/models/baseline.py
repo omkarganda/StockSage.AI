@@ -303,7 +303,7 @@ class BaselineModel:
         
         # Handle missing values more robustly
         # First, fill with forward fill, then backward fill, then median
-        X = X.fillna(method='ffill').fillna(method='bfill').fillna(X.median())
+        X = X.ffill().bfill().fillna(X.median())
         # Drop any remaining rows with NaN values
         nan_rows = X.isnull().any(axis=1)
         if nan_rows.any():
@@ -376,7 +376,7 @@ class BaselineModel:
         
         # Handle missing values more robustly
         # First, fill with forward fill, then backward fill, then median
-        X = X.fillna(method='ffill').fillna(method='bfill').fillna(X.median() if len(X) > 0 else 0)
+        X = X.ffill().bfill().fillna(X.median() if len(X) > 0 else 0)
         # Drop any remaining rows with NaN values
         nan_rows = X.isnull().any(axis=1)
         if nan_rows.any():
@@ -407,7 +407,7 @@ class BaselineModel:
             'rmse': np.sqrt(mean_squared_error(y_true_valid, y_pred_valid)),
             'mae': mean_absolute_error(y_true_valid, y_pred_valid),
             'r2': r2_score(y_true_valid, y_pred_valid),
-            'mape': np.mean(np.abs((y_true_valid - y_pred_valid) / y_true_valid)) * 100
+            'smape': np.mean(2 * np.abs(y_true_valid - y_pred_valid) / (np.abs(y_true_valid) + np.abs(y_pred_valid) + 1e-8)) * 100
         }
         
         return metrics
@@ -431,8 +431,17 @@ class BaselineModel:
         y_true = y[valid_mask]
         
         if len(y_true) == 0:
-            logger.warning("No valid samples for evaluation")
-            return {}
+            logger.warning("No valid samples for evaluation - this is expected for test sets where future data is not available")
+            logger.info("For time series forecasting, evaluation should be done using walk-forward validation")
+            # Return default metrics structure for consistency
+            return {
+                'mse': np.nan,
+                'rmse': np.nan,
+                'mae': np.nan,
+                'smape': np.nan,
+                'r2': np.nan,
+                'note': 'No evaluation data available - expected for forecasting on test sets'
+            }
         
         # Make predictions
         predictions = self.predict(df)
@@ -586,7 +595,7 @@ class LinearRegressionBaseline(BaselineModel):
         
         # Handle missing values more robustly
         # First, fill with forward fill, then backward fill, then median
-        X = X.fillna(method='ffill').fillna(method='bfill').fillna(X.median() if len(X) > 0 else 0)
+        X = X.ffill().bfill().fillna(X.median() if len(X) > 0 else 0)
         # Drop any remaining rows with NaN values
         nan_rows = X.isnull().any(axis=1)
         if nan_rows.any():
