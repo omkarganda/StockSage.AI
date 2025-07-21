@@ -92,6 +92,7 @@ temp_backup/
 .pytest_cache/
 .coverage
 htmlcov/
+linkedin_post_requirements.txt
 
 # Project specific: Large data files
 unified_dataset_*.csv
