@@ -114,23 +114,5 @@ from src.features.generative_sentiment import generate_market_scenarios
 print(generate_market_scenarios("AAPL", horizon_days=30))
 ```
 
----
-
-## 🐛 Troubleshooting
-| Issue | Fix |
-|-------|-----|
-| Missing C++ build tools (Prophet / cmdstanpy) | `conda install -c conda-forge libpython m2-base` *or* use Docker image |
-| `OPENAI_API_KEY` not set | LLM features silently fallback to neutral – set key to enable full functionality |
-| GPU not utilised | Ensure CUDA version matches the `torch` build installed (`pip install torch --index-url …`) |
-
----
-
-## 🗺️ Roadmap
-- Hyper-parameter tuning with **Optuna** & Ray
-- Broker integration for paper-trading
-- Auto-generated PDF reports
-- Docker & Helm charts for easy deployment
-
----
 
 Happy researching 🎉
