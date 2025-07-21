@@ -7,6 +7,7 @@
 StockSage.AI is an **end-to-end quantitative research platform** that brings together
 market data, macro-economic indicators, news sentiment (FinBERT **and** LLM-powered), advanced feature engineering, several forecasting model families, back-testing and a production-ready FastAPI + Streamlit front-end.
 
+![img.png](imgs/dashboard_1.png)
 The codebase is modular ‑ each layer can be used in isolation or as part of the complete research pipeline.
 
 ---
